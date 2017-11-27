@@ -4,7 +4,9 @@ import random
 import numpy as np
 import math
 import sys
-# import time
+import time
+import datetime
+import string
 
 
 class DE:
@@ -29,11 +31,18 @@ class DE:
         self.coil_only = False
         self.allatom = False
 
+        self.stage0_init = False
+        self.stage2_interval = -1
+        self.stage2_all_interval = -1
+        self.partial_reset = -1
+        self.log_interval = 10
+
         # Island stuff
         self.comm = None  # Comunicator
         self.island_interval = 100
 
         # LHS parameters
+        self.do_lhs = False
         self.n_hashes = 4
         self.hashes = None
         self.hash_values = None
@@ -43,6 +52,20 @@ class DE:
         self.tmp2 = None
         self.update_interval = 5
         self.change_interval = 200
+
+        # Log stuff
+        self.init_time = time.time()
+        self.now = datetime.datetime.now()
+        now = self.now
+
+        char_set = string.ascii_uppercase + string.digits
+        r_string = ''.join(random.sample(char_set * 6, 6))
+
+        self.name_suffix = "_%s_%1d_%8.3f_%8.3f_%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, self.do_lhs, self.c_rate, self.f_factor, now.year,
+                                                                                       now.month, now.day, now.hour, now.minute,
+                                                                                       now.second, r_string)
+
+        self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
 
     def set_coms(self, pigeon):
         self.comm = pigeon
@@ -161,14 +184,16 @@ class DE:
                 best_index = i
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
+        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, -1, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+        print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, -1, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
 
-        for i in range(self.pop_size):
-            if random.random() < .1:
-                self.pop[i].eval()
-                self.pop[i].stage1_mc()
-                self.pop[i].update_angle_from_pose()
-                self.pop[i].eval()
+        if self.stage0_init:
+            for i in range(self.pop_size):
+                if random.random() < .1:
+                    self.pop[i].eval()
+                    self.pop[i].stage1_mc()
+                    self.pop[i].update_angle_from_pose()
+                    self.pop[i].eval()
 
         mean = 0
         best_index = 0
@@ -183,7 +208,8 @@ class DE:
                 self.best_index = best_index
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
+        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, 0, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+        print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, 0, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
 
         self.apply_hash()
 
@@ -202,14 +228,17 @@ class DE:
                 self.apply_hash()
 
             for i in range(self.pop_size):
-                self.rand1bin_lhs(i)
+                if self.do_lhs:
+                    self.rand1bin_lhs(i)
+                else:
+                    self.rand1bin_global(i)
                 # mean += self.pop[i].score / self.pop_size
 
                 if best_score is None or self.pop[i].score < best_score:
                     best_score = self.pop[i].score
                     best_index = i
 
-            if it % 100 == 0 and it > 0:
+            if self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0:
                 # print('LS')
                 for i in range(self.pop_size):
                     if random.random() < .05 and i != best_index:
@@ -218,13 +247,13 @@ class DE:
                         self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
 
-            if it % 10 == 0 and it > 0:
+            if self.stage2_interval > 0 and it % self.stage2_interval == 0 and it > 0:
                 # print('LS')
                 self.pop[best_index].stage2_mc()
                 self.pop[best_index].update_angle_from_pose()
                 self.pop[best_index].eval()
 
-            if it % 50 == 0 and it > 0:
+            if self.stage2_all_interval and it % self.stage2_all_interval == 0 and it > 0:
                 # print('NINJA MOVE')
                 self.rosetta_pack.loop_modeling(self.pop[best_index].pose)
                 self.pop[best_index].update_angle_from_pose()
@@ -245,16 +274,20 @@ class DE:
                     self.best_score = best_score
                     self.best_index = best_index
 
-            if it % self.island_interval == 0 and it > 0:
-                print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
+            if self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
+                # print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
                 new_guy = self.comm.migration(self.get_best())
-                self.pop[self.best_index].new_angles(new_guy)
-                self.pop[self.best_index].eval()
+                if new_guy is not None:
+                    self.pop[self.best_index].new_angles(new_guy)
+                    self.pop[self.best_index].eval()
                 # print('Ha! migration')
 
-            rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
-            print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
-            sys.stdout.flush()
+            if self.log_interval > 0 and it % self.log_interval == 0:
+                rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
+                self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, it, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+                print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+                self.stats.flush()
+            # sys.stdout.flush()
 
             self.rosetta_pack.pymover.apply(self.pop[best_index].pose)
 
@@ -331,21 +364,24 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        if self.coil_only:
-            c = 0
-            for d in range(self.rosetta_pack.pose.total_residue() * 3):
-                if self.rosetta_pack.ss_pred[c] != 'C' and (random.random() < self.c_rate or d == cutPoint):
-                    t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+        index = 0
+        c = 0
+        d = 0
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+
+                if random.random() < self.c_rate or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
                 else:
                     t_angle.append(ind1.angles[d])
 
-                c += 1
-        else:
-            for d in range(self.rosetta_pack.pose.total_residue() * 3):
-                if random.random() < self.c_rate or d == cutPoint:
-                    t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
-                else:
-                    t_angle.append(ind1.angles[d])
+            c += 1
+            index += na
 
         trial = protein_data.ProteinData(self.rosetta_pack)
         trial.new_angles(t_angle)
@@ -390,3 +426,17 @@ class DE:
 
     def dump_pbd_pop(self):
         pass
+
+    def avg_distance(self):
+        s = 0
+        c = 0
+        pop = self.pop
+
+        for i in range(self.pop_size):
+            for j in range(i + 1, self.pop_size):
+                c += 1
+                diff = pop[i].angles - pop[j].angles
+                squareDistance = np.dot(diff.T, diff)
+                s += math.sqrt(squareDistance)
+
+        return s / c

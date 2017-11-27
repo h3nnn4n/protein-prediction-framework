@@ -12,10 +12,13 @@ if __name__ == '__main__':
     pname = '1rop'
     pname = '1crn'
 
-    if c.rank % 2 == 0:
-        d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
-    else:
-        d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname)
+    # if c.rank % 2 == 0:
+        # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
+    # else:
+        # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname)
+
+    # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
+    d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname)
 
     island = d
     island.set_coms(c)

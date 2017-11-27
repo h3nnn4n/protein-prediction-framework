@@ -11,6 +11,9 @@ class Pigeon:
         print('%3d is on %s' % (self.rank, MPI.Get_processor_name()))
 
     def migration(self, best):
+        if self.size <= 1:
+            return None
+
         debug = False
         # debug = True
 

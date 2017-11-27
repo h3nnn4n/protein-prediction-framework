@@ -21,6 +21,9 @@ class ProteinLoader:
         if name is not None:
             self.name = name
 
+        # original = os.path.dirname(os.path.realpath(__file__))
+        self.original = os.getcwd()
+
         base = self.protein_data_path
 
         dest = base + '/' + self.name
@@ -53,6 +56,9 @@ class ProteinLoader:
             f9 = base + '/' + name + '/output/' + name + '.200.9mers'
             if os.path.isfile(f9):
                 self.fragset9_path = f9
+
+
+        # os.chdir(original)
 
     def show(self):
         print(self.name)
