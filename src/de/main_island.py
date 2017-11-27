@@ -6,7 +6,7 @@ if __name__ == '__main__':
     c = comm.Pigeon()
     d = None
 
-    pop_size = 10
+    pop_size = 100
     max_iters = 1250
     pname = '1zdd'
     pname = '1rop'
