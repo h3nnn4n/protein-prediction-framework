@@ -1,0 +1,41 @@
+Found rosetta database at: /usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database; using it....
+PyRosetta-4 2016 [Rosetta 2016 unknown:ebee9f505da801d17837b6e348f870db27cc9d74 2017-07-21 21:38:58 -0700] retrieved from: git@github.com:RosettaCommons/main.git
+(C) Copyright Rosetta Commons Member Institutions.
+Created in JHU by Sergey Lyskov and PyRosetta Team.
+
+Found rosetta database at: /usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database; using it....
+PyRosetta-4 2016 [Rosetta 2016 unknown:ebee9f505da801d17837b6e348f870db27cc9d74 2017-07-21 21:38:58 -0700] retrieved from: git@github.com:RosettaCommons/main.git
+(C) Copyright Rosetta Commons Member Institutions.
+Created in JHU by Sergey Lyskov and PyRosetta Team.
+
+  0 is on panicbasket
+Found rosetta database at: /usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database; using it....
+PyRosetta-4 2016 [Rosetta 2016 unknown:ebee9f505da801d17837b6e348f870db27cc9d74 2017-07-21 21:38:58 -0700] retrieved from: git@github.com:RosettaCommons/main.git
+(C) Copyright Rosetta Commons Member Institutions.
+Created in JHU by Sergey Lyskov and PyRosetta Team.
+
+Found rosetta database at: /usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database; using it....
+PyRosetta-4 2016 [Rosetta 2016 unknown:ebee9f505da801d17837b6e348f870db27cc9d74 2017-07-21 21:38:58 -0700] retrieved from: git@github.com:RosettaCommons/main.git
+(C) Copyright Rosetta Commons Member Institutions.
+Created in JHU by Sergey Lyskov and PyRosetta Team.
+
+  1 is on panicbasket
+  2 is on panicbasket
+  3 is on panicbasket
+ 1       -1  123.191  197.996    1.000   13.928
+ 1        0  123.191  188.312    0.961   13.928
+ 3       -1  110.746  179.427    1.000    9.277
+ 3        0  110.746  179.427    1.000    9.277
+ 2       -1 4114.992 17709.491    1.000   18.717
+ 2        0 4114.992 15210.907    0.971   18.717
+ 0       -1 3545.521 9316.336    1.000   17.638
+ 1        1  123.191  182.345    0.961   13.928
+ 0        0 3475.842 9046.147    1.000   11.409
+ 3        1  110.746  176.063    0.974    9.277
+ 2        1  197.817 14520.328    0.971   14.927
+ 0        1  189.986 8430.644    1.000   11.767
+ 1        2  123.191  174.581    0.961   13.928
+ 0        2  189.986 8430.644    1.000   11.767
+ 2        2  197.817 14520.328    0.971   14.927
+ 3        2  110.746  176.063    0.974    9.277
+ 1        3  123.191  174.581    0.961   13.928

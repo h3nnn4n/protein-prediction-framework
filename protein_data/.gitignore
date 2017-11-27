@@ -1,0 +1,14 @@
+profw
+protein.fasta
+freqccw
+freqccwG
+*.out
+*.aux
+*.chk
+*.mn
+*.pn
+*.sn
+*.mtx
+*.tmp
+*.txt
+mtx
