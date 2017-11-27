@@ -61,11 +61,30 @@ class DE:
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
 
-        self.name_suffix = "_%s_%1d_%8.3f_%8.3f_%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, self.do_lhs, self.c_rate, self.f_factor, now.year,
-                                                                                       now.month, now.day, now.hour, now.minute,
-                                                                                       now.second, r_string)
+        self.name_suffix = "_%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, now.year, now.month, now.day, now.hour, now.minute,
+                                                                        now.second, r_string)
 
         self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
+
+        with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".dat", 'w') as f:
+            f.write('pop_size %d\n' % (self.pop_size))
+            f.write('c_rate %f\n' % (self.c_rate))
+            f.write('f_factor %f\n' % (self.f_factor))
+            f.write('max_iters %d\n' % (self.max_iters))
+            f.write('coil_only %d\n' % (self.coil_only))
+            f.write('allatom %d\n' % (self.allatom))
+            f.write('stage0_init %d\n' % self.stage0_init)
+            f.write('stage2_interval %d\n' % self.stage2_interval)
+            f.write('stage2_all_interval %d\n' % self.stage2_all_interval)
+            f.write('partial_reset %d\n' % self.partial_reset)
+            f.write('log_interval %d\n' % self.log_interval)
+            f.write('island_interval %d\n' % self.island_interval)
+            f.write('do_lhs %d\n' % self.do_lhs)
+            f.write('n_hashes %d\n' % self.n_hashes)
+            f.write('update_interval %d\n' % self.update_interval)
+            f.write('change_interval %d\n' % self.change_interval)
+
+            f.flush()
 
     def set_coms(self, pigeon):
         self.comm = pigeon
