@@ -278,6 +278,9 @@ class DE:
                 self.pop[best_index].update_angle_from_pose()
                 self.pop[best_index].eval()
                 for i in range(self.pop_size):
+                    if i == self.best_index:
+                        continue
+
                     if random.random() < .2:
                         self.pop[i].stage2_mc(n=10, temp=2.5)
                     else:
@@ -306,6 +309,7 @@ class DE:
                 self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, it, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
                 print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
                 self.stats.flush()
+                self.dump_pbd_best(it)
             # sys.stdout.flush()
 
             self.rosetta_pack.pymover.apply(self.pop[best_index].pose)
@@ -445,6 +449,10 @@ class DE:
 
     def dump_pbd_pop(self):
         pass
+
+    def dump_pbd_best(self, it):
+        name = self.rosetta_pack.protein_loader.original + '/' + ("best_%05d_" % it) + self.name_suffix + ".pdb"
+        self.pop[self.best_index].pose.dump_pdb(name)
 
     def avg_distance(self):
         s = 0
