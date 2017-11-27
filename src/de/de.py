@@ -278,6 +278,9 @@ class DE:
                 self.pop[best_index].update_angle_from_pose()
                 self.pop[best_index].eval()
                 for i in range(self.pop_size):
+                    if i == self.best_index:
+                        pass
+
                     if random.random() < .2:
                         self.pop[i].stage2_mc(n=10, temp=2.5)
                     else:
