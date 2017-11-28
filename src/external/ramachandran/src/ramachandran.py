@@ -6,6 +6,7 @@ import os.path
 import math
 import random
 import numpy as np
+import os
 
 
 class Ramachandran():
@@ -134,8 +135,14 @@ class Ramachandran():
 
 if __name__ == "__main__":
     rama = Ramachandran()
-    rama.load(path="/home/h3nnn4n/PyRosetta4.Release.python35.linux.release-147/"
-                   "setup/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb")
+    p1 = "/home/h3nnn4n/PyRosetta4.Release.python35.linux.release-147/setup/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
+    p2 = "/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
+
+    if os.path.exists(p1):
+        rama.load(path=p1)
+    else:
+        rama.load(path=p2)
+
     rama.process()
 
     print(rama.get_random_angle('T'))
