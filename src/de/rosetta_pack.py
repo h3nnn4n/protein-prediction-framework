@@ -49,8 +49,9 @@ class RosettaPack():
         self.score5 = pyrosetta.create_score_function('score5')
 
         self.ramachandran = rama.Ramachandran()
-        self.ramachandran.load(path="/home/h3nnn4n/rosetta/PyRosetta4.Release.python35.linux.release-147/setup/pyrosetta/database/"
-                                    "scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb")
+        # self.ramachandran.load(path="/home/h3nnn4n/rosetta/PyRosetta4.Release.python35.linux.release-147/setup/pyrosetta/database/"
+                                    # "scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb")
+        self.ramachandran.load(path="/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb")
         self.ramachandran.process()
 
         self.stride = stride_.Stride()
