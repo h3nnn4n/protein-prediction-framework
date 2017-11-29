@@ -20,6 +20,8 @@ class DE:
         self.c_rate = c_rate
         self.f_factor = f_factor
 
+        self.trial = protein_data.ProteinData(self.rosetta_pack, allatom=allatom)
+
         self.max_iters = max_iters
 
         self.spent_iters = 0
@@ -361,13 +363,14 @@ class DE:
             c += 1
             index += na
 
-        trial = protein_data.ProteinData(self.rosetta_pack)
-        trial.new_angles(t_angle)
-        trial.fix_bounds()
-        trial.eval()
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
 
-        if trial.score < self.pop[j].score:
-            self.pop[j] = trial
+        if self.trial.score < self.pop[j].score:
+            t = self.pop[j]
+            self.pop[j] = self.trial
+            self.trial = t
 
     def rand1bin_global(self, j):
         p1 = random.randint(0, self.pop_size - 1)
@@ -406,13 +409,14 @@ class DE:
             c += 1
             index += na
 
-        trial = protein_data.ProteinData(self.rosetta_pack)
-        trial.new_angles(t_angle)
-        trial.fix_bounds()
-        trial.eval()
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
 
-        if trial.score < self.pop[j].score:
-            self.pop[j] = trial
+        if self.trial.score < self.pop[j].score:
+            t = self.pop[j]
+            self.pop[j] = self.trial
+            self.trial = t
 
     def update_diversity(self):
         diversity = 0
