@@ -11,6 +11,7 @@ if __name__ == '__main__':
     pname = '1zdd'
     pname = '1rop'
     pname = '1crn'
+    pname = '1plw'
 
     # if c.rank % 2 == 0:
         # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)

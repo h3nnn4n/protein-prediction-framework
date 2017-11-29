@@ -7,6 +7,7 @@ import string
 import math
 import bounds
 import protein_loader
+import os
 
 sys.path.append('../external')
 
@@ -49,16 +50,21 @@ class RosettaPack():
         self.score5 = pyrosetta.create_score_function('score5')
 
         self.ramachandran = rama.Ramachandran()
-        # self.ramachandran.load(path="/home/h3nnn4n/rosetta/PyRosetta4.Release.python35.linux.release-147/setup/pyrosetta/database/"
-                                    # "scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb")
-        self.ramachandran.load(path="/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb")
+        p1 = "/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
+        p2 = "/usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
+
+        if os.path.exists(p1):
+            self.ramachandran.load(path=p1)
+        else:
+            self.ramachandran.load(path=p2)
+
         self.ramachandran.process()
 
         self.stride = stride_.Stride()
         self.stride.change_path("/home/h3nnn4n/Downloads/stride")
 
         self.fragset3 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(3)
-        self.fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
+        # self.fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
 
         self.bounds = bounds.Bounds()
 
@@ -71,7 +77,7 @@ class RosettaPack():
         self.native = pyrosetta.pose_from_pdb(self.native_path)
 
         self.fragset3.read_fragment_file(self.fragset3_path)
-        self.fragset9.read_fragment_file(self.fragset9_path)
+        # self.fragset9.read_fragment_file(self.fragset9_path)
 
         ######################
 
@@ -97,14 +103,14 @@ class RosettaPack():
         cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
 
         self.mover_3mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(self.fragset3, self.movemap)
-        self.mover_9mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(self.fragset9, self.movemap)
+        # self.mover_9mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(self.fragset9, self.movemap)
         self.mover_3mer_smooth = pyrosetta.rosetta.protocols.simple_moves.SmoothFragmentMover(self.fragset3, self.movemap, cost)
-        self.mover_9mer_smooth = pyrosetta.rosetta.protocols.simple_moves.SmoothFragmentMover(self.fragset9, self.movemap, cost)
+        # self.mover_9mer_smooth = pyrosetta.rosetta.protocols.simple_moves.SmoothFragmentMover(self.fragset9, self.movemap, cost)
 
         self.mover_3mer.set_movemap(self.movemap)
-        self.mover_9mer.set_movemap(self.movemap)
+        # self.mover_9mer.set_movemap(self.movemap)
         self.mover_3mer_smooth.set_movemap(self.movemap)
-        self.mover_9mer_smooth.set_movemap(self.movemap)
+        # self.mover_9mer_smooth.set_movemap(self.movemap)
 
         self.task_pack = pyrosetta.standard_packer_task(self.pose)
         self.task_pack.restrict_to_repacking()
