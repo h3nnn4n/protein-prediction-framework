@@ -456,23 +456,23 @@ class DE:
                 ind_b = self.pop[j].angles
 
                 for d in range(0, nsca):
-                    aux_1 = aux_1 + (ind_a[d] - ind_b[d]) ** 2
+                    aux_1 += (ind_a[d] - ind_b[d]) ** 2
 
                 aux_1 = math.sqrt(aux_1) / nsca
 
                 if j == i + 1 or aux_2 > aux_1:
                     aux_2 = aux_1
 
-            diversity = diversity + math.log(1.0 + aux_2)
+            diversity += math.log(1.0 + aux_2)
 
-            self.m_nmdf = max(self.m_nmdf, diversity)
+        self.m_nmdf = max(self.m_nmdf, diversity)
 
-            if self.m_nmdf > 0:
-                self.diversity = diversity/self.m_nmdf
-            else:
-                self.diversity = 0.0
+        if self.m_nmdf > 0:
+            self.diversity = diversity / self.m_nmdf
+        else:
+            self.diversity = 0.0
 
-            return self.diversity
+        return self.diversity
 
     def dump_pbd_pop(self):
         pass
