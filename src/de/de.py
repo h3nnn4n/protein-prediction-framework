@@ -34,7 +34,7 @@ class DE:
         self.allatom = False
 
         self.stage0_init = False
-        self.stage0_init = True
+        self.stage0_init = False
         self.stage2_interval = -1
         self.stage2_all_interval = -1
         self.partial_reset = -1
@@ -45,7 +45,7 @@ class DE:
         self.island_interval = 100
 
         # LHS parameters
-        self.do_lhs = False
+        self.do_lhs = True
         self.n_hashes = 4
         self.hashes = None
         self.hash_values = None
@@ -107,10 +107,9 @@ class DE:
             p.eval()
 
     def create_hashs(self):
-        self.hashes = [np.random.randint(10, size=self.pop[0].nsca) for _ in range(self.n_hashes)]
+        self.hashes = [np.random.randint(100, size=self.pop[0].nsca) for _ in range(self.n_hashes)]
 
-    def apply_hash(self):
-        debug = False
+    def apply_hash(self, debug=False):
         # debug = True
 
         if self.hash_values is None:
@@ -188,6 +187,9 @@ class DE:
 
         while old2 == self.active_hash2:
             self.active_hash2 = random.randint(0, self.n_hashes - 1)
+
+        if self.active_hash1 == self.active_hash2:
+            self.change_hash()
 
     def get_best(self):
         return self.pop[self.best_index].angles
@@ -324,18 +326,18 @@ class DE:
         # end_time = time.time()
         # print("Processing took %f seconds" % (end_time - start_time))
 
-    def rand1bin_lhs(self, j):
+    def rand1bin_lhs(self, huehue):
         hi = 0
 
         for n, hs in enumerate(self.hash_values):
-            if j in hs:
+            if huehue in hs:
                 hi = n
 
         if len(self.hash_values[hi]) < 3:
             return
 
         ps = random.sample(self.hash_values[hi], k=3)
-        # print(j, hi, ps)
+        # print(huehue, hi, ps)
 
         p1 = ps[0]
         p2 = ps[1]
@@ -356,14 +358,18 @@ class DE:
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
-
-                if random.random() < self.c_rate or d == cutPoint:
+                # old = self.pop[huehue].angles[d]
+                r = random.random()
+                if r < self.c_rate or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
                         t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
                     elif not self.coil_only:
                         t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
                 else:
-                    t_angle.append(ind1.angles[d])
+                    t_angle.append(self.pop[huehue].angles[d])
+
+                # if old - t_angle[d] > 0.01 and r > self.c_rate:
+                    # print("%8.3f %8.3f %d %8.3f %8.3f %8.3f" % (r, self.c_rate, d, old, t_angle[d], self.pop[huehue].angles[d]))
 
             c += 1
             index += na
@@ -372,10 +378,21 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[j].score:
-            t = self.pop[j]
-            self.pop[j] = self.trial
+        # print()
+
+        # print(p1, p2, p3, self.trial.score, self.pop[huehue].score)
+
+        if self.trial.score < self.pop[huehue].score:
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
             self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+            # print('accept')
+        # else:
+            # print('reject')
+        # print()
 
     def rand1bin_global(self, huehue):
         p1 = random.randint(0, self.pop_size - 1)
@@ -402,10 +419,9 @@ class DE:
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
-                old = self.pop[huehue].angles[d]
+                # old = self.pop[huehue].angles[d]
                 r = random.random()
-
-                if random.random() < self.c_rate or d == cutPoint:
+                if r < self.c_rate or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
                         t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
                     elif not self.coil_only:
