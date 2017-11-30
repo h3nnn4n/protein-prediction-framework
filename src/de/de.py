@@ -10,7 +10,7 @@ import string
 
 
 class DE:
-    def __init__(self, pop_size=50, pname='1zdd', c_rate=0.9, f_factor=0.8, max_iters=100, allatom=False):
+    def __init__(self, pop_size=50, pname='1zdd', c_rate=1.0, f_factor=0.5, max_iters=100, allatom=False):
         self.rosetta_pack = rosetta_pack.RosettaPack(pname)
 
         self.pname = pname
@@ -87,6 +87,8 @@ class DE:
             f.write('change_interval %d\n' % self.change_interval)
 
             f.flush()
+
+        print('Starting')
 
     def set_coms(self, pigeon):
         self.comm = pigeon
@@ -205,8 +207,8 @@ class DE:
                 best_index = i
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, -1, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
-        print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, -1, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
+        print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
 
         if self.stage0_init:
             for i in range(self.pop_size):
@@ -229,8 +231,8 @@ class DE:
                 self.best_index = best_index
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, 0, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
-        print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, 0, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
+        print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
 
         self.apply_hash()
 
@@ -274,7 +276,7 @@ class DE:
                 self.pop[best_index].update_angle_from_pose()
                 self.pop[best_index].eval()
 
-            if self.stage2_all_interval and it % self.stage2_all_interval == 0 and it > 0:
+            if self.stage2_all_interval > 0 and it % self.stage2_all_interval == 0 and it > 0:
                 # print('NINJA MOVE')
                 self.rosetta_pack.loop_modeling(self.pop[best_index].pose)
                 self.pop[best_index].update_angle_from_pose()
@@ -308,11 +310,11 @@ class DE:
 
             if self.log_interval > 0 and it % self.log_interval == 0:
                 rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
-                self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, it, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
-                print("%2d %8d %8.3f %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.avg_distance(), self.update_diversity(), rmsd))
+                self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
+                print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
                 self.stats.flush()
                 self.dump_pbd_best(it)
-            # sys.stdout.flush()
+            sys.stdout.flush()
 
             self.rosetta_pack.pymover.apply(self.pop[best_index].pose)
 
@@ -425,6 +427,8 @@ class DE:
 
         d = 0
 
+        nsca = len(self.pop[0].angles)
+
         for i in range(0, self.pop_size):
             for j in range(i + 1, self.pop_size):
                 aux_1 = 0
@@ -432,15 +436,15 @@ class DE:
                 ind_a = self.pop[i].angles
                 ind_b = self.pop[j].angles
 
-                for d in range(0, self.d * 3):
+                for d in range(0, nsca):
                     aux_1 = aux_1 + (ind_a[d] - ind_b[d]) ** 2
 
-                aux_1 = math.sqrt(aux_1) / (self.d * 3)
+                aux_1 = math.sqrt(aux_1) / nsca
 
                 if j == i + 1 or aux_2 > aux_1:
                     aux_2 = aux_1
 
-            diversity = diversity + math.log((1.0) + aux_2)
+            diversity = diversity + math.log(1.0 + aux_2)
 
             self.m_nmdf = max(self.m_nmdf, diversity)
 
@@ -467,7 +471,6 @@ class DE:
             for j in range(i + 1, self.pop_size):
                 c += 1
                 diff = pop[i].angles - pop[j].angles
-                squareDistance = np.dot(diff.T, diff)
-                s += math.sqrt(squareDistance)
+                s += np.linalg.norm(diff)
 
         return s / c
