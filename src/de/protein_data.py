@@ -12,7 +12,7 @@ class ProteinData:
             self.rosetta_pack.get_allatom_switch().apply(self.pose)
 
         self.nsca = sum([(self.bounds.getNumSideChainAngles(ss) + 3) for ss in self.rosetta_pack.target])
-        self.angles = np.empty(self.nsca)
+        self.angles = np.zeros(self.nsca)
         self.score = None
 
         index = 0
@@ -30,16 +30,23 @@ class ProteinData:
             self.angles[index + 1] = psi
             self.angles[index + 2] = omega
 
-            if self.allatom and n_sidechain_angles > 0:
-                aa = self.rosetta_pack.target[k]
-                angles = self.bounds.generateRandomSidechainAngles(aa)
-                for kk, vv in enumerate(angles):
+            aa = self.rosetta_pack.target[k]
+            angles = self.bounds.generateRandomSidechainAngles(aa)
+            for kk, vv in enumerate(angles):
+                if self.allatom and n_sidechain_angles > 0:
                     self.angles[index + 3 + kk] = vv
                     self.pose.set_chi(kk + 1, k + 1, vv)
 
+            print("%4d %8.3f %8.3f %8.3f " % (k, self.angles[index + 0], self.angles[index + 1], self.angles[index + 2]), end='')
+            for i in range(len(angles)):
+                print(" %8.3f" % self.angles[index + 3 + i], end='')
+            print()
+
             index += 3 + n_sidechain_angles
 
+        self.fix_bounds()
         self.eval()
+        print()
 
         # print('Finished INIT', self.allatom)
 
@@ -65,6 +72,8 @@ class ProteinData:
                     self.pose.set_chi(kk + 1, k + 1, vv)
 
             index += 3 + n_sidechain_angles
+
+        self.eval()
 
         self.fix_bounds()
 
@@ -113,18 +122,22 @@ class ProteinData:
             if phi < self.bounds.getSecondaryLowerBound(ss, 0):
                 phi = self.bounds.getSecondaryLowerBound(ss, 0)
                 self.pose.set_phi(n + 1, phi)
+                self.angles[index + 0] = phi
 
             if phi > self.bounds.getSecondaryUpperBound(ss, 0):
                 phi = self.bounds.getSecondaryUpperBound(ss, 0)
                 self.pose.set_phi(n + 1, phi)
+                self.angles[index + 0] = phi
 
             if psi < self.bounds.getSecondaryLowerBound(ss, 1):
                 psi = self.bounds.getSecondaryLowerBound(ss, 1)
                 self.pose.set_psi(n + 1, psi)
+                self.angles[index + 1] = psi
 
             if psi > self.bounds.getSecondaryUpperBound(ss, 1):
                 psi = self.bounds.getSecondaryUpperBound(ss, 1)
                 self.pose.set_psi(n + 1, psi)
+                self.angles[index + 1] = psi
 
             index += 3 + n_sidechain_angles
 

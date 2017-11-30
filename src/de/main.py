@@ -7,11 +7,16 @@ if __name__ == '__main__':
     d = None
 
     pop_size = 100
-    max_iters = 1250
+    max_iters = 5000
     pname = '1zdd'
     pname = '1rop'
     pname = '1crn'
     # pname = '1plw'
+
+    c_rate = 1.0
+    f_factor = 0.5
+
+    allatom = False
 
     # if c.rank % 2 == 0:
         # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
@@ -19,7 +24,7 @@ if __name__ == '__main__':
         # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname)
 
     # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
-    d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname)
+    d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, f_factor=f_factor, c_rate=c_rate, allatom=allatom)
 
     island = d
     island.set_coms(c)
