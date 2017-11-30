@@ -309,6 +309,7 @@ class DE:
                 # print('Ha! migration')
 
             if self.log_interval > 0 and it % self.log_interval == 0:
+                # self.pop[0].print_angles()
                 rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
                 self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
                 print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))

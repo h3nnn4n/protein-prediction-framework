@@ -37,18 +37,23 @@ class ProteinData:
                     self.angles[index + 3 + kk] = vv
                     self.pose.set_chi(kk + 1, k + 1, vv)
 
-            print("%4d %8.3f %8.3f %8.3f " % (k, self.angles[index + 0], self.angles[index + 1], self.angles[index + 2]), end='')
-            for i in range(len(angles)):
-                print(" %8.3f" % self.angles[index + 3 + i], end='')
-            print()
-
             index += 3 + n_sidechain_angles
 
         self.fix_bounds()
         self.eval()
-        print()
+        self.print_angles()
+        print('Finished INIT', self.allatom)
 
-        # print('Finished INIT', self.allatom)
+    def print_angles(self):
+        index = 0
+        for k, ss in enumerate(self.rosetta_pack.ss_pred):
+            n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
+            print("%4d %4d %8.3f %8.3f %8.3f " % (k, index, self.angles[index + 0], self.angles[index + 1], self.angles[index + 2]), end='')
+            for i in range(n_sidechain_angles):
+                print(" %8.3f" % self.angles[index + 3 + i], end='')
+            index += 3 + n_sidechain_angles
+            print()
+        print()
 
     def reset(self):
         index = 0
