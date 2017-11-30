@@ -207,8 +207,8 @@ class DE:
                 best_index = i
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
-        print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
+        self.stats.write("%2d %8d %20.10f %20.10f %20.10f %20.10f\n" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
+        print("%2d %8d %20.10f %20.10f %20.10f %20.10f" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
 
         if self.stage0_init:
             for i in range(self.pop_size):
@@ -231,10 +231,11 @@ class DE:
                 self.best_index = best_index
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
-        print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
+        self.stats.write("%2d %8d %20.10f %20.10f %20.10f %20.10f\n" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
+        print("%2d %8d %20.10f %20.10f %20.10f %20.10f" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
 
-        self.apply_hash()
+        if self.do_lhs:
+            self.apply_hash()
 
         it = 0
         while it < self.max_iters:
@@ -244,10 +245,10 @@ class DE:
             mean = 0
             best_index = 0
 
-            if it % self.change_interval == 0:
+            if self.do_lhs and it % self.change_interval == 0:
                 self.change_hash()
 
-            if it % self.update_interval == 0:
+            if self.do_lhs and it % self.update_interval == 0:
                 self.apply_hash()
 
             for i in range(self.pop_size):
@@ -310,8 +311,8 @@ class DE:
 
             if self.log_interval > 0 and it % self.log_interval == 0:
                 rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
-                self.stats.write("%2d %8d %8.3f %8.3f %8.3f %8.3f\n" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
-                print("%2d %8d %8.3f %8.3f %8.3f %8.3f" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
+                self.stats.write("%2d %8d %20.10f %20.10f %20.10f %20.10f\n" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
+                print("%2d %8d %20.10f %20.10f %20.10f %20.10f" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
                 self.stats.flush()
                 self.dump_pbd_best(it)
             sys.stdout.flush()
