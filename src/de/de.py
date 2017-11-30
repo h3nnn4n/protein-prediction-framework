@@ -34,6 +34,7 @@ class DE:
         self.allatom = False
 
         self.stage0_init = False
+        self.stage0_init = True
         self.stage2_interval = -1
         self.stage2_all_interval = -1
         self.partial_reset = -1
