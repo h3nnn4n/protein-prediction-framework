@@ -41,8 +41,8 @@ class ProteinData:
 
         self.fix_bounds()
         self.eval()
-        self.print_angles()
-        print('Finished INIT', self.allatom)
+        # self.print_angles()
+        # print('Finished INIT', self.allatom)
 
     def print_angles(self):
         index = 0

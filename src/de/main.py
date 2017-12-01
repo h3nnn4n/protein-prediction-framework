@@ -1,3 +1,4 @@
+import config_loader
 import comm
 import sys
 import de
@@ -7,35 +8,18 @@ if __name__ == '__main__':
     c = comm.Pigeon()
     d = None
 
-    pop_size = 100
-    max_iters = 5000
-    pname = '1zdd'
-    pname = '1rop'
-    pname = '1crn'
-    # pname = '1plw'
+    if len(sys.argv) > 1:
+        conf_file = sys.argv[1]
+    else:
+        conf_file = None
 
-    c_rate = 1.0
-    f_factor = 0.5
+    cf = config_loader.ConfigLoader(conf_file)
 
-    allatom = False
-
-    # if c.rank % 2 == 0:
-        # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
-    # else:
-        # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname)
-
-    # d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, allatom=True)
-    d = de.DE(pop_size=pop_size, max_iters=max_iters, pname=pname, f_factor=f_factor, c_rate=c_rate, allatom=allatom)
+    d = de.DE(pop_size=cf['pop_size'], max_iters=cf['max_iters'], pname=cf['pname'],
+              f_factor=cf['f_factor'], c_rate=cf['c_rate'], allatom=cf['allatom'])
 
     island = d
     island.set_coms(c)
     island.island_interval = 75
-    # island.island_interval = 2
-
-    # if island.comm.rank == 1:
-        # island.coil_only = True
-
-    # if island.comm.rank == 2:
-        # island.c_rate = 0.3
 
     island.run()

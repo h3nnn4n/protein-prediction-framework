@@ -1,0 +1,5 @@
+pop_size: 100
+c_rate: 1.0
+f_factor: 0.5
+max_iters: 100
+pname: '1zdd'

@@ -38,7 +38,7 @@ class DE:
         self.stage2_interval = -1
         self.stage2_all_interval = -1
         self.partial_reset = -1
-        self.log_interval = 5
+        self.log_interval = 10
 
         # Island stuff
         self.comm = None  # Comunicator
@@ -46,14 +46,14 @@ class DE:
 
         # LHS parameters
         self.do_lhs = False
-        self.n_hashes = 4
+        self.n_hashes = 10
         self.hashes = None
         self.hash_values = None
         self.active_hash1 = 1
         self.active_hash2 = 2
         self.tmp1 = None
         self.tmp2 = None
-        self.update_interval = 1
+        self.update_interval = 20
         self.change_interval = 100
 
         # Log stuff
@@ -72,25 +72,26 @@ class DE:
         self.name_suffix = "_%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, now.year, now.month, now.day, now.hour, now.minute,
                                                                         now.second, r_string)
 
-        self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
+        self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".yaml", 'w')
 
         with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".dat", 'w') as f:
-            f.write('pop_size %d\n' % (self.pop_size))
-            f.write('c_rate %f\n' % (self.c_rate))
-            f.write('f_factor %f\n' % (self.f_factor))
-            f.write('max_iters %d\n' % (self.max_iters))
-            f.write('coil_only %d\n' % (self.coil_only))
-            f.write('allatom %d\n' % (self.allatom))
-            f.write('stage0_init %d\n' % self.stage0_init)
-            f.write('stage2_interval %d\n' % self.stage2_interval)
-            f.write('stage2_all_interval %d\n' % self.stage2_all_interval)
-            f.write('partial_reset %d\n' % self.partial_reset)
-            f.write('log_interval %d\n' % self.log_interval)
-            f.write('island_interval %d\n' % self.island_interval)
-            f.write('do_lhs %d\n' % self.do_lhs)
-            f.write('n_hashes %d\n' % self.n_hashes)
-            f.write('update_interval %d\n' % self.update_interval)
-            f.write('change_interval %d\n' % self.change_interval)
+            f.write('pname: %d\n' % (self.pname))
+            f.write('pop_size: %d\n' % (self.pop_size))
+            f.write('c_rate: %f\n' % (self.c_rate))
+            f.write('f_factor: %f\n' % (self.f_factor))
+            f.write('max_iters: %d\n' % (self.max_iters))
+            f.write('coil_only: %d\n' % (self.coil_only))
+            f.write('allatom: %d\n' % (self.allatom))
+            f.write('stage0_init: %d\n' % self.stage0_init)
+            f.write('stage2_interval: %d\n' % self.stage2_interval)
+            f.write('stage2_all_interval: %d\n' % self.stage2_all_interval)
+            f.write('partial_reset: %d\n' % self.partial_reset)
+            f.write('log_interval: %d\n' % self.log_interval)
+            f.write('island_interval: %d\n' % self.island_interval)
+            f.write('do_lhs: %d\n' % self.do_lhs)
+            f.write('n_hashes: %d\n' % self.n_hashes)
+            f.write('update_interval: %d\n' % self.update_interval)
+            f.write('change_interval: %d\n' % self.change_interval)
 
             f.flush()
 
@@ -201,7 +202,7 @@ class DE:
         return self.pop[self.best_index].angles
 
     def run(self):
-        # start_time = time.time()
+        self.start_time = time.time()
 
         self.create_hashs()
 
@@ -266,10 +267,23 @@ class DE:
                     self.best_score = self.pop[i].score
                     self.best_index = i
 
-            if self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0:
-                # print('LS')
+            if self.do_lhs:
+                for h in self.hash_values:
+                    if len(h) >= self.pop_size // 2:
+                        print('Niche reset')
+                        for i in h:
+                            if random.random() < .5 and i != self.best_index:
+                                self.pop[i].stage1_mc()
+                                self.pop[i].update_angle_from_pose()
+                                self.pop[i].eval()
+                                self.pop[i].stage2_mc()
+                                self.pop[i].update_angle_from_pose()
+                                self.pop[i].eval()
+
+            if (self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0):
+                print('Partial reset')
                 for i in range(self.pop_size):
-                    if random.random() < .05 and i != self.best_index:
+                    if random.random() < .15 and i != self.best_index:
                         self.pop[i].reset()
                         self.pop[i].stage2_mc()
                         self.pop[i].update_angle_from_pose()
@@ -327,6 +341,7 @@ class DE:
         # print("Processing took %f seconds" % (end_time - start_time))
 
     def print_hash(self):
+        return
         for n, i in enumerate(self.hash_values):
             if len(i) > 0:
                 print(n, i)
@@ -542,8 +557,16 @@ class DE:
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
 
-        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f"
-        data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(), rmsd, self.avg_rmsd_from_native())
+        if it < 1:
+            secs_per_iter = 0
+            eta = 0
+        else:
+            secs_per_iter = (time.time() - self.start_time) / it
+            eta = (self.max_iters - it) * secs_per_iter
+
+        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f"
+        data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
+                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta)
 
         self.stats.write((string + '\n') % data)
         print(string % data)
