@@ -38,14 +38,14 @@ class DE:
         self.stage2_interval = -1
         self.stage2_all_interval = -1
         self.partial_reset = -1
-        self.log_interval = 10
+        self.log_interval = 5
 
         # Island stuff
         self.comm = None  # Comunicator
         self.island_interval = 100
 
         # LHS parameters
-        self.do_lhs = True
+        self.do_lhs = False
         self.n_hashes = 4
         self.hashes = None
         self.hash_values = None
@@ -53,13 +53,18 @@ class DE:
         self.active_hash2 = 2
         self.tmp1 = None
         self.tmp2 = None
-        self.update_interval = 5
-        self.change_interval = 200
+        self.update_interval = 1
+        self.change_interval = 100
 
         # Log stuff
         self.init_time = time.time()
         self.now = datetime.datetime.now()
         now = self.now
+
+        # Inner info
+        self.mean = 0
+        self.best_index = 0
+        self.best_score = 0
 
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
@@ -166,6 +171,7 @@ class DE:
             v = (self.n_hashes) * a + b
 
             if v >= len(self.hash_values):
+                print(v, len(self.hash_values))
                 v -= len(self.hash_values) - 2
 
             self.hash_values[v].append(i)
@@ -199,19 +205,17 @@ class DE:
 
         self.create_hashs()
 
-        mean = 0
-        best_index = 0
-        best_score = None
+        self.mean = 0
+        self.best_index = 0
+        self.best_score = None
 
         for i in range(self.pop_size):
-            mean += self.pop[i].score / self.pop_size
-            if best_score is None or self.pop[i].score < best_score:
-                best_score = self.pop[i].score
-                best_index = i
+            self.mean += self.pop[i].score / self.pop_size
+            if self.best_score is None or self.pop[i].score < self.best_score:
+                self.best_score = self.pop[i].score
+                self.best_index = i
 
-        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        self.stats.write("%2d %8d %20.10f %20.10f %20.10f %20.10f\n" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
-        print("%2d %8d %20.10f %20.10f %20.10f %20.10f" % (self.comm.rank, -1, best_score, mean, self.update_diversity(), rmsd))
+        self.log(it=-1)
 
         if self.stage0_init:
             for i in range(self.pop_size):
@@ -221,21 +225,17 @@ class DE:
                     self.pop[i].update_angle_from_pose()
                     self.pop[i].eval()
 
-        mean = 0
-        best_index = 0
-        best_score = None
+        self.mean = 0
+        self.best_index = 0
+        self.best_score = None
 
         for i in range(self.pop_size):
-            mean += self.pop[i].score / self.pop_size
-            if best_score is None or self.pop[i].score < best_score:
-                best_score = self.pop[i].score
-                best_index = i
-                self.best_score = best_score
-                self.best_index = best_index
+            self.mean += self.pop[i].score / self.pop_size
+            if self.best_score is None or self.pop[i].score < self.best_score:
+                self.best_score = self.pop[i].score
+                self.best_index = i
 
-        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[best_index].pose)
-        self.stats.write("%2d %8d %20.10f %20.10f %20.10f %20.10f\n" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
-        print("%2d %8d %20.10f %20.10f %20.10f %20.10f" % (self.comm.rank, 0, best_score, mean, self.update_diversity(), rmsd))
+        self.log(it=0)
 
         if self.do_lhs:
             self.apply_hash()
@@ -243,10 +243,11 @@ class DE:
         it = 0
         while it < self.max_iters:
             it += 1
-            best_score = None
+            self.it = it
+            self.best_score = None
 
-            mean = 0
-            best_index = 0
+            self.mean = 0
+            self.best_index = 0
 
             if self.do_lhs and it % self.change_interval == 0:
                 self.change_hash()
@@ -259,16 +260,16 @@ class DE:
                     self.rand1bin_lhs(i)
                 else:
                     self.rand1bin_global(i)
-                # mean += self.pop[i].score / self.pop_size
+                # self.mean += self.pop[i].score / self.pop_size
 
-                if best_score is None or self.pop[i].score < best_score:
-                    best_score = self.pop[i].score
-                    best_index = i
+                if self.best_score is None or self.pop[i].score < self.best_score:
+                    self.best_score = self.pop[i].score
+                    self.best_index = i
 
             if self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0:
                 # print('LS')
                 for i in range(self.pop_size):
-                    if random.random() < .05 and i != best_index:
+                    if random.random() < .05 and i != self.best_index:
                         self.pop[i].reset()
                         self.pop[i].stage2_mc()
                         self.pop[i].update_angle_from_pose()
@@ -276,15 +277,15 @@ class DE:
 
             if self.stage2_interval > 0 and it % self.stage2_interval == 0 and it > 0:
                 # print('LS')
-                self.pop[best_index].stage2_mc()
-                self.pop[best_index].update_angle_from_pose()
-                self.pop[best_index].eval()
+                self.pop[self.best_index].stage2_mc()
+                self.pop[self.best_index].update_angle_from_pose()
+                self.pop[self.best_index].eval()
 
             if self.stage2_all_interval > 0 and it % self.stage2_all_interval == 0 and it > 0:
                 # print('NINJA MOVE')
-                self.rosetta_pack.loop_modeling(self.pop[best_index].pose)
-                self.pop[best_index].update_angle_from_pose()
-                self.pop[best_index].eval()
+                self.rosetta_pack.loop_modeling(self.pop[self.best_index].pose)
+                self.pop[self.best_index].update_angle_from_pose()
+                self.pop[self.best_index].eval()
                 for i in range(self.pop_size):
                     if i == self.best_index:
                         continue
@@ -297,12 +298,10 @@ class DE:
                     self.pop[i].eval()
 
             for i in range(self.pop_size):
-                mean += self.pop[i].score / self.pop_size
-                if best_score is None or self.pop[i].score < best_score:
-                    best_score = self.pop[i].score
-                    best_index = i
-                    self.best_score = best_score
-                    self.best_index = best_index
+                self.mean += self.pop[i].score / self.pop_size
+                if self.best_score is None or self.pop[i].score < self.best_score:
+                    self.best_score = self.pop[i].score
+                    self.best_index = i
 
             if self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
                 # print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
@@ -314,17 +313,23 @@ class DE:
 
             if self.log_interval > 0 and it % self.log_interval == 0:
                 # self.pop[0].print_angles()
-                rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
-                self.stats.write("%2d %8d %20.10f %20.10f %20.10f %20.10f\n" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
-                print("%2d %8d %20.10f %20.10f %20.10f %20.10f" % (self.comm.rank, it, best_score, mean, self.update_diversity(), rmsd))
+                self.log()
                 self.stats.flush()
                 self.dump_pbd_best(it)
+                if self.do_lhs:
+                    self.print_hash()
+
             sys.stdout.flush()
 
-            self.rosetta_pack.pymover.apply(self.pop[best_index].pose)
+            self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
 
         # end_time = time.time()
         # print("Processing took %f seconds" % (end_time - start_time))
+
+    def print_hash(self):
+        for n, i in enumerate(self.hash_values):
+            if len(i) > 0:
+                print(n, i)
 
     def rand1bin_lhs(self, huehue):
         hi = 0
@@ -509,3 +514,36 @@ class DE:
                 s += np.linalg.norm(diff)
 
         return s / c
+
+    def avg_rmsd(self):
+        s = 0
+        c = 0
+
+        for i in range(self.pop_size):
+            for j in range(i + 1, self.pop_size):
+                c += 1
+                s += self.rosetta_pack.get_rmsd_from_pose(self.pop[i].pose, self.pop[j].pose)
+
+        return s / c
+
+    def avg_rmsd_from_native(self):
+        s = 0
+        c = 0
+
+        for i in range(self.pop_size):
+            c += 1
+            s += self.rosetta_pack.get_rmsd_from_pose(self.pop[i].pose)
+
+        return s / c
+
+    def log(self, it=None):
+        if it is None:
+            it = self.it
+
+        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
+
+        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f"
+        data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(), rmsd, self.avg_rmsd_from_native())
+
+        self.stats.write((string + '\n') % data)
+        print(string % data)

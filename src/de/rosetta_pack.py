@@ -139,11 +139,14 @@ class RosettaPack():
         self.centroid_switch.apply(pose)
         return pose
 
-    def get_rmsd_from_pose(self, pose=None):
+    def get_rmsd_from_pose(self, pose=None, pose2=None):
         if pose is None:
             return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, self.pose)
         else:
-            return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, pose)
+            if pose2 is None:
+                return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, pose)
+            else:
+                return pyrosetta.rosetta.core.scoring.CA_rmsd(pose, pose2)
 
     def get_sidechain_recover(self):
         return pyrosetta.rosetta.protocols.simple_moves.ReturnSidechainMover
