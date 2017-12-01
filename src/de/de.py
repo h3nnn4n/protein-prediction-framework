@@ -319,7 +319,7 @@ class DE:
                 if self.do_lhs:
                     self.print_hash()
 
-            sys.stdout.flush()
+                sys.stdout.flush()
 
             self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
 
