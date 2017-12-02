@@ -18,8 +18,8 @@ if __name__ == '__main__':
     d = de.DE(pop_size=cf['pop_size'], max_iters=cf['max_iters'], pname=cf['pname'],
               f_factor=cf['f_factor'], c_rate=cf['c_rate'], allatom=cf['allatom'])
 
-    island = d
-    island.set_coms(c)
-    island.island_interval = 75
+    d.set_coms(c)
 
-    island.run()
+    cf.inject(d)
+
+    d.run()

@@ -74,6 +74,9 @@ class DE:
 
         self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
 
+        print('Finished initialization')
+
+    def dump_config(self):
         with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml", 'w') as f:
             f.write('pname: %s\n' % (self.pname))
             f.write('pop_size: %d\n' % (self.pop_size))
@@ -94,8 +97,6 @@ class DE:
             f.write('change_interval: %d\n' % self.change_interval)
 
             f.flush()
-
-        print('Starting')
 
     def set_coms(self, pigeon):
         self.comm = pigeon
@@ -202,6 +203,7 @@ class DE:
         return self.pop[self.best_index].angles
 
     def run(self):
+        self.dump_config()
         self.start_time = time.time()
 
         self.create_hashs()
