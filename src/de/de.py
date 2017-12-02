@@ -72,9 +72,9 @@ class DE:
         self.name_suffix = "_%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, now.year, now.month, now.day, now.hour, now.minute,
                                                                         now.second, r_string)
 
-        self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".yaml", 'w')
+        self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
 
-        with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".dat", 'w') as f:
+        with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml", 'w') as f:
             f.write('pname: %s\n' % (self.pname))
             f.write('pop_size: %d\n' % (self.pop_size))
             f.write('c_rate: %f\n' % (self.c_rate))
