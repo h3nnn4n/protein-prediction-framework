@@ -49,8 +49,8 @@ class DE:
         self.n_hashes = 10
         self.hashes = None
         self.hash_values = None
-        self.active_hash1 = 1
-        self.active_hash2 = 2
+        self.active_hash1 = 0
+        self.active_hash2 = 1
         self.tmp1 = None
         self.tmp2 = None
         self.update_interval = 20
@@ -343,7 +343,6 @@ class DE:
         # print("Processing took %f seconds" % (end_time - start_time))
 
     def print_hash(self):
-        return
         for n, i in enumerate(self.hash_values):
             if len(i) > 0:
                 print(n, i)
