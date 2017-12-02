@@ -269,7 +269,7 @@ class DE:
                     self.best_score = self.pop[i].score
                     self.best_index = i
 
-            if self.do_lhs:
+            if self.do_lhs and False:
                 for h in self.hash_values:
                     if len(h) >= self.pop_size // 2:
                         print('Niche reset')
