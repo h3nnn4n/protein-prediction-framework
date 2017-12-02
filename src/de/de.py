@@ -292,13 +292,13 @@ class DE:
                         self.pop[i].eval()
 
             if self.stage2_interval > 0 and it % self.stage2_interval == 0 and it > 0:
-                # print('LS')
+                print('LS')
                 self.pop[self.best_index].stage2_mc()
                 self.pop[self.best_index].update_angle_from_pose()
                 self.pop[self.best_index].eval()
 
             if self.stage2_all_interval > 0 and it % self.stage2_all_interval == 0 and it > 0:
-                # print('NINJA MOVE')
+                print('NINJA MOVE')
                 self.rosetta_pack.loop_modeling(self.pop[self.best_index].pose)
                 self.pop[self.best_index].update_angle_from_pose()
                 self.pop[self.best_index].eval()
