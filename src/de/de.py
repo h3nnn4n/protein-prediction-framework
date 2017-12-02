@@ -75,7 +75,7 @@ class DE:
         self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".yaml", 'w')
 
         with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".dat", 'w') as f:
-            f.write('pname: %d\n' % (self.pname))
+            f.write('pname: %s\n' % (self.pname))
             f.write('pop_size: %d\n' % (self.pop_size))
             f.write('c_rate: %f\n' % (self.c_rate))
             f.write('f_factor: %f\n' % (self.f_factor))
