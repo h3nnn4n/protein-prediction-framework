@@ -21,9 +21,7 @@ class DE:
         self.f_factor = f_factor
 
         self.trial = protein_data.ProteinData(self.rosetta_pack, allatom=allatom)
-
         self.max_iters = max_iters
-
         self.spent_iters = 0
         self.m_nmdf = 0
 
@@ -39,6 +37,9 @@ class DE:
         self.stage2_all_interval = -1
         self.partial_reset = -1
         self.log_interval = 10
+
+        self.reset_d_trigger = 0.0
+        self.reset_d_percent = 0.75
 
         # Island stuff
         self.comm = None  # Comunicator
@@ -95,6 +96,8 @@ class DE:
             f.write('n_hashes: %d\n' % self.n_hashes)
             f.write('update_interval: %d\n' % self.update_interval)
             f.write('change_interval: %d\n' % self.change_interval)
+            f.write('reset_d_trigger: %d\n' % self.reset_d_trigger)
+            f.write('reset_d_percent: %d\n' % self.reset_d_percent)
 
             f.flush()
 
@@ -282,6 +285,15 @@ class DE:
                                 self.pop[i].update_angle_from_pose()
                                 self.pop[i].eval()
 
+            if self.diversity < self.reset_trigger:
+                print('reset')
+                for i in range(self.pop_size):
+                    if random.random() < self.reset_percent and i != self.best_index:
+                        self.pop[i].reset()
+                        self.pop[i].stage1_mc()
+                        self.pop[i].update_angle_from_pose()
+                        self.pop[i].eval()
+
             if (self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0):
                 print('Partial reset')
                 for i in range(self.pop_size):
@@ -306,7 +318,7 @@ class DE:
                     if i == self.best_index:
                         continue
 
-                    if random.random() < .2:
+                    if random.random() < .25:
                         self.pop[i].stage2_mc(n=10, temp=2.5)
                     else:
                         self.pop[i].stage2_mc(n=10, temp=.5)
@@ -320,18 +332,22 @@ class DE:
                     self.best_index = i
 
             if self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
-                # print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
+                print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
                 new_guy = self.comm.migration(self.get_best())
                 if new_guy is not None:
-                    self.pop[self.best_index].new_angles(new_guy)
-                    self.pop[self.best_index].eval()
-                # print('Ha! migration')
+                    # self.pop[self.best_index].new_angles(new_guy)
+                    # self.pop[self.best_index].eval()
+                    self.pop[0].new_angles(new_guy)
+                    self.pop[0].eval()
+                    # print('Ha! migration')
+
+            if it % 100 == 0:
+                self.dump_pbd_best(it)
 
             if self.log_interval > 0 and it % self.log_interval == 0:
                 # self.pop[0].print_angles()
                 self.log()
                 self.stats.flush()
-                self.dump_pbd_best(it)
                 if self.do_lhs:
                     self.print_hash()
 
@@ -570,4 +586,5 @@ class DE:
                 rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta)
 
         self.stats.write((string + '\n') % data)
+        # if it % 100 == 0:
         print(string % data)
