@@ -1,0 +1,6 @@
+pop_size: 100
+c_rate: 1.0
+f_factor: 0.5
+max_iters: 5000
+pname: 'base'
+stage2_all_interval: 100
