@@ -5,8 +5,8 @@ class ConfigLoader:
     def __init__(self, conf_file):
         self.parameters = ['pname', 'pop_size', 'max_iters', 'c_rate', 'f_factor', 'allatom', 'coil_only', 'stage0_init',
                            'stage2_interval', 'stage2_all_interval', 'partial_reset', 'log_interval', 'island_interval', 'do_lhs',
-                           'n_hashes', 'update_interval', 'change_interval', 'reset_d_trigger', 'reset_d_percent']
-        self.defaults = ['1crn', 100, 50, 1.0, 0.5, False, False, False, -1, -1, -1, 10, 100, False, 10, 20, 100, 0.0, 0.75]
+                           'n_hashes', 'update_interval', 'change_interval', 'reset_d_trigger', 'reset_d_percent', 'cname']
+        self.defaults = ['1crn', 100, 50, 1.0, 0.5, False, False, False, -1, -1, -1, 10, 100, False, 10, 20, 100, 0.0, 0.75, '']
         self.p_values = []
 
         try:
@@ -19,6 +19,7 @@ class ConfigLoader:
                             self.p_values.append(config[k])
                         else:
                             self.p_values.append(self.defaults[n])
+                    self.p_values.append(f.split('.')[0])
                 except yaml.YAMLError as ee:
                     print(ee)
         except Exception as e:

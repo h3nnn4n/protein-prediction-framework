@@ -24,6 +24,7 @@ class DE:
         self.max_iters = max_iters
         self.spent_iters = 0
         self.m_nmdf = 0
+        self.cname = ''
 
         self.d = self.pop[0].pose.total_residue()
 
@@ -70,7 +71,7 @@ class DE:
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
 
-        self.name_suffix = "_%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, now.year, now.month, now.day, now.hour, now.minute,
+        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, self.cname, now.year, now.month, now.day, now.hour, now.minute,
                                                                         now.second, r_string)
 
         self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
