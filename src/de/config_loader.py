@@ -19,11 +19,11 @@ class ConfigLoader:
                             self.p_values.append(config[k])
                         else:
                             self.p_values.append(self.defaults[n])
-                    self.p_values.append(f.split('.')[0])
+                    self.p_values.append(conf_file.split('.')[0])
                 except yaml.YAMLError as ee:
                     print(ee)
         except Exception as e:
-            # print(e)
+            print(e)
             self.p_values = self.defaults
 
         # print(self.p_values)

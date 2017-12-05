@@ -4,5 +4,5 @@ a=$1
 
 for i in `seq 8`
 do
-	./runner.sh $i $a
+	./runner.sh $i $a & disown %
 done

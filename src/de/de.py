@@ -286,7 +286,7 @@ class DE:
                                 self.pop[i].update_angle_from_pose()
                                 self.pop[i].eval()
 
-            if self.diversity < self.reset_trigger:
+            if self.diversity < self.reset_d_trigger:
                 print('reset')
                 for i in range(self.pop_size):
                     if random.random() < self.reset_percent and i != self.best_index:
