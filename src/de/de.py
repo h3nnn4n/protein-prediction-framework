@@ -68,8 +68,8 @@ class DE:
         self.sade_n_ops = 1
         self.sade_lp = 50
         self.sade_f = []
-        self.sade_cr = []
-        self.sade_cr_m = [random.random() for _ in range(self.pop_size)]
+        self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
+        self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]
         self.sade_cr_memory = [[] for _ in range(self.sade_n_ops)]
 
         # Inner info
@@ -88,9 +88,8 @@ class DE:
                 self.sade_cr_memory[k]
                 self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
 
-        # self.cr = self.sade_cr_m[0]
-        self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
-                        for i in range(self.pop_size)]
+            self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
+                            for i in range(self.pop_size)]
 
         # if self.it > self.sade_lp:
             # print(self.sade_f)
@@ -638,9 +637,9 @@ class DE:
         if self.sade_run:
             cr = self.sade_cr_m[0]
 
-        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %10.3f"
+        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %10.3f %6d"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
-                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr)
+                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr, len(self.sade_cr_memory))
 
         self.stats.write((string + '\n') % data)
         # if it % 100 == 0:
