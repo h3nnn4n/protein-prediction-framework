@@ -67,10 +67,10 @@ class DE:
         self.sade_run = True
         self.sade_n_ops = 1
         self.sade_lp = 50
-        self.sade_f = [random.gauss(0.5, 0.3) for _ in range(self.pop_size)]
-        self.sade_cr = [random.gauss(0.5, 0.1) for _ in range(self.pop_size)]
+        self.sade_f = []
+        self.sade_cr = []
         self.sade_cr_m = [random.random() for _ in range(self.pop_size)]
-        self.sade_cr_memory = []
+        self.sade_cr_memory = [[] for _ in range(self.sade_n_ops)]
 
         # Inner info
         self.mean = 0
@@ -84,10 +84,17 @@ class DE:
 
         if self.it > self.sade_lp:
             for k in range(self.sade_n_ops):
-                self.sade_cr_m[k] = np.median(self.sade_cr_memory)
 
-        self.cr = [[random.gauss(np.clip(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
-                   for i in range(self.pop_size)]
+                self.sade_cr_memory[k]
+                self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
+
+        # self.cr = self.sade_cr_m[0]
+        self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
+                        for i in range(self.pop_size)]
+
+        # if self.it > self.sade_lp:
+            # print(self.sade_f)
+            # print(self.sade_cr_memory)
 
     def open_stats(self):
         char_set = string.ascii_uppercase + string.digits
@@ -234,7 +241,6 @@ class DE:
     def run(self):
         self.open_stats()
         self.dump_config()
-        self.start_time = time.time()
 
         self.create_hashs()
 
@@ -273,6 +279,8 @@ class DE:
         if self.do_lhs:
             self.apply_hash()
 
+        self.start_time = time.time()
+
         it = 0
         while it < self.max_iters:
             it += 1
@@ -288,6 +296,7 @@ class DE:
             if self.do_lhs and it % self.update_interval == 0:
                 self.apply_hash()
 
+            self.sade()
             for i in range(self.pop_size):
                 if self.do_lhs:
                     self.rand1bin_lhs(i)
@@ -358,7 +367,7 @@ class DE:
                     self.best_score = self.pop[i].score
                     self.best_index = i
 
-            if self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
+            if self.comm.size > 1 and self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
                 print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
                 new_guy = self.comm.migration(self.get_best())
                 if new_guy is not None:
@@ -480,14 +489,14 @@ class DE:
         c = 0
         d = 0
 
+        sade_k = 0
+
         f = self.f_factor
         cr = self.c_rate
 
         if self.sade_run:
             f = self.sade_f[huehue]
-            cr = self.sade_cr
-
-        sade_k = 0
+            cr = self.sade_cr[huehue][sade_k]
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -497,13 +506,13 @@ class DE:
                 r = random.random()
                 if r < cr or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
-                        t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
                         if self.sade_run:
                             self.sade_cr_memory[sade_k].append(cr)
                     elif not self.coil_only:
                         if self.sade_run:
                             self.sade_cr_memory[sade_k].append(cr)
-                        t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
                     else:
                         t_angle.append(self.pop[huehue].angles[d])
                 else:
@@ -627,7 +636,7 @@ class DE:
         cr = self.c_rate
 
         if self.sade_run:
-            cr = self.sade_cr
+            cr = self.sade_cr_m[0]
 
         string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %10.3f"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
