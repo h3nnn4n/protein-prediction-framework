@@ -63,20 +63,42 @@ class DE:
         self.now = datetime.datetime.now()
         now = self.now
 
+        # SaDE stuff
+        self.sade_run = True
+        self.sade_n_ops = 1
+        self.sade_lp = 50
+        self.sade_f = [random.gauss(0.5, 0.3) for _ in range(self.pop_size)]
+        self.sade_cr = [random.gauss(0.5, 0.1) for _ in range(self.pop_size)]
+        self.sade_cr_m = [random.random() for _ in range(self.pop_size)]
+        self.sade_cr_memory = []
+
         # Inner info
         self.mean = 0
         self.best_index = 0
         self.best_score = 0
 
+        print('Finished initialization')
+
+    def sade(self):
+        self.sade_f = [random.gauss(0.5, 0.3) for _ in range(self.pop_size)]
+
+        if self.it > self.sade_lp:
+            for k in range(self.sade_n_ops):
+                self.sade_cr_m[k] = np.median(self.sade_cr_memory)
+
+        self.cr = [[random.gauss(np.clip(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
+                   for i in range(self.pop_size)]
+
+    def open_stats(self):
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
 
-        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (pname, self.cname, now.year, now.month, now.day, now.hour, now.minute,
-                                                                        now.second, r_string)
+        now = self.now
+
+        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % \
+                           (self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
 
         self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
-
-        print('Finished initialization')
 
     def dump_config(self):
         with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml", 'w') as f:
@@ -99,6 +121,9 @@ class DE:
             f.write('change_interval: %d\n' % self.change_interval)
             f.write('reset_d_trigger: %d\n' % self.reset_d_trigger)
             f.write('reset_d_percent: %d\n' % self.reset_d_percent)
+            f.write('sade_run: %d\n' % self.sade_run)
+            f.write('sade_n_ops: %d\n' % self.sade_n_ops)
+            f.write('sade_lp: %d\n' % self.sade_lp)
 
             f.flush()
 
@@ -207,6 +232,7 @@ class DE:
         return self.pop[self.best_index].angles
 
     def run(self):
+        self.open_stats()
         self.dump_config()
         self.start_time = time.time()
 
@@ -453,17 +479,33 @@ class DE:
         index = 0
         c = 0
         d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr
+
+        sade_k = 0
+
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
                 # old = self.pop[huehue].angles[d]
                 r = random.random()
-                if r < self.c_rate or d == cutPoint:
+                if r < cr or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
                         t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                        if self.sade_run:
+                            self.sade_cr_memory[sade_k].append(cr)
                     elif not self.coil_only:
+                        if self.sade_run:
+                            self.sade_cr_memory[sade_k].append(cr)
                         t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
                 else:
                     t_angle.append(self.pop[huehue].angles[d])
 
@@ -582,9 +624,14 @@ class DE:
             secs_per_iter = (time.time() - self.start_time) / it
             eta = (self.max_iters - it) * secs_per_iter
 
-        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f"
+        cr = self.c_rate
+
+        if self.sade_run:
+            cr = self.sade_cr
+
+        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %10.3f"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
-                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta)
+                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr)
 
         self.stats.write((string + '\n') % data)
         # if it % 100 == 0:
