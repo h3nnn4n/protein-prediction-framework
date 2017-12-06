@@ -61,16 +61,15 @@ class DE:
         # Log stuff
         self.init_time = time.time()
         self.now = datetime.datetime.now()
-        now = self.now
 
         # SaDE stuff
         self.sade_run = True
-        self.sade_n_ops = 1
+        self.sade_n_ops = 4
         self.sade_lp = 50
         self.sade_f = []
         self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
         self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]
-        self.sade_cr_memory = [[] for _ in range(self.sade_n_ops)]
+        self.sade_cr_memory = [[self.sade_cr_m[k]] for k in range(self.sade_n_ops)]
 
         # Inner info
         self.mean = 0
@@ -85,7 +84,6 @@ class DE:
         if self.it > self.sade_lp:
             for k in range(self.sade_n_ops):
 
-                self.sade_cr_memory[k]
                 self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
 
             self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
@@ -295,12 +293,23 @@ class DE:
             if self.do_lhs and it % self.update_interval == 0:
                 self.apply_hash()
 
+            for k in range(self.sade_n_ops):
+                if len(self.sade_cr_memory[k]) > 1000:
+                    m = np.median(self.sade_cr_memory[k])
+                    self.sade_cr_memory[k] = [m]
+            print(len(self.sade_cr_memory[2]))
+
+            self.sade_cr_memory.sort()
+
             self.sade()
+
             for i in range(self.pop_size):
                 if self.do_lhs:
                     self.rand1bin_lhs(i)
                 else:
-                    self.rand1bin_global(i)
+                    # self.rand1bin_global(i)
+                    self.best1bin_global(i)
+                    # self.rand2bin_global(i)
                 # self.mean += self.pop[i].score / self.pop_size
 
                 if self.best_score is None or self.pop[i].score < self.best_score:
@@ -409,7 +418,6 @@ class DE:
             return
 
         ps = random.sample(self.hash_values[hi], k=3)
-        # print(huehue, hi, ps)
 
         p1 = ps[0]
         p2 = ps[1]
@@ -430,7 +438,6 @@ class DE:
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
-                # old = self.pop[huehue].angles[d]
                 r = random.random()
                 if r < self.c_rate or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
@@ -440,19 +447,12 @@ class DE:
                 else:
                     t_angle.append(self.pop[huehue].angles[d])
 
-                # if old - t_angle[d] > 0.01 and r > self.c_rate:
-                    # print("%8.3f %8.3f %d %8.3f %8.3f %8.3f" % (r, self.c_rate, d, old, t_angle[d], self.pop[huehue].angles[d]))
-
             c += 1
             index += na
 
         self.trial.new_angles(t_angle)
         self.trial.fix_bounds()
         self.trial.eval()
-
-        # print()
-
-        # print(p1, p2, p3, self.trial.score, self.pop[huehue].score)
 
         if self.trial.score < self.pop[huehue].score:
             t = self.pop[huehue]
@@ -461,12 +461,74 @@ class DE:
             if self.trial is self.pop[huehue]:
                 import sys
                 sys.exit()
-            # print('accept')
-        # else:
-            # print('reject')
-        # print()
+
+# ########### Global operators
+
+    def best1bin_global(self, huehue):
+        sade_k = 0
+
+        p1 = self.best_index
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+
+        while p1 == p2 or p2 == p3 or p1 == p3 or p2 == huehue or p3 == huehue:
+            p2 = random.randint(0, self.pop_size - 1)
+            p3 = random.randint(0, self.pop_size - 1)
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
 
     def rand1bin_global(self, huehue):
+        sade_k = 1
+
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
         p3 = random.randint(0, self.pop_size - 1)
@@ -488,7 +550,74 @@ class DE:
         c = 0
         d = 0
 
-        sade_k = 0
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+
+    def rand2bin_global(self, huehue):
+        sade_k = 2
+
+        p1 = random.randint(0, self.pop_size - 1)
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+        p4 = random.randint(0, self.pop_size - 1)
+        p5 = random.randint(0, self.pop_size - 1)
+
+        while p1 == p2 or p2 == p3 or p1 == p3 or p1 == huehue or p2 == huehue or p3 == huehue or p4 == p5 or p4 == huehue or p5 == huehue:
+            p1 = random.randint(0, self.pop_size - 1)
+            p2 = random.randint(0, self.pop_size - 1)
+            p3 = random.randint(0, self.pop_size - 1)
+            p4 = random.randint(0, self.pop_size - 1)
+            p5 = random.randint(0, self.pop_size - 1)
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+        ind4 = self.pop[p4]
+        ind5 = self.pop[p5]
+
+        index = 0
+        c = 0
+        d = 0
 
         f = self.f_factor
         cr = self.c_rate
@@ -501,24 +630,16 @@ class DE:
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
-                # old = self.pop[huehue].angles[d]
                 r = random.random()
                 if r < cr or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
-                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
-                        if self.sade_run:
-                            self.sade_cr_memory[sade_k].append(cr)
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
                     elif not self.coil_only:
-                        if self.sade_run:
-                            self.sade_cr_memory[sade_k].append(cr)
-                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
                     else:
                         t_angle.append(self.pop[huehue].angles[d])
                 else:
                     t_angle.append(self.pop[huehue].angles[d])
-
-                # if old - t_angle[d] > 0.01 and r > self.c_rate:
-                    # print("%8.3f %8.3f %d %8.3f %8.3f %8.3f" % (r, self.c_rate, d, old, t_angle[d], self.pop[huehue].angles[d]))
 
             c += 1
             index += na
@@ -527,21 +648,144 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        # print()
-
-        # print(p1, p2, p3, self.trial.score, self.pop[huehue].score)
-
         if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
             if self.trial is self.pop[huehue]:
                 import sys
                 sys.exit()
-            # print('accept')
-        # else:
-            # print('reject')
-        # print()
+
+    def currToRand(self, huehue):
+        sade_k = 3
+
+        p1 = huehue
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+
+        while p1 == p2 or p2 == p3 or p1 == p3 or or p2 == huehue or p3 == huehue:
+            p1 = random.randint(0, self.pop_size - 1)
+            p2 = random.randint(0, self.pop_size - 1)
+            p3 = random.randint(0, self.pop_size - 1)
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+
+    def currToBest(self, huehue):
+        sade_k = 4
+
+        p1 = huehue
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+        p4 = self.best_index
+        p5 = random.randint(0, self.pop_size - 1)
+
+        while p1 == p2 or p2 == p3 or p1 == p3 or or p2 == huehue or p3 == huehue or p4 == p5:
+            p1 = random.randint(0, self.pop_size - 1)
+            p2 = random.randint(0, self.pop_size - 1)
+            p3 = random.randint(0, self.pop_size - 1)
+            p5 = random.randint(0, self.pop_size - 1)
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d]))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
 
     def update_diversity(self):
         diversity = 0
@@ -635,7 +879,7 @@ class DE:
         cr = self.c_rate
 
         if self.sade_run:
-            cr = self.sade_cr_m[0]
+            cr = self.sade_cr_m[3]
 
         string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %10.3f %6d"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
