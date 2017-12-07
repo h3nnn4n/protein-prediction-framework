@@ -3,7 +3,48 @@ import random
 
 class Bounds:
     def __init__(self):
-        pass
+        self.sdd = {}
+        self.sdd["G"] = 0
+        self.sdd["A"] = 0
+        self.sdd["P"] = 0
+        self.sdd["S"] = 1
+        self.sdd["C"] = 1
+        self.sdd["T"] = 1
+        self.sdd["V"] = 1
+        self.sdd["I"] = 2
+        self.sdd["L"] = 2
+        self.sdd["D"] = 2
+        self.sdd["N"] = 2
+        self.sdd["F"] = 2
+        self.sdd["Y"] = 2
+        self.sdd["H"] = 2
+        self.sdd["W"] = 2
+        self.sdd["M"] = 3
+        self.sdd["E"] = 3
+        self.sdd["Q"] = 3
+        self.sdd["K"] = 4
+        self.sdd["R"] = 4
+
+        self.sdd["GLY"] = 0
+        self.sdd["ALA"] = 0
+        self.sdd["PRO"] = 0
+        self.sdd["SER"] = 1
+        self.sdd["CYS"] = 1
+        self.sdd["THR"] = 1
+        self.sdd["VAL"] = 1
+        self.sdd["ILE"] = 2
+        self.sdd["LEU"] = 2
+        self.sdd["ASP"] = 2
+        self.sdd["ASN"] = 2
+        self.sdd["PHE"] = 2
+        self.sdd["TYR"] = 2
+        self.sdd["HIS"] = 2
+        self.sdd["TRP"] = 2
+        self.sdd["MET"] = 3
+        self.sdd["GLU"] = 3
+        self.sdd["GLN"] = 3
+        self.sdd["LYS"] = 4
+        self.sdd["ARG"] = 4
 
     def generateRandomAngles(self, ss):
         phi = random.uniform(self.getSecondaryLowerBound(ss, 0), self.getSecondaryUpperBound(ss, 0))
@@ -24,6 +65,9 @@ class Bounds:
         return r
 
     def getNumSideChainAngles(self, name):
+        # if name not in self.sdd.keys():
+        #     return 0
+        # return self.sdd[name]
         if (name == 'GLY' or name == 'G') or (name == 'ALA' or name == 'A') or \
                 (name == 'PRO' or name == 'P'):
                     return 0
