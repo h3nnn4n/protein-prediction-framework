@@ -70,8 +70,8 @@ class DE:
 
         self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand2bin_global,
                          self.currToRand_global, self.currToBest_global]
-        self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
-        self.sade_ops = [self.rand1bin_global]
+        # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
+        # self.sade_ops = [self.rand1bin_global]
         self.sade_n_ops = len(self.sade_ops)
 
         self.sade_ops_probs = None #  [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
@@ -94,8 +94,9 @@ class DE:
 
     def sade_reinit(self):
         self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
-        self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]
-        self.sade_cr_memory = [[] for k in range(self.sade_n_ops)]
+        # self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]  # uniform
+        self.sade_cr_m = [np.clip(random.gauss(0.75, 0.1), 0.6, 1.0) for k in range(self.sade_n_ops)]  # gaussian
+        self.sade_cr_memory = [[self.sade_cr_m[k]] for k in range(self.sade_n_ops)]
 
         self.sade_success_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
         self.sade_failure_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
@@ -113,8 +114,12 @@ class DE:
 
             for k in range(self.sade_n_ops):
                 if len(self.sade_cr_memory[k]) == 0:
-                    print('Empty memory for k = %d %s!' % (k, self.sade_ops_probs[k]))
-                self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
+                    print('Empty memory for k = %d %s!' % (k, self.sade_ops[k]))
+                else:
+                    self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
+                    # if len(self.sade_cr_memory[k]) > 2000:
+                    #     m = np.median(self.sade_cr_memory[k])
+                    #     self.sade_cr_memory[k] = [m]
 
             self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
                             for i in range(self.pop_size)]
@@ -325,6 +330,9 @@ class DE:
             if it % self.sade_reinit_interval == 0 or it == 0:
                 self.sade_reinit()
 
+            self.sade_update_parameters()
+            self.sade_update_ops()
+
             it += 1
             self.it = it
             self.best_score = None
@@ -337,15 +345,6 @@ class DE:
 
             if self.do_lhs and it % self.update_interval == 0:
                 self.apply_hash()
-
-            for k in range(self.sade_n_ops):
-                if len(self.sade_cr_memory[k]) > 2000:
-                    m = np.median(self.sade_cr_memory[k])
-                    self.sade_cr_memory[k] = [m]
-            # print(len(self.sade_cr_memory[2]))
-
-            self.sade_update_parameters()
-            self.sade_update_ops()
 
             for i in range(self.pop_size):
                 if self.do_lhs:
