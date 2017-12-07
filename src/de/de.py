@@ -65,19 +65,25 @@ class DE:
         # SaDE stuff
         self.sade_run = True
         self.sade_lp = 50
+        self.sade_lp_left = self.sade_lp
         self.sade_f = []
 
-        self.sade_n_ops = 5
         self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand2bin_global,
-                         self.currToRand, self.currToBest]
-        self.sade_ops_probs = [ 1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
+                         self.currToRand_global, self.currToBest_global]
+        self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
+        self.sade_ops = [self.rand1bin_global]
+        self.sade_n_ops = len(self.sade_ops)
 
-        self.sade_success_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
-        self.sade_failure_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+        self.sade_ops_probs = None #  [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
 
-        self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
-        self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]
-        self.sade_cr_memory = [[self.sade_cr_m[k]] for k in range(self.sade_n_ops)]
+        self.sade_success_memory = None #  [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+        self.sade_failure_memory = None #  [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+
+        self.sade_cr = None #  [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
+        self.sade_cr_m = None #  [random.random() for k in range(self.sade_n_ops)]
+        self.sade_cr_memory = None #  [[] for k in range(self.sade_n_ops)]
+
+        self.sade_reinit_interval = 1000
 
         # Inner info
         self.mean = 0
@@ -86,20 +92,34 @@ class DE:
 
         print('Finished initialization')
 
-    def sade(self):
+    def sade_reinit(self):
+        self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
+        self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]
+        self.sade_cr_memory = [[] for k in range(self.sade_n_ops)]
+
+        self.sade_success_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+        self.sade_failure_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+
+        self.sade_ops_probs = [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
+
+        self.sade_lp_left = self.sade_lp
+
+    def sade_update_parameters(self):
         self.sade_f = [random.gauss(0.5, 0.3) for _ in range(self.pop_size)]
 
-        if self.it > self.sade_lp:
+        if self.sade_lp_left <= 0:
             for k in range(self.sade_n_ops):
+                self.sade_cr_memory[k].sort()
 
+            for k in range(self.sade_n_ops):
+                if len(self.sade_cr_memory[k]) == 0:
+                    print('Empty memory for k = %d %s!' % (k, self.sade_ops_probs[k]))
                 self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
 
             self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
                             for i in range(self.pop_size)]
-
-        # if self.it > self.sade_lp:
-            # print(self.sade_f)
-            # print(self.sade_cr_memory)
+        else:
+            self.sade_lp_left -= 1
 
     def sade_update_ops(self):
         pass
@@ -302,6 +322,9 @@ class DE:
 
         it = 0
         while it < self.max_iters:
+            if it % self.sade_reinit_interval == 0 or it == 0:
+                self.sade_reinit()
+
             it += 1
             self.it = it
             self.best_score = None
@@ -321,9 +344,8 @@ class DE:
                     self.sade_cr_memory[k] = [m]
             # print(len(self.sade_cr_memory[2]))
 
-            self.sade_cr_memory.sort()
-
-            self.sade()
+            self.sade_update_parameters()
+            self.sade_update_ops()
 
             for i in range(self.pop_size):
                 if self.do_lhs:
@@ -488,7 +510,7 @@ class DE:
 # ########### Global operators
 
     def best1bin_global(self, huehue):
-        sade_k = 0
+        sade_k = self.sade_ops.index(self.best1bin_global)
 
         p1 = self.best_index
         p2 = random.randint(0, self.pop_size - 1)
@@ -543,7 +565,7 @@ class DE:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_success_memory[ind][sade_k] += 1
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
@@ -553,10 +575,10 @@ class DE:
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_failure_memory[ind][sade_k] += 1
 
     def rand1bin_global(self, huehue):
-        sade_k = 1
+        sade_k = self.sade_ops.index(self.rand1bin_global)
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -591,7 +613,7 @@ class DE:
             for j in range(na):
                 d = index + j
                 r = random.random()
-                if r < cr or d == cutPoint:
+                if r < cr:  # or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
                         t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
                     elif not self.coil_only:
@@ -612,7 +634,7 @@ class DE:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_success_memory[ind][sade_k] += 1
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
@@ -622,10 +644,10 @@ class DE:
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_failure_memory[ind][sade_k] += 1
 
     def rand2bin_global(self, huehue):
-        sade_k = 2
+        sade_k = self.sade_ops.index(self.rand2bin_global)
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -687,7 +709,7 @@ class DE:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_success_memory[ind][sade_k] += 1
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
@@ -697,9 +719,10 @@ class DE:
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_failure_memory[ind][sade_k] += 1
 
-    def currToRand(self, huehue):
+    def currToRand_global(self, huehue):
+        sade_k = self.sade_ops.index(self.currToRand_global)
         sade_k = 3
 
         p1 = huehue
@@ -756,7 +779,7 @@ class DE:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_success_memory[ind][sade_k] += 1
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
@@ -766,10 +789,10 @@ class DE:
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_failure_memory[ind][sade_k] += 1
 
-    def currToBest(self, huehue):
-        sade_k = 4
+    def currToBest_global(self, huehue):
+        sade_k = self.sade_ops.index(self.currToBest_global)
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -830,7 +853,7 @@ class DE:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_success_memory[ind][sade_k] += 1
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
@@ -840,7 +863,7 @@ class DE:
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k]
+                self.sade_failure_memory[ind][sade_k] += 1
 
     def update_diversity(self):
         diversity = 0
@@ -931,18 +954,21 @@ class DE:
             secs_per_iter = (time.time() - self.start_time) / it
             eta = (self.max_iters - it) * secs_per_iter
 
-        cr = self.c_rate
+        cr = '%3.2f' % self.c_rate
 
         if self.sade_run:
-            cr = self.sade_cr_m[3]
+            cr = ''
 
-        string = "%2d %8d %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f %20.10f"
+            if self.sade_cr_m is not None:
+                for i in range(len(self.sade_cr_m)):
+                    cr += '%3.2f ' % self.sade_cr_m[i]
+
+        string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f %s"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
-                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta)
+                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr)
 
-        print(self.sade_cr_m)
-        print(self.sade_success_memory)
-        print(self.sade_failure_memory)
+        # print(self.sade_success_memory)
+        # print(self.sade_failure_memory)
 
         self.stats.write((string + '\n') % data)
         # if it % 100 == 0:
