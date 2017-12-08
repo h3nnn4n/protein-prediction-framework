@@ -28,7 +28,7 @@ if __name__ == '__main__':
         d.run()
     else:
         rosetta_pack_ = rosetta_pack.RosettaPack(cf['pname'])
-        pdata = protein_data.ProteinData(rosetta_pack_)
+        pdata = protein_data.ProteinData(rosetta_pack_, allatom=cf['allatom'])
 
         for i in range(cf['max_iters']):
             # print('new gen on %d' % c.rank)

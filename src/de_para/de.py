@@ -279,11 +279,13 @@ class DE:
                 i, score = c.recv(source=MPI.ANY_SOURCE, status=s)
 
                 if i > 0:
-                    w = self.pop[i]
-                    self.pop[i] = self.pop2[i]
-                    self.pop2[i] = w
-                    self.pop[i].score = score
-                    # self.pop[i].new_angles(self.pop[2].angles)
+                    if score < self.pop[i].score:
+                        w = self.pop[i]
+                        self.pop[i] = self.pop2[i]
+                        self.pop2[i] = w
+                        self.pop[i].score = score
+                        # self.pop[i].new_angles(self.pop[2].angles)
+
                     # print("got %d %f from %d" % (i, score, s.Get_source()))
                     got += 1
 
