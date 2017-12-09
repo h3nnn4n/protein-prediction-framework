@@ -47,7 +47,7 @@ class DE:
         self.island_interval = 100
 
         # LHS parameters
-        self.do_lhs = False
+        self.do_lsh = False
         self.n_hashes = 10
         self.hashes = None
         self.hash_values = None
@@ -68,20 +68,21 @@ class DE:
         self.sade_lp_left = self.sade_lp
         self.sade_f = []
 
-        self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand2bin_global,
+        # self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand1bin_lsh]
+        self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand2bin_global,  # self.rand1bin_lsh,
                          self.currToRand_global, self.currToBest_global]
         # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
         # self.sade_ops = [self.rand1bin_global]
         self.sade_n_ops = len(self.sade_ops)
 
-        self.sade_ops_probs = None #  [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
+        self.sade_ops_probs = None  # [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
 
-        self.sade_success_memory = None #  [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
-        self.sade_failure_memory = None #  [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+        self.sade_success_memory = None  # [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
+        self.sade_failure_memory = None  # [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
 
-        self.sade_cr = None #  [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
-        self.sade_cr_m = None #  [random.random() for k in range(self.sade_n_ops)]
-        self.sade_cr_memory = None #  [[] for k in range(self.sade_n_ops)]
+        self.sade_cr = None  # [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
+        self.sade_cr_m = None  # [random.random() for k in range(self.sade_n_ops)]
+        self.sade_cr_memory = None  # [[] for k in range(self.sade_n_ops)]
 
         self.sade_reinit_interval = 1000
 
@@ -176,7 +177,7 @@ class DE:
             f.write('partial_reset: %d\n' % self.partial_reset)
             f.write('log_interval: %d\n' % self.log_interval)
             f.write('island_interval: %d\n' % self.island_interval)
-            f.write('do_lhs: %d\n' % self.do_lhs)
+            f.write('do_lsh: %d\n' % self.do_lsh)
             f.write('n_hashes: %d\n' % self.n_hashes)
             f.write('update_interval: %d\n' % self.update_interval)
             f.write('change_interval: %d\n' % self.change_interval)
@@ -330,7 +331,7 @@ class DE:
 
         self.log(it=0)
 
-        if self.do_lhs:
+        if self.do_lsh:
             self.apply_hash()
 
         self.start_time = time.time()
@@ -350,15 +351,15 @@ class DE:
             self.mean = 0
             self.best_index = 0
 
-            if self.do_lhs and it % self.change_interval == 0:
+            if self.do_lsh and it % self.change_interval == 0:
                 self.change_hash()
 
-            if self.do_lhs and it % self.update_interval == 0:
+            if self.do_lsh and it % self.update_interval == 0:
                 self.apply_hash()
 
             for i in range(self.pop_size):
-                if self.do_lhs:
-                    self.rand1bin_lhs(i)
+                if self.do_lsh:
+                    self.rand1bin_lsh(i)
                 else:
                     if self.sade_run:
                         self.sade_get_op()(i)
@@ -370,7 +371,7 @@ class DE:
                     self.best_score = self.pop[i].score
                     self.best_index = i
 
-            if self.do_lhs and False:
+            if self.do_lsh and False:
                 for h in self.hash_values:
                     if len(h) >= self.pop_size // 2:
                         print('Niche reset')
@@ -446,8 +447,8 @@ class DE:
                 # self.pop[0].print_angles()
                 self.log()
                 self.stats.flush()
-                if self.do_lhs:
-                    self.print_hash()
+                # if self.do_lsh:
+                    # self.print_hash()
 
                 sys.stdout.flush()
 
@@ -461,8 +462,16 @@ class DE:
             if len(i) > 0:
                 print(n, i)
 
-    def rand1bin_lhs(self, huehue):
+# ########### LSH operators
+
+    def rand1bin_lsh(self, huehue):
+        sade_k = self.sade_ops.index(self.best1bin_global)
         hi = 0
+
+        if self.hash_values is None:
+            print('Attempted to use rand1bin_lsh without initializing lsh\nAborting!')
+            import sys
+            sys.exit()
 
         for n, hs in enumerate(self.hash_values):
             if huehue in hs:
@@ -488,33 +497,48 @@ class DE:
         index = 0
         c = 0
         d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
                 r = random.random()
-                if r < self.c_rate or d == cutPoint:
+                if r < cr or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
-                        t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
                     elif not self.coil_only:
-                        t_angle.append(ind1.angles[d] + (self.f_factor * (ind2.angles[d] - ind3.angles[d])))
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
                 else:
                     t_angle.append(self.pop[huehue].angles[d])
-
-            c += 1
-            index += na
 
         self.trial.new_angles(t_angle)
         self.trial.fix_bounds()
         self.trial.eval()
 
         if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
             t = self.pop[huehue]
             self.pop[huehue] = self.trial
             self.trial = t
             if self.trial is self.pop[huehue]:
                 import sys
                 sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
 
 # ########### Global operators
 
@@ -622,7 +646,7 @@ class DE:
             for j in range(na):
                 d = index + j
                 r = random.random()
-                if r < cr:  # or d == cutPoint:
+                if r < cr or d == cutPoint:
                     if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
                         t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
                     elif not self.coil_only:
