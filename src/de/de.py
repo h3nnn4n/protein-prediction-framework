@@ -442,7 +442,7 @@ class DE:
                     self.pop[0].eval()
                     # print('Ha! migration')
 
-            if it % 100 == 0:
+            if it % 1000 == 0:
                 self.dump_pbd_best(it)
 
             if self.log_interval > 0 and it % self.log_interval == 0:
