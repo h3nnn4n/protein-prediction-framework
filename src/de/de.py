@@ -127,7 +127,17 @@ class DE:
             self.sade_lp_left -= 1
 
     def sade_update_ops(self):
-        pass
+        if self.sade_lp_left <= 0:
+            for k in range(self.sade_n_ops):
+                s_s = sum([self.sade_success_memory[i][k] for i in range(self.sade_lp)])
+                s_f = sum([self.sade_failure_memory[i][k] for i in range(self.sade_lp)])
+                if s_s + s_f > 0:
+                    self.sade_ops_probs[k] = s_s / (s_s + s_f) + 0.01
+                else:
+                    self.sade_ops_probs[k] = 0.01
+
+        norm = sum(self.sade_ops_probs)
+        self.sade_ops_probs = list(map(lambda x: x / norm, self.sade_ops_probs))
 
     def sade_get_op(self):
         n = random.random()
@@ -954,6 +964,7 @@ class DE:
             eta = (self.max_iters - it) * secs_per_iter
 
         cr = '%3.2f' % self.c_rate
+        probs = ''
 
         if self.sade_run:
             cr = ''
@@ -962,9 +973,13 @@ class DE:
                 for i in range(len(self.sade_cr_m)):
                     cr += '%3.2f ' % self.sade_cr_m[i]
 
-        string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f %s"
+            if self.sade_ops_probs is not None:
+                for k in range(self.sade_n_ops):
+                    probs += '%3.2f ' % self.sade_ops_probs[k]
+
+        string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f %s %s"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
-                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr)
+                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr, probs)
 
         # print(self.sade_success_memory)
         # print(self.sade_failure_memory)
