@@ -69,7 +69,9 @@ class DE:
         self.sade_f = []
 
         # self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand1bin_lsh]
-        self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand2bin_global,  # self.rand1bin_lsh,
+        self.sade_ops = [self.best1bin_global, self.best2bin_global,
+                         self.rand1bin_global, self.rand2bin_global,
+                         # self.rand1bin_lsh,
                          self.currToRand_global, self.currToBest_global]
         # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
         # self.sade_ops = [self.rand1bin_global]
@@ -465,7 +467,7 @@ class DE:
 # ########### LSH operators
 
     def rand1bin_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.best1bin_global)
+        sade_k = self.sade_ops.index(self.rand1bin_lsh)
         hi = 0
 
         if self.hash_values is None:
@@ -582,6 +584,81 @@ class DE:
                         t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
                     elif not self.coil_only:
                         t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def best2bin_global(self, huehue):
+        sade_k = self.sade_ops.index(self.best2bin_global)
+
+        p1 = self.best_index
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+        p4 = random.randint(0, self.pop_size - 1)
+        p5 = random.randint(0, self.pop_size - 1)
+
+        while p1 == p2 or p2 == p3 or p1 == p3 or p1 == huehue or p2 == huehue or p3 == huehue or p4 == p5 or p4 == huehue or p5 == huehue:
+            p1 = random.randint(0, self.pop_size - 1)
+            p2 = random.randint(0, self.pop_size - 1)
+            p3 = random.randint(0, self.pop_size - 1)
+            p4 = random.randint(0, self.pop_size - 1)
+            p5 = random.randint(0, self.pop_size - 1)
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+        ind4 = self.pop[p4]
+        ind5 = self.pop[p5]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
                     else:
                         t_angle.append(self.pop[huehue].angles[d])
                 else:
@@ -1001,7 +1078,7 @@ class DE:
                 for k in range(self.sade_n_ops):
                     probs += '%3.2f ' % self.sade_ops_probs[k]
 
-        string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f %s %s"
+        string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
         data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
                 rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr, probs)
 
