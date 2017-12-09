@@ -311,9 +311,8 @@ class DE:
                 self.best_score = self.pop[i].score
                 self.best_index = i
 
-        self.log(it=-1)
-
         if self.stage0_init:
+            self.log(it=-1)
             for i in range(self.pop_size):
                 if random.random() < .1:
                     self.pop[i].eval()
@@ -340,11 +339,12 @@ class DE:
 
         it = 0
         while it < self.max_iters:
-            if it % self.sade_reinit_interval == 0 or it == 0:
+            if self.sade_run and (it % self.sade_reinit_interval == 0 or it == 0):
                 self.sade_reinit()
 
-            self.sade_update_parameters()
-            self.sade_update_ops()
+            if self.sade_run:
+                self.sade_update_parameters()
+                self.sade_update_ops()
 
             it += 1
             self.it = it
@@ -1064,12 +1064,10 @@ class DE:
             secs_per_iter = (time.time() - self.start_time) / it
             eta = (self.max_iters - it) * secs_per_iter
 
-        cr = '%3.2f' % self.c_rate
+        cr = ''  # '%3.2f' % self.c_rate
         probs = ''
 
         if self.sade_run:
-            cr = ''
-
             if self.sade_cr_m is not None:
                 for i in range(len(self.sade_cr_m)):
                     cr += '%3.2f ' % self.sade_cr_m[i]
