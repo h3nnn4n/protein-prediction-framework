@@ -45,6 +45,11 @@ if True:
             os.rename(stats_path, base_name + '/' + stats_path)
             os.rename(parameters_path, base_name + '/' + parameters_path)
 
+            for n in os.listdir():
+                if 'pdb' in n and prefix.split('.')[0] in n:
+                    # print(prefix, n)
+                    os.rename(n, base_name + '/' + n)
+
 # Group similar files
 if True:
     dnames = os.listdir()
@@ -79,6 +84,14 @@ if True:
 
                     os.rename(stats_path, p + '/' + stats_path)
                     os.rename(parameters_path, p + '/' + parameters_path)
+
+                    if not os.path.exists(p + '/pdb'):
+                        os.mkdir(p + '/pdb')
+
+                    for n in os.listdir():
+                        if 'pdb' in n and prefix.split('.')[0] in n:
+                            # print(prefix, n)
+                            os.rename(n, p + '/pdb/' + n)
 
             os.chdir('..')
 
