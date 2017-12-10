@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import scipy.stats
+import scipy
 import numpy as np
 import sys
 import os
@@ -41,10 +43,23 @@ def boxplot(target, names):
 
     x = []
     names = []
+    keys = []
     for k, v in alldata.items():
         x.append(v['best'])
         # x.append(v['rmsd'])
         names.append(k.split('.')[0][:-4])
+        keys.append((k, k.split('.')[0][:-4]))
+
+    # print(alldata)
+
+    for mode in ['rmsd', 'best']:
+        for a, i in enumerate(keys):
+            for b, j in enumerate(keys[a + 1:]):
+                p1 = alldata[i[0]][mode]
+                p2 = alldata[j[0]][mode]
+
+                w = scipy.stats.wilcoxon(p1, p2)[1]
+                print(mode, i[1], j[1], w, np.mean(p1), np.mean(p2))
 
     fig, ax = plt.subplots()
 
