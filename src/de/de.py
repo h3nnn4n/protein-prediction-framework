@@ -71,8 +71,11 @@ class DE:
         # self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand1bin_lsh]
         self.sade_ops = [self.best1bin_global, self.best2bin_global,
                          self.rand1bin_global, self.rand2bin_global,
-                         # self.rand1bin_lsh,
-                         self.currToRand_global, self.currToBest_global]
+                         self.currToRand_global, self.currToBest_global,
+                         self.best1bin_lsh, self.best2bin_lsh,
+                         self.rand1bin_lsh, self.rand2bin_lsh,
+                         self.currToRand_lsh, self.currToBest_lsh,
+                         ]
         # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
         # self.sade_ops = [self.rand1bin_global]
         self.sade_n_ops = len(self.sade_ops)
@@ -266,8 +269,8 @@ class DE:
             v = (self.n_hashes) * a + b
 
             if v >= len(self.hash_values):
-                print(v, len(self.hash_values))
-                v -= len(self.hash_values) - 2
+                print(v, len(self.hash_values), a, b, self.n_hashes)
+                v = len(self.hash_values) - 1
 
             self.hash_values[v].append(i)
 
@@ -360,7 +363,7 @@ class DE:
                 self.apply_hash()
 
             for i in range(self.pop_size):
-                if self.do_lsh:
+                if self.do_lsh and not self.sade_run:
                     self.rand1bin_lsh(i)
                 else:
                     if self.sade_run:
@@ -466,6 +469,168 @@ class DE:
 
 # ########### LSH operators
 
+    def best1bin_lsh(self, huehue):
+        sade_k = self.sade_ops.index(self.best1bin_lsh)
+        hi = 0
+
+        if self.hash_values is None:
+            print('Attempted to use best1bin_lsh without initializing lsh\nAborting!')
+            import sys
+            sys.exit()
+
+        for n, hs in enumerate(self.hash_values):
+            if huehue in hs:
+                hi = n
+
+        if len(self.hash_values[hi]) < 2:
+            return
+
+        ps = random.sample(self.hash_values[hi], k=2)
+
+        p1 = self.best_index
+        p2 = ps[0]
+        p3 = ps[1]
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def best2bin_lsh(self, huehue):
+        sade_k = self.sade_ops.index(self.best2bin_lsh)
+        hi = 0
+
+        if self.hash_values is None:
+            print('Attempted to use best2bin_lsh without initializing lsh\nAborting!')
+            import sys
+            sys.exit()
+
+        for n, hs in enumerate(self.hash_values):
+            if huehue in hs:
+                hi = n
+
+        if len(self.hash_values[hi]) < 4:
+            return
+
+        ps = random.sample(self.hash_values[hi], k=4)
+
+        p1 = self.best_index
+        p2 = ps[0]
+        p3 = ps[1]
+        p4 = ps[2]
+        p5 = ps[3]
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+        ind4 = self.pop[p4]
+        ind5 = self.pop[p5]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
     def rand1bin_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.rand1bin_lsh)
         hi = 0
@@ -521,6 +686,248 @@ class DE:
                         t_angle.append(self.pop[huehue].angles[d])
                 else:
                     t_angle.append(self.pop[huehue].angles[d])
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def rand2bin_lsh(self, huehue):
+        sade_k = self.sade_ops.index(self.rand2bin_lsh)
+        hi = 0
+
+        if self.hash_values is None:
+            print('Attempted to use rand2bin_lsh without initializing lsh\nAborting!')
+            import sys
+            sys.exit()
+
+        for n, hs in enumerate(self.hash_values):
+            if huehue in hs:
+                hi = n
+
+        if len(self.hash_values[hi]) < 5:
+            return
+
+        ps = random.sample(self.hash_values[hi], k=5)
+
+        p1 = ps[0]
+        p2 = ps[1]
+        p3 = ps[2]
+        p4 = ps[3]
+        p5 = ps[4]
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+        ind4 = self.pop[p4]
+        ind5 = self.pop[p5]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def currToRand_lsh(self, huehue):
+        sade_k = self.sade_ops.index(self.currToRand_lsh)
+        hi = 0
+
+        if self.hash_values is None:
+            print('Attempted to use currToRand_lsh without initializing lsh\nAborting!')
+            import sys
+            sys.exit()
+
+        for n, hs in enumerate(self.hash_values):
+            if huehue in hs:
+                hi = n
+
+        if len(self.hash_values[hi]) < 2:
+            return
+
+        ps = random.sample(self.hash_values[hi], k=2)
+
+        p1 = huehue
+        p2 = ps[0]
+        p3 = ps[1]
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def currToBest_lsh(self, huehue):
+        sade_k = self.sade_ops.index(self.currToBest_lsh)
+        hi = 0
+
+        if self.hash_values is None:
+            print('Attempted to use currToBest_lsh without initializing lsh\nAborting!')
+            import sys
+            sys.exit()
+
+        for n, hs in enumerate(self.hash_values):
+            if huehue in hs:
+                hi = n
+
+        if len(self.hash_values[hi]) < 3:
+            return
+
+        ps = random.sample(self.hash_values[hi], k=3)
+
+        p1 = huehue
+        p2 = ps[0]
+        p3 = ps[1]
+        p4 = self.best_index
+        p5 = ps[2]
+
+        cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+        ind4 = self.pop[p4]
+        ind5 = self.pop[p5]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])) + (f * (ind4.angles[d] - ind5.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
 
         self.trial.new_angles(t_angle)
         self.trial.fix_bounds()
@@ -833,7 +1240,6 @@ class DE:
 
     def currToRand_global(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_global)
-        sade_k = 3
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
