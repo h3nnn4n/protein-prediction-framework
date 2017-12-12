@@ -239,8 +239,8 @@ class DE:
         for i in range(self.pop_size):
             h1 = np.dot(self.hashes[self.active_hash1], self.pop[i].angles)
             h2 = np.dot(self.hashes[self.active_hash2], self.pop[i].angles)
-            tmp1[i] = abs(h1)
-            tmp2[i] = abs(h2)
+            tmp1[i] = h1
+            tmp2[i] = h2
 
             if minh1 is None or h1 < minh1:
                 minh1 = h1
@@ -261,16 +261,20 @@ class DE:
         b2 = random.random() * r2
 
         if debug:
-            print("r: %8.3f  b: %8.3f  minh: %8.3f  maxh: %8.3f" % (r1, b1, minh1, maxh1))
-            print("r: %8.3f  b: %8.3f  minh: %8.3f  maxh: %8.3f" % (r2, b2, minh2, maxh2))
+            print("r1: %8.3f  b1: %8.3f  minh1: %8.3f  maxh1: %8.3f" % (r1, b1, minh1, maxh1))
+            print("r2: %8.3f  b2: %8.3f  minh2: %8.3f  maxh2: %8.3f" % (r2, b2, minh2, maxh2))
 
         for i in range(self.pop_size):
-            a, b = math.floor((tmp1[i] + b1) / r1), math.floor((tmp2[i] + b2) / r2)
+            a, b = math.floor((tmp1[i] - minh1 + b1) / r1), math.floor((tmp2[i] - minh2 + b2) / r2)
             v = (self.n_hashes) * a + b
 
+            if v < 0:
+                v = abs(v)
+
             if v >= len(self.hash_values):
-                print(v, len(self.hash_values), a, b, self.n_hashes)
-                v = len(self.hash_values) - 1
+                print("v %8d  len %8d  a %10d %20.10f  b %10d %20.10f" %
+                      (b, len(self.hash_values), a, b, tmp1[i], tmp2[i]))
+                v = 0
 
             self.hash_values[v].append(i)
 
