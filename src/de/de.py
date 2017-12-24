@@ -44,6 +44,11 @@ class DE:
         self.reset_d_trigger = 0.0
         self.reset_d_percent = 0.75
 
+        # Crowding
+        self.do_crowding = False
+        self.do_rmsd_crowding = False
+        self.crowding_factor = 3
+
         # Island stuff
         self.comm = None  # Comunicator
         self.island_interval = 100
@@ -400,6 +405,7 @@ class DE:
                 self.apply_hash()
 
             for i in range(self.pop_size):
+                self.huehue = i
                 if self.do_lsh and not self.sade_run:
                     self.rand1bin_lsh(i)
                 else:
@@ -508,6 +514,7 @@ class DE:
 
     def rand1bin_rmsd(self, huehue):
         sade_k = self.sade_ops.index(self.rand1bin_rmsd)
+        self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -576,24 +583,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand1exp_rmsd(self, huehue):
         sade_k = self.sade_ops.index(self.rand1exp_rmsd)
+        self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -655,24 +649,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToRand_rmsd(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_rmsd)
+        self.sade_k = sade_k
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -739,24 +720,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToRand_exp_rmsd(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_exp_rmsd)
+        self.sade_k = sade_k
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -816,26 +784,13 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
 # ########### LSH operators
 
     def best1bin_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.best1bin_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -897,24 +852,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def best2bin_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.best2bin_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -980,24 +922,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand1bin_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.rand1bin_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1056,24 +985,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand2bin_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.rand2bin_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1136,24 +1052,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToRand_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1215,24 +1118,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToBest_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.currToBest_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1298,26 +1188,13 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
 # ########### LSH operators exp
 
     def best1exp_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.best1exp_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1372,24 +1249,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def best2exp_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.best2exp_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1449,24 +1313,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand1exp_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.rand1exp_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1521,24 +1372,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand2exp_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.rand2exp_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1598,24 +1436,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToRand_exp_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_exp_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1670,24 +1495,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToBest_exp_lsh(self, huehue):
         sade_k = self.sade_ops.index(self.currToBest_exp_lsh)
+        self.sade_k = sade_k
         hi = 0
 
         if self.hash_values is None:
@@ -1747,25 +1559,13 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
+
 # ########### Global operators Bin
 
     def best1bin_global(self, huehue):
         sade_k = self.sade_ops.index(self.best1bin_global)
+        self.sade_k = sade_k
 
         p1 = self.best_index
         p2 = random.randint(0, self.pop_size - 1)
@@ -1816,24 +1616,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def best2bin_global(self, huehue):
         sade_k = self.sade_ops.index(self.best2bin_global)
+        self.sade_k = sade_k
 
         p1 = self.best_index
         p2 = random.randint(0, self.pop_size - 1)
@@ -1891,24 +1678,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand1bin_global(self, huehue):
         sade_k = self.sade_ops.index(self.rand1bin_global)
+        self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -1960,24 +1734,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand2bin_global(self, huehue):
         sade_k = self.sade_ops.index(self.rand2bin_global)
+        self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -2035,24 +1796,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToRand_global(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_global)
+        self.sade_k = sade_k
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -2104,24 +1852,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToBest_global(self, huehue):
         sade_k = self.sade_ops.index(self.currToBest_global)
+        self.sade_k = sade_k
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -2178,26 +1913,13 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
 # ########### Global operators Exp
 
     def best1exp_global(self, huehue):
         sade_k = self.sade_ops.index(self.best1exp_global)
+        self.sade_k = sade_k
 
         p1 = self.best_index
         p2 = random.randint(0, self.pop_size - 1)
@@ -2241,24 +1963,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def best2exp_global(self, huehue):
         sade_k = self.sade_ops.index(self.best2exp_global)
+        self.sade_k = sade_k
 
         p1 = self.best_index
         p2 = random.randint(0, self.pop_size - 1)
@@ -2310,24 +2019,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand1exp_global(self, huehue):
         sade_k = self.sade_ops.index(self.rand1exp_global)
+        self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -2372,24 +2068,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def rand2exp_global(self, huehue):
         sade_k = self.sade_ops.index(self.rand2exp_global)
+        self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
         p2 = random.randint(0, self.pop_size - 1)
@@ -2441,24 +2124,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToRand_exp_global(self, huehue):
         sade_k = self.sade_ops.index(self.currToRand_exp_global)
+        self.sade_k = sade_k
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -2503,24 +2173,11 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
-            self.trial = t
-            if self.trial is self.pop[huehue]:
-                import sys
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.selection(self.pop[huehue])
 
     def currToBest_exp_global(self, huehue):
         sade_k = self.sade_ops.index(self.currToBest_exp_global)
+        self.sade_k = sade_k
 
         p1 = huehue
         p2 = random.randint(0, self.pop_size - 1)
@@ -2571,21 +2228,54 @@ class DE:
         self.trial.fix_bounds()
         self.trial.eval()
 
-        if self.trial.score < self.pop[huehue].score:
+        self.selection(self.pop[huehue])
+
+# ########### End of operators
+
+    def selection(self, candidate=None):
+        if self.do_crowding:
+            pass
+        elif self.do_rmsd_crowding:
+            pass
+        else:
+            if candidate is not None:
+                self.standard_selection(candidate)
+            else:
+                pass
+
+    def standard_selection(self, candidate):
+        sade_k = self.sade_k
+
+        f, cr = self.get_f_cr()
+
+        if self.trial.score < candidate.score:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
                 self.sade_success_memory[ind][sade_k] += 1
-            t = self.pop[huehue]
-            self.pop[huehue] = self.trial
+            # t = self.pop[huehue]
+            # self.pop[huehue] = self.trial
+            t = candidate
+            candidate = self.trial
             self.trial = t
-            if self.trial is self.pop[huehue]:
+            if self.trial is candidate:
                 import sys
+                print('PANIC! Found duplicated reference in population')
                 sys.exit()
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
                 self.sade_failure_memory[ind][sade_k] += 1
+
+    def get_f_cr(self):
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[self.huehue]
+            cr = self.sade_cr[self.huehue][self.sade_k]
+
+        return f, cr
 
     def update_diversity(self):
         diversity = 0

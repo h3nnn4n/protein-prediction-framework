@@ -6,9 +6,9 @@ class ConfigLoader:
         self.parameters = ['pname', 'pop_size', 'max_iters', 'c_rate', 'f_factor', 'allatom', 'coil_only', 'stage0_init',
                            'stage2_interval', 'stage2_all_interval', 'partial_reset', 'log_interval', 'island_interval', 'do_lsh',
                            'n_hashes', 'update_interval', 'change_interval', 'reset_d_trigger', 'reset_d_percent', 'cname',
-                           'sade_run', 'sade_lp', 'sade_reinit_interval']
+                           'sade_run', 'sade_lp', 'sade_reinit_interval', 'do_crowding', 'do_rmsd_crowding', 'crowding_factor']
         self.defaults = ['1crn', 100, 50, 1.0, 0.5, False, False, False, -1, -1, -1, 10, 100, False, 10, 20, 100, 0.0,
-                         0.75, conf_file.split('.')[0], False, 50, 1000]
+                         0.75, conf_file.split('.')[0], False, 50, 1000, False, False, 3]
         self.p_values = []
 
         try:
