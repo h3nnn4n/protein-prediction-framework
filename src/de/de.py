@@ -32,6 +32,8 @@ class DE:
         self.coil_only = False
         self.allatom = False
 
+        self.failsafe_verbose = False
+
         self.stage0_init = False
         self.stage0_init = False
         self.stage2_interval = -1
@@ -68,6 +70,8 @@ class DE:
         self.sade_lp_left = self.sade_lp
         self.sade_f = []
 
+        self.sade_ops = []
+
         # self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand1bin_lsh]
         # self.sade_ops = [self.best1bin_global, self.best2bin_global,
         #                  self.rand1bin_global, self.rand2bin_global,
@@ -78,7 +82,10 @@ class DE:
         #                  ]
         # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
         # self.sade_ops = [self.rand1bin_global]
-        # self.sade_ops = [self.rand1bin_rmsd]
+        self.sade_ops += [self.rand1bin_rmsd]
+        self.sade_ops += [self.rand1exp_rmsd]
+        self.sade_ops += [self.currToRand_rmsd]
+        self.sade_ops += [self.currToRand_exp_rmsd]
         # self.sade_ops = [self.rand1exp_global]
 
         # self.sade_ops = [self.best1exp_global, self.best2exp_global,
@@ -86,10 +93,23 @@ class DE:
         #                  self.currToRand_exp_global, self.currToBest_exp_global,
         #                  ]
 
-        self.sade_ops = [self.best1exp_lsh, self.best2exp_lsh,
-                         self.rand1exp_lsh, self.rand2exp_lsh,
-                         self.currToRand_exp_lsh, self.currToBest_exp_lsh,
-                         ]
+        # self.sade_ops += [self.best1exp_lsh, self.best2exp_lsh,
+        #                   self.rand1exp_lsh, self.rand2exp_lsh,
+        #                   self.currToRand_exp_lsh, self.currToBest_exp_lsh]
+
+        # self.sade_ops += [self.best1exp_global, self.best2exp_global,
+                          # self.rand1exp_global, self.rand2exp_global,
+                          # self.currToRand_exp_global, self.currToBest_exp_global,
+                          # ]
+
+        # self.sade_ops += [self.best1bin_global, self.best2bin_global,
+                          # self.rand1bin_global, self.rand2bin_global,
+                          # self.currToRand_global, self.currToBest_global]
+
+        # self.sade_ops += [self.best1bin_lsh, self.best2bin_lsh,
+        #                   self.rand1bin_lsh, self.rand2bin_lsh,
+        #                   self.currToRand_lsh, self.currToBest_lsh,
+        #                   ]
 
         self.sade_n_ops = len(self.sade_ops)
 
@@ -512,7 +532,7 @@ class DE:
 
             safe -= 1
 
-        if safe <= 0:
+        if safe <= 0 and self.failsafe_verbose:
             print('failsafe got activated on %d' % self.it)
 
         cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
@@ -598,11 +618,172 @@ class DE:
 
             safe -= 1
 
-        if safe <= 0:
+        if safe <= 0 and self.failsafe_verbose:
             print('failsafe got activated on %d for %s' % (self.it, self.rand1exp_rmsd))
 
         cutPoint = random.randint(0, self.pop[0].nsca)
 
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        L = 0
+        r = 0.0
+        pivot = cutPoint
+
+        for i in range(0, ind1.nsca):
+            t_angle.append(self.pop[huehue].angles[i])
+
+        while L < ind1.nsca and r < cr:
+            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
+                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+
+            r = random.random()
+            L += 1
+            pivot += 1
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def currToRand_rmsd(self, huehue):
+        sade_k = self.sade_ops.index(self.currToRand_rmsd)
+
+        p1 = huehue
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+
+        rmsd = 0.0
+
+        safe = 20
+
+        while rmsd < 3.0 and safe > 0:
+            while p1 == p2 or p2 == p3 or p1 == p3 or p2 == huehue or p3 == huehue:
+                p2 = random.randint(0, self.pop_size - 1)
+                p3 = random.randint(0, self.pop_size - 1)
+
+            rmsd = 0
+            rmsd += self.rosetta_pack.get_rmsd_from_pose(self.pop[p1].pose, self.pop[p2].pose)
+            rmsd += self.rosetta_pack.get_rmsd_from_pose(self.pop[p1].pose, self.pop[p3].pose)
+            rmsd += self.rosetta_pack.get_rmsd_from_pose(self.pop[p2].pose, self.pop[p3].pose)
+
+            rmsd /= 3.0
+
+            safe -= 1
+
+        if safe <= 0 and self.failsafe_verbose:
+            print('failsafe got activated on %d for %s' % (self.it, self.rand1exp_rmsd))
+
+        cutPoint = random.randint(0, self.pop[0].nsca)
+        t_angle = []
+
+        ind1 = self.pop[p1]
+        ind2 = self.pop[p2]
+        ind3 = self.pop[p3]
+
+        index = 0
+        c = 0
+        d = 0
+
+        f = self.f_factor
+        cr = self.c_rate
+
+        if self.sade_run:
+            f = self.sade_f[huehue]
+            cr = self.sade_cr[huehue][sade_k]
+
+        for k, v in enumerate(self.rosetta_pack.target):
+            na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
+            for j in range(na):
+                d = index + j
+                r = random.random()
+                if r < cr or d == cutPoint:
+                    if self.coil_only and self.rosetta_pack.ss_pred[c // 3] != 'C':
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    elif not self.coil_only:
+                        t_angle.append(ind1.angles[d] + (f * (ind2.angles[d] - ind3.angles[d])))
+                    else:
+                        t_angle.append(self.pop[huehue].angles[d])
+                else:
+                    t_angle.append(self.pop[huehue].angles[d])
+
+            c += 1
+            index += na
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        if self.trial.score < self.pop[huehue].score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            t = self.pop[huehue]
+            self.pop[huehue] = self.trial
+            self.trial = t
+            if self.trial is self.pop[huehue]:
+                import sys
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
+
+    def currToRand_exp_rmsd(self, huehue):
+        sade_k = self.sade_ops.index(self.currToRand_exp_rmsd)
+
+        p1 = huehue
+        p2 = random.randint(0, self.pop_size - 1)
+        p3 = random.randint(0, self.pop_size - 1)
+
+        rmsd = 0.0
+
+        safe = 20
+
+        while rmsd < 3.0 and safe > 0:
+            while p1 == p2 or p2 == p3 or p1 == p3 or p2 == huehue or p3 == huehue:
+                p2 = random.randint(0, self.pop_size - 1)
+                p3 = random.randint(0, self.pop_size - 1)
+
+            rmsd = 0
+            rmsd += self.rosetta_pack.get_rmsd_from_pose(self.pop[p1].pose, self.pop[p2].pose)
+            rmsd += self.rosetta_pack.get_rmsd_from_pose(self.pop[p1].pose, self.pop[p3].pose)
+            rmsd += self.rosetta_pack.get_rmsd_from_pose(self.pop[p2].pose, self.pop[p3].pose)
+
+            rmsd /= 3.0
+
+            safe -= 1
+
+        if safe <= 0 and self.failsafe_verbose:
+            print('failsafe got activated on %d for %s' % (self.it, self.rand1exp_rmsd))
+
+        cutPoint = random.randint(0, self.pop[0].nsca)
         t_angle = []
 
         ind1 = self.pop[p1]
