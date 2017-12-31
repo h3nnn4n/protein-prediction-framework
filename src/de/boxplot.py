@@ -58,8 +58,10 @@ def boxplot(target, names):
                 p1 = alldata[i[0]][mode]
                 p2 = alldata[j[0]][mode]
 
-                w = scipy.stats.wilcoxon(p1, p2)[1]
-                print(mode, i[1], j[1], w, np.mean(p1), np.mean(p2))
+                ml = min(len(p1), len(p1))
+
+                w = scipy.stats.wilcoxon(p1[:ml], p2[:ml])[1]
+                print(mode, i[1], j[1], w, np.mean(p1[:ml]), np.mean(p2[:ml]))
 
     fig, ax = plt.subplots()
 
