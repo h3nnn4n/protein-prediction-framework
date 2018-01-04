@@ -42,7 +42,10 @@ class DE:
         self.log_interval = 10
 
         self.reset_d_trigger = 0.0
-        self.reset_d_percent = 0.75
+        self.reset_d_percent = 0.0
+
+        self.reset_rmsd_trigger = 0.0
+        self.reset_rmsd_percent = 0.0
 
         # Crowding
         self.do_crowding = False
@@ -87,20 +90,16 @@ class DE:
         #                  ]
         # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
         # self.sade_ops = [self.rand1bin_global]
-        self.sade_ops += [self.rand1bin_rmsd]
-        self.sade_ops += [self.rand1exp_rmsd]
-        self.sade_ops += [self.currToRand_rmsd]
-        self.sade_ops += [self.currToRand_exp_rmsd]
+        # self.sade_ops += [self.rand1bin_rmsd]
+        # self.sade_ops += [self.rand1exp_rmsd]
+        # self.sade_ops += [self.currToRand_rmsd]
+        # self.sade_ops += [self.currToRand_exp_rmsd]
         # self.sade_ops = [self.rand1exp_global]
 
         # self.sade_ops = [self.best1exp_global, self.best2exp_global,
         #                  self.rand1exp_global, self.rand2exp_global,
         #                  self.currToRand_exp_global, self.currToBest_exp_global,
         #                  ]
-
-        # self.sade_ops += [self.best1exp_lsh, self.best2exp_lsh,
-        #                   self.rand1exp_lsh, self.rand2exp_lsh,
-        #                   self.currToRand_exp_lsh, self.currToBest_exp_lsh]
 
         # self.sade_ops += [self.best1exp_global, self.best2exp_global,
                           # self.rand1exp_global, self.rand2exp_global,
@@ -109,11 +108,23 @@ class DE:
 
         # self.sade_ops += [self.best1bin_global, self.best2bin_global,
                           # self.rand1bin_global, self.rand2bin_global,
-                          # self.currToRand_global, self.currToBest_global]
+                          # self.currToRand_global, self.currToBest_global
+                          # ]
+
+        self.sade_ops += [self.rand1exp_global, self.rand2exp_global]
+
+        self.sade_ops += [self.rand1bin_global, self.rand2bin_global]
+
+        # self.sade_ops += [self.monte_carlo]
 
         # self.sade_ops += [self.best1bin_lsh, self.best2bin_lsh,
         #                   self.rand1bin_lsh, self.rand2bin_lsh,
         #                   self.currToRand_lsh, self.currToBest_lsh,
+        #                   ]
+
+        # self.sade_ops += [self.best1exp_lsh, self.best2exp_lsh,
+        #                   self.rand1exp_lsh, self.rand2exp_lsh,
+        #                   self.currToRand_exp_lsh, self.currToBest_exp_lsh
         #                   ]
 
         self.sade_n_ops = len(self.sade_ops)
@@ -227,8 +238,10 @@ class DE:
             f.write('reset_d_trigger: %f\n' % self.reset_d_trigger)
             f.write('reset_d_percent: %f\n' % self.reset_d_percent)
             f.write('sade_run: %d\n' % self.sade_run)
-            f.write('sade_n_ops: %d\n' % self.sade_n_ops)
             f.write('sade_lp: %d\n' % self.sade_lp)
+            f.write('do_crowding: %d\n' % self.do_crowding)
+            f.write('do_rmsd_crowding: %d\n' % self.do_rmsd_crowding)
+            f.write('crowding_factor: %d\n' % self.crowding_factor)
 
             f.flush()
 
@@ -432,8 +445,17 @@ class DE:
                                 self.pop[i].update_angle_from_pose()
                                 self.pop[i].eval()
 
+            if it % 50 == 0 and self.diversity < self.reset_rmsd_trigger:
+                print('rmsd_reset')
+                for i in range(self.pop_size):
+                    if random.random() < self.reset_rmsd_percent and i != self.best_index:
+                        self.pop[i].reset()
+                        self.pop[i].stage1_mc()
+                        self.pop[i].update_angle_from_pose()
+                        self.pop[i].eval()
+
             if self.diversity < self.reset_d_trigger:
-                print('reset')
+                print('d_reset')
                 for i in range(self.pop_size):
                     if random.random() < self.reset_d_percent and i != self.best_index:
                         self.pop[i].reset()
@@ -510,6 +532,29 @@ class DE:
             if len(i) > 0:
                 print(n, i)
 
+# ########### MC operators
+
+    def monte_carlo(self, huehue):
+        sade_k = self.sade_ops.index(self.monte_carlo)
+        self.sade_k = sade_k
+
+        f, cr = self.get_f_cr()
+
+        t_angle = []
+
+        for i in range(0, len(self.pop[huehue].angles)):
+            t_angle.append(self.pop[huehue].angles[i])
+
+        # self.pop[huehue].stage2_mc(n=1, temp=1.0)
+
+        self.trial.stage2_mc(n=5, temp=1.0)
+
+        self.trial.new_angles(t_angle)
+        self.trial.fix_bounds()
+        self.trial.eval()
+
+        self.selection(self.pop[huehue])
+
 # ########### RMSD operators
 
     def rand1bin_rmsd(self, huehue):
@@ -554,12 +599,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -623,12 +663,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -691,12 +726,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -758,12 +788,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -823,12 +848,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -893,12 +913,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -959,12 +974,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1026,12 +1036,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1089,12 +1094,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1159,12 +1159,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1223,12 +1218,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1286,12 +1276,7 @@ class DE:
         ind4 = self.pop[p4]
         ind5 = self.pop[p5]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1346,12 +1331,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1409,12 +1389,7 @@ class DE:
         ind4 = self.pop[p4]
         ind5 = self.pop[p5]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1469,12 +1444,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1532,12 +1502,7 @@ class DE:
         ind4 = self.pop[p4]
         ind5 = self.pop[p5]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1587,12 +1552,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1649,12 +1609,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1705,12 +1660,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1767,12 +1717,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1823,12 +1768,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1884,12 +1824,7 @@ class DE:
         c = 0
         d = 0
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         for k, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
@@ -1937,12 +1872,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -1992,12 +1922,7 @@ class DE:
         ind4 = self.pop[p4]
         ind5 = self.pop[p5]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -2042,12 +1967,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -2097,12 +2017,7 @@ class DE:
         ind4 = self.pop[p4]
         ind5 = self.pop[p5]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -2147,12 +2062,7 @@ class DE:
         ind2 = self.pop[p2]
         ind3 = self.pop[p3]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -2201,12 +2111,7 @@ class DE:
         ind4 = self.pop[p4]
         ind5 = self.pop[p5]
 
-        f = self.f_factor
-        cr = self.c_rate
-
-        if self.sade_run:
-            f = self.sade_f[huehue]
-            cr = self.sade_cr[huehue][sade_k]
+        f, cr = self.get_f_cr()
 
         L = 0
         r = 0.0
@@ -2233,15 +2138,56 @@ class DE:
 # ########### End of operators
 
     def selection(self, candidate=None):
-        if self.do_crowding:
-            pass
-        elif self.do_rmsd_crowding:
-            pass
+        if self.do_crowding or self.do_rmsd_crowding:
+            self.crowding_selection()
         else:
             if candidate is not None:
                 self.standard_selection(candidate)
             else:
                 pass
+
+    def crowding_selection(self):
+        sade_k = self.sade_k
+
+        f, cr = self.get_f_cr()
+
+        ps = random.sample(range(self.pop_size), k=self.crowding_factor)
+
+        best_index = None
+        best_dist = None
+
+        for p in ps:
+            if self.do_rmsd_crowding:
+                d = self.rosetta_pack.get_rmsd_from_pose(self.trial.pose, self.pop[p].pose)
+            elif self.do_crowding:
+                d = np.sqrt(np.sum((self.trial.angles - self.pop[p].angles)**2))
+            else:
+                print('WARNING! Crowding was called without being enabled!')
+
+            if best_dist is None or d < best_dist:
+                best_dist = d
+                best_index = p
+
+        candidate = self.pop[best_index]
+
+        if self.trial.score < candidate.score:
+            if self.sade_run:
+                self.sade_cr_memory[sade_k].append(cr)
+                ind = self.it % self.sade_lp
+                self.sade_success_memory[ind][sade_k] += 1
+            # t = self.pop[huehue]
+            # self.pop[huehue] = self.trial
+            t = candidate
+            candidate = self.trial
+            self.trial = t
+            if self.trial is candidate:
+                import sys
+                print('PANIC! Found duplicated reference in population')
+                sys.exit()
+        else:
+            if self.sade_run:
+                ind = self.it % self.sade_lp
+                self.sade_failure_memory[ind][sade_k] += 1
 
     def standard_selection(self, candidate):
         sade_k = self.sade_k

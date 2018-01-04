@@ -4,14 +4,9 @@ import sys
 import de
 
 
-if __name__ == '__main__':
+def boot(conf_file):
     c = comm.Pigeon()
     d = None
-
-    if len(sys.argv) > 1:
-        conf_file = sys.argv[1]
-    else:
-        conf_file = None
 
     cf = config_loader.ConfigLoader(conf_file)
 
@@ -23,3 +18,12 @@ if __name__ == '__main__':
     cf.inject(d)
 
     d.run()
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        conf_file = sys.argv[1]
+    else:
+        conf_file = None
+
+    boot(conf_file)

@@ -1,4 +1,5 @@
 import yaml
+import os
 
 
 class ConfigLoader:
@@ -6,9 +7,10 @@ class ConfigLoader:
         self.parameters = ['pname', 'pop_size', 'max_iters', 'c_rate', 'f_factor', 'allatom', 'coil_only', 'stage0_init',
                            'stage2_interval', 'stage2_all_interval', 'partial_reset', 'log_interval', 'island_interval', 'do_lsh',
                            'n_hashes', 'update_interval', 'change_interval', 'reset_d_trigger', 'reset_d_percent', 'cname',
-                           'sade_run', 'sade_lp', 'sade_reinit_interval', 'do_crowding', 'do_rmsd_crowding', 'crowding_factor']
+                           'sade_run', 'sade_lp', 'sade_reinit_interval', 'do_crowding', 'do_rmsd_crowding', 'crowding_factor',
+                           'reset_rmsd_trigger', 'reset_rmsd_percent']
         self.defaults = ['1crn', 100, 50, 1.0, 0.5, False, False, False, -1, -1, -1, 10, 100, False, 10, 20, 100, 0.0,
-                         0.75, conf_file.split('.')[0], False, 50, 1000, False, False, 3]
+                         0.75, 'none' if conf_file is None else conf_file.split('.')[0], False, 50, 1000, False, False, 3, 0.0, 0.0]
         self.p_values = []
 
         try:
@@ -24,7 +26,17 @@ class ConfigLoader:
                 except yaml.YAMLError as ee:
                     print(ee)
         except Exception as e:
-            print(e)
+            # print(e)
+            print('Using default values because: %s\nWhile opening %s' % (e, conf_file))
+            if conf_file is None:
+                print('conf_file was not set')
+            else:
+                if os.path.isfile(conf_file):
+                    print('file exists')
+                else:
+                    print('file does not exist')
+                    for p in conf_file:
+                        print(p)
             self.p_values = self.defaults
 
         # print(self.p_values)
