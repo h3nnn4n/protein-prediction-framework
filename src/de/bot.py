@@ -9,7 +9,7 @@ if __name__ == '__main__':
     pwd = None
     reps = 1
     todo = []
-    np = 4
+    np = 8
 
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
