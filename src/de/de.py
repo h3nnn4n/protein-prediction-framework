@@ -47,6 +47,9 @@ class DE:
         self.reset_rmsd_trigger = 0.0
         self.reset_rmsd_percent = 0.0
 
+        self.config_name = None
+        self.stats_name = None
+
         # Crowding
         self.do_crowding = False
         self.do_rmsd_crowding = False
@@ -213,11 +216,12 @@ class DE:
 
         self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % \
                            (self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
-
-        self.stats = open(self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat", 'w')
+        self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
+        self.stats = open(self.stats_name, 'w')
 
     def dump_config(self):
-        with open(self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml", 'w') as f:
+        self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
+        with open(self.config_name, 'w') as f:
             f.write('pname: %s\n' % (self.pname))
             f.write('pop_size: %d\n' % (self.pop_size))
             f.write('c_rate: %f\n' % (self.c_rate))
@@ -500,7 +504,7 @@ class DE:
                     self.best_score = self.pop[i].score
                     self.best_index = i
 
-            if self.comm.size > 1 and self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
+            if self.comm is not None and self.comm.size > 1 and self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
                 print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
                 new_guy = self.comm.migration(self.get_best())
                 if new_guy is not None:
@@ -510,7 +514,7 @@ class DE:
                     self.pop[0].eval()
                     # print('Ha! migration')
 
-            if it % 1000 == 0:
+            if False and it % 1000 == 0:
                 self.dump_pbd_best(it)
 
             if self.log_interval > 0 and it % self.log_interval == 0:
@@ -2325,7 +2329,8 @@ class DE:
                     probs += '%3.2f ' % self.sade_ops_probs[k]
 
         string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
-        data = (self.comm.rank, it, self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
+        data = (0 if self.comm is None else self.comm.rank, it,
+                self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
                 rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr, probs)
 
         # print(self.sade_success_memory)
