@@ -104,19 +104,19 @@ class DE:
         #                  self.currToRand_exp_global, self.currToBest_exp_global,
         #                  ]
 
-        # self.sade_ops += [self.best1exp_global, self.best2exp_global,
-                          # self.rand1exp_global, self.rand2exp_global,
-                          # self.currToRand_exp_global, self.currToBest_exp_global,
-                          # ]
+        self.sade_ops += [self.best1exp_global, self.best2exp_global,
+                          self.rand1exp_global, self.rand2exp_global,
+                          self.currToRand_exp_global, self.currToBest_exp_global,
+                          ]
 
         # self.sade_ops += [self.best1bin_global, self.best2bin_global,
                           # self.rand1bin_global, self.rand2bin_global,
                           # self.currToRand_global, self.currToBest_global
                           # ]
 
-        self.sade_ops += [self.rand1exp_global, self.rand2exp_global]
+        # self.sade_ops += [self.rand1exp_global, self.rand2exp_global]
 
-        self.sade_ops += [self.rand1bin_global, self.rand2bin_global]
+        # self.sade_ops += [self.rand1bin_global, self.rand2bin_global]
 
         # self.sade_ops += [self.monte_carlo]
 
