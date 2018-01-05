@@ -542,7 +542,10 @@ class DE:
 # ########### MC operators
 
     def monte_carlo(self, huehue):
-        sade_k = self.sade_ops.index(self.monte_carlo)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo)
         self.sade_k = sade_k
 
         f, cr = self.get_f_cr()
@@ -565,7 +568,10 @@ class DE:
 # ########### RMSD operators
 
     def rand1bin_rmsd(self, huehue):
-        sade_k = self.sade_ops.index(self.rand1bin_rmsd)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand1bin_rmsd)
         self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
@@ -633,7 +639,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand1exp_rmsd(self, huehue):
-        sade_k = self.sade_ops.index(self.rand1exp_rmsd)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand1exp_rmsd)
         self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
@@ -694,7 +703,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToRand_rmsd(self, huehue):
-        sade_k = self.sade_ops.index(self.currToRand_rmsd)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToRand_rmsd)
         self.sade_k = sade_k
 
         p1 = huehue
@@ -760,7 +772,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToRand_exp_rmsd(self, huehue):
-        sade_k = self.sade_ops.index(self.currToRand_exp_rmsd)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToRand_exp_rmsd)
         self.sade_k = sade_k
 
         p1 = huehue
@@ -821,7 +836,10 @@ class DE:
 # ########### LSH operators
 
     def best1bin_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.best1bin_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best1bin_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -882,7 +900,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def best2bin_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.best2bin_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best2bin_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -947,7 +968,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand1bin_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.rand1bin_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand1bin_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1005,7 +1029,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand2bin_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.rand2bin_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand2bin_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1067,7 +1094,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToRand_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.currToRand_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToRand_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1128,7 +1158,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToBest_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.currToBest_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToBest_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1195,7 +1228,10 @@ class DE:
 # ########### LSH operators exp
 
     def best1exp_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.best1exp_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best1exp_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1249,7 +1285,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def best2exp_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.best2exp_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best2exp_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1308,7 +1347,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand1exp_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.rand1exp_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand1exp_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1362,7 +1404,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand2exp_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.rand2exp_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand2exp_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1421,7 +1466,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToRand_exp_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.currToRand_exp_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToRand_exp_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1475,7 +1523,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToBest_exp_lsh(self, huehue):
-        sade_k = self.sade_ops.index(self.currToBest_exp_lsh)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToBest_exp_lsh)
         self.sade_k = sade_k
         hi = 0
 
@@ -1536,7 +1587,10 @@ class DE:
 # ########### Global operators Bin
 
     def best1bin_global(self, huehue):
-        sade_k = self.sade_ops.index(self.best1bin_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best1bin_global)
         self.sade_k = sade_k
 
         p1 = self.best_index
@@ -1586,7 +1640,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def best2bin_global(self, huehue):
-        sade_k = self.sade_ops.index(self.best2bin_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best2bin_global)
         self.sade_k = sade_k
 
         p1 = self.best_index
@@ -1643,7 +1700,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand1bin_global(self, huehue):
-        sade_k = self.sade_ops.index(self.rand1bin_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand1bin_global)
         self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
@@ -1694,7 +1754,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand2bin_global(self, huehue):
-        sade_k = self.sade_ops.index(self.rand2bin_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand2bin_global)
         self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
@@ -1751,7 +1814,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToRand_global(self, huehue):
-        sade_k = self.sade_ops.index(self.currToRand_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToRand_global)
         self.sade_k = sade_k
 
         p1 = huehue
@@ -1802,7 +1868,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToBest_global(self, huehue):
-        sade_k = self.sade_ops.index(self.currToBest_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToBest_global)
         self.sade_k = sade_k
 
         p1 = huehue
@@ -1860,7 +1929,10 @@ class DE:
 # ########### Global operators Exp
 
     def best1exp_global(self, huehue):
-        sade_k = self.sade_ops.index(self.best1exp_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best1exp_global)
         self.sade_k = sade_k
 
         p1 = self.best_index
@@ -1903,7 +1975,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def best2exp_global(self, huehue):
-        sade_k = self.sade_ops.index(self.best2exp_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.best2exp_global)
         self.sade_k = sade_k
 
         p1 = self.best_index
@@ -1954,7 +2029,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand1exp_global(self, huehue):
-        sade_k = self.sade_ops.index(self.rand1exp_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand1exp_global)
         self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
@@ -1998,7 +2076,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def rand2exp_global(self, huehue):
-        sade_k = self.sade_ops.index(self.rand2exp_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.rand2exp_global)
         self.sade_k = sade_k
 
         p1 = random.randint(0, self.pop_size - 1)
@@ -2049,7 +2130,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToRand_exp_global(self, huehue):
-        sade_k = self.sade_ops.index(self.currToRand_exp_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToRand_exp_global)
         self.sade_k = sade_k
 
         p1 = huehue
@@ -2093,7 +2177,10 @@ class DE:
         self.selection(self.pop[huehue])
 
     def currToBest_exp_global(self, huehue):
-        sade_k = self.sade_ops.index(self.currToBest_exp_global)
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.currToBest_exp_global)
         self.sade_k = sade_k
 
         p1 = huehue
