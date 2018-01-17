@@ -81,54 +81,18 @@ class DE:
         self.sade_lp_left = self.sade_lp
         self.sade_f = []
 
-        self.sade_ops = []
+        # self.ops = ["best1bin_global",
+                    # "best1exp_global",
+                    # "best2bin_global",
+                    # "best2exp_global",
+                    # "currToRand_exp_global",
+                    # "currToRand_global",
+                    # "rand1bin_global",
+                    # "rand1exp_global",
+                    # "rand2bin_global",
+                    # "rand2exp_global"]
 
-        # self.sade_ops = [self.best1bin_global, self.rand1bin_global, self.rand1bin_lsh]
-        # self.sade_ops = [self.best1bin_global, self.best2bin_global,
-        #                  self.rand1bin_global, self.rand2bin_global,
-        #                  self.currToRand_global, self.currToBest_global,
-        #                  self.best1bin_lsh, self.best2bin_lsh,
-        #                  self.rand1bin_lsh, self.rand2bin_lsh,
-        #                  self.currToRand_lsh, self.currToBest_lsh,
-        #                  ]
-        # self.sade_ops = [self.rand1bin_global, self.rand2bin_global]
-        # self.sade_ops = [self.rand1bin_global]
-        # self.sade_ops += [self.rand1bin_rmsd]
-        # self.sade_ops += [self.rand1exp_rmsd]
-        # self.sade_ops += [self.currToRand_rmsd]
-        # self.sade_ops += [self.currToRand_exp_rmsd]
-        # self.sade_ops = [self.rand1exp_global]
-
-        # self.sade_ops = [self.best1exp_global, self.best2exp_global,
-        #                  self.rand1exp_global, self.rand2exp_global,
-        #                  self.currToRand_exp_global, self.currToBest_exp_global,
-        #                  ]
-
-        self.sade_ops += [self.best1exp_global, self.best2exp_global,
-                          self.rand1exp_global, self.rand2exp_global,
-                          self.currToRand_exp_global, self.currToBest_exp_global,
-                          ]
-
-        # self.sade_ops += [self.best1bin_global, self.best2bin_global,
-                          # self.rand1bin_global, self.rand2bin_global,
-                          # self.currToRand_global, self.currToBest_global
-                          # ]
-
-        # self.sade_ops += [self.rand1exp_global, self.rand2exp_global]
-
-        # self.sade_ops += [self.rand1bin_global, self.rand2bin_global]
-
-        # self.sade_ops += [self.monte_carlo]
-
-        # self.sade_ops += [self.best1bin_lsh, self.best2bin_lsh,
-        #                   self.rand1bin_lsh, self.rand2bin_lsh,
-        #                   self.currToRand_lsh, self.currToBest_lsh,
-        #                   ]
-
-        # self.sade_ops += [self.best1exp_lsh, self.best2exp_lsh,
-        #                   self.rand1exp_lsh, self.rand2exp_lsh,
-        #                   self.currToRand_exp_lsh, self.currToBest_exp_lsh
-        #                   ]
+        # self.set_sade_ops()
 
         self.sade_n_ops = len(self.sade_ops)
 
@@ -149,6 +113,72 @@ class DE:
         self.best_score = 0
 
         print('Finished initialization')
+
+    def set_sade_ops(self):
+        self.sade_ops = []
+
+        for op in self.ops:
+            if op == "best1bin_global":
+                self.sade_ops += [self.best1bin_global]
+            elif op == "best1bin_lsh":
+                self.sade_ops += [self.best1bin_lsh]
+            elif op == "best1exp_global":
+                self.sade_ops += [self.best1exp_global]
+            elif op == "best1exp_lsh":
+                self.sade_ops += [self.best1exp_lsh]
+            elif op == "best2bin_global":
+                self.sade_ops += [self.best2bin_global]
+            elif op == "best2bin_lsh":
+                self.sade_ops += [self.best2bin_lsh]
+            elif op == "best2exp_global":
+                self.sade_ops += [self.best2exp_global]
+            elif op == "best2exp_lsh":
+                self.sade_ops += [self.best2exp_lsh]
+            elif op == "currToBest_exp_global":
+                self.sade_ops += [self.currToBest_exp_global]
+            elif op == "currToBest_exp_lsh":
+                self.sade_ops += [self.currToBest_exp_lsh]
+            elif op == "currToBest_global":
+                self.sade_ops += [self.currToBest_global]
+            elif op == "currToBest_lsh":
+                self.sade_ops += [self.currToBest_lsh]
+            elif op == "currToRand_exp_global":
+                self.sade_ops += [self.currToRand_exp_global]
+            elif op == "currToRand_exp_lsh":
+                self.sade_ops += [self.currToRand_exp_lsh]
+            elif op == "currToRand_exp_rmsd":
+                self.sade_ops += [self.currToRand_exp_rmsd]
+            elif op == "currToRand_global":
+                self.sade_ops += [self.currToRand_global]
+            elif op == "currToRand_lsh":
+                self.sade_ops += [self.currToRand_lsh]
+            elif op == "currToRand_rmsd":
+                self.sade_ops += [self.currToRand_rmsd]
+            elif op == "monte_carlo":
+                self.sade_ops += [self.monte_carlo]
+            elif op == "rand1bin_global":
+                self.sade_ops += [self.rand1bin_global]
+            elif op == "rand1bin_lsh":
+                self.sade_ops += [self.rand1bin_lsh]
+            elif op == "rand1bin_rmsd":
+                self.sade_ops += [self.rand1bin_rmsd]
+            elif op == "rand1exp_global":
+                self.sade_ops += [self.rand1exp_global]
+            elif op == "rand1exp_lsh":
+                self.sade_ops += [self.rand1exp_lsh]
+            elif op == "rand1exp_rmsd":
+                self.sade_ops += [self.rand1exp_rmsd]
+            elif op == "rand2bin_global":
+                self.sade_ops += [self.rand2bin_global]
+            elif op == "rand2bin_lsh":
+                self.sade_ops += [self.rand2bin_lsh]
+            elif op == "rand2exp_global":
+                self.sade_ops += [self.rand2exp_global]
+            elif op == "rand2exp_lsh":
+                self.sade_ops += [self.rand2exp_lsh]
+
+        if len(self.sade_ops) == 0:
+            self.sade_ops += [self.rand1bin_global]
 
     def sade_reinit(self):
         self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
@@ -249,6 +279,7 @@ class DE:
             f.write('do_crowding: %d\n' % self.do_crowding)
             f.write('do_rmsd_crowding: %d\n' % self.do_rmsd_crowding)
             f.write('crowding_factor: %d\n' % self.crowding_factor)
+            f.write('ops: %s\n' % self.ops)
 
             f.flush()
 
@@ -361,6 +392,7 @@ class DE:
         return self.pop[self.best_index].angles
 
     def run(self):
+        self.set_sade_ops()
         self.open_stats()
         self.dump_config()
 
