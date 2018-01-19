@@ -81,6 +81,8 @@ class DE:
         self.sade_lp_left = self.sade_lp
         self.sade_f = []
 
+        self.ops = []
+
         # self.ops = ["best1bin_global",
                     # "best1exp_global",
                     # "best2bin_global",
@@ -94,7 +96,7 @@ class DE:
 
         # self.set_sade_ops()
 
-        self.sade_n_ops = len(self.sade_ops)
+        self.sade_n_ops = None  # len(self.sade_ops)
 
         self.sade_ops_probs = None  # [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
 
@@ -179,6 +181,8 @@ class DE:
 
         if len(self.sade_ops) == 0:
             self.sade_ops += [self.rand1bin_global]
+
+        self.sade_n_ops = len(self.sade_ops)
 
     def sade_reinit(self):
         self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
