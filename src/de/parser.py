@@ -131,6 +131,10 @@ if True:
                             line = l.rstrip().lstrip()
                             tokens = re.sub("\s+", " ", line).split(' ')
 
+                        if len(tokens) < 3:
+                            # print(tokens)
+                            continue
+
                         best = float(tokens[2])
                         mean = float(tokens[3])
                         mdf = float(tokens[4])
