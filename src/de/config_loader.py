@@ -4,15 +4,58 @@ import os
 
 class ConfigLoader:
     def __init__(self, conf_file):
-        self.parameters = ['pname', 'pop_size', 'max_iters', 'c_rate', 'f_factor', 'allatom', 'coil_only', 'stage0_init',
-                           'stage2_interval', 'stage2_all_interval', 'partial_reset', 'log_interval', 'island_interval', 'do_lsh',
-                           'n_hashes', 'update_interval', 'change_interval', 'reset_d_trigger', 'reset_d_percent', 'cname',
-                           'sade_run', 'sade_lp', 'sade_reinit_interval', 'do_crowding', 'do_rmsd_crowding', 'crowding_factor',
-                           'reset_rmsd_trigger', 'reset_rmsd_percent', 'ops']
-        self.defaults = ['1crn', 100, 50, 1.0, 0.5, False, False, False, -1, -1, -1, 10, 100, False, 10, 20, 100, 0.0,
-                         0.75, 'none' if conf_file is None else conf_file.split('.')[0], False, 50, 1000, False, False, 3, 0.0, 0.0,
-                         ['rand1bin_global']]
+        self.options = {}
+
+        self.options['pname'] = '1crn'
+        self.options['pop_size'] = 100
+        self.options['max_iters'] = 50
+        self.options['c_rate'] = 1.0
+        self.options['f_factor'] = 0.5
+        self.options['allatom'] = False
+        self.options['coil_only'] = False
+
+        self.options['stage0_init'] = False
+        self.options['stage2_interval'] = -1
+        self.options['stage2_all_interval'] = -1
+        self.options['partial_reset'] = -1
+
+        self.options['log_interval'] = 10
+
+        self.options['island_interval'] = 100
+
+        self.options['do_lsh'] = False
+        self.options['n_hashes'] = 10
+        self.options['n_buckets'] = 50
+        self.options['update_interval'] = 20
+        self.options['change_interval'] = 100
+
+        self.options['reset_d_trigger'] = 0.0
+        self.options['reset_d_percent'] = 0.0
+        self.options['reset_rmsd_trigger'] = 0.0
+        self.options['reset_rmsd_percent'] = 0.0
+
+        self.options['cname'] = 'none' if conf_file is None else conf_file.split('.')[0]
+        self.options['sade_run'] = False
+        self.options['sade_lp'] = 50
+        self.options['sade_reinit_interval'] = 1000
+
+        self.options['do_crowding'] = False
+        self.options['do_rmsd_crowding'] = False
+        self.options['crowding_factor'] = 3
+
+        self.options['ops'] = ['rand1bin_global']
+
+        self.options['do_clearing'] = False
+        self.options['clearing_interval'] = 10
+        self.options['clearing_size'] = 1
+
+        self.parameters = []
+        self.defaults = []
         self.p_values = []
+
+        for k in self.options.keys():
+            self.parameters.append(k)
+            self.defaults.append(self.options[k])
 
         try:
             with open(conf_file, 'r') as f:

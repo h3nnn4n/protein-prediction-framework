@@ -50,10 +50,15 @@ class DE:
         self.config_name = None
         self.stats_name = None
 
+        # Clearing
+        self.do_clearing = False
+        self.clearing_interval = 10
+        self.clearing_size = 1
+
         # Crowding
         self.do_crowding = False
         self.do_rmsd_crowding = False
-        self.crowding_factor = 3
+        self.crowding_factor = None
 
         # Island stuff
         self.comm = None  # Comunicator
@@ -61,15 +66,16 @@ class DE:
 
         # LHS parameters
         self.do_lsh = False
-        self.n_hashes = 10
+        self.n_hashes = None
+        self.n_buckets = None
         self.hashes = None
         self.hash_values = None
         self.active_hash1 = 0
         self.active_hash2 = 1
         self.tmp1 = None
         self.tmp2 = None
-        self.update_interval = 20
-        self.change_interval = 100
+        self.update_interval = None
+        self.change_interval = None
 
         # Log stuff
         self.init_time = time.time()
@@ -115,6 +121,8 @@ class DE:
         self.best_score = 0
 
         print('Finished initialization')
+
+# ######################### START OF SADE ##########################
 
     def set_sade_ops(self):
         self.sade_ops = []
@@ -179,6 +187,36 @@ class DE:
             elif op == "rand2exp_lsh":
                 self.sade_ops += [self.rand2exp_lsh]
 
+                # 'best1bin_lsh'
+                # 'best1exp_global'
+                # 'best1exp_lsh'
+                # 'best2bin_global'
+                # 'best2bin_lsh'
+                # 'best2exp_global'
+                # 'best2exp_lsh'
+                # 'currToBest_exp_global'
+                # 'currToBest_exp_lsh'
+                # 'currToBest_global'
+                # 'currToBest_lsh'
+                # 'currToRand_exp_global'
+                # 'currToRand_exp_lsh'
+                # 'currToRand_exp_rmsd'
+                # 'currToRand_global'
+                # 'currToRand_lsh'
+                # 'currToRand_rmsd'
+                # 'monte_carlo'
+                # 'rand1bin_global'
+                # 'rand1bin_lsh'
+                # 'rand1bin_rmsd'
+                # 'rand1exp_global'
+                # 'rand1exp_lsh'
+                # 'rand1exp_rmsd'
+                # 'rand2bin_global'
+                # 'rand2bin_lsh'
+                # 'rand2exp_global'
+                # 'rand2exp_lsh'
+                # 'best1bin_global'
+
         if len(self.sade_ops) == 0:
             self.sade_ops += [self.rand1bin_global]
 
@@ -242,6 +280,8 @@ class DE:
 
         return self.sade_ops[i]
 
+# ######################### END OF SADE ##########################
+
     def open_stats(self):
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
@@ -284,7 +324,9 @@ class DE:
             f.write('do_rmsd_crowding: %d\n' % self.do_rmsd_crowding)
             f.write('crowding_factor: %d\n' % self.crowding_factor)
             f.write('ops: %s\n' % self.ops)
-
+            f.write('do_clearing: %d\n' % self.do_clearing)
+            f.write('clearing_interval: %d\n' % self.clearing_interval)
+            f.write('clearing_size: %d\n' % self.clearing_size)
             f.flush()
 
     def set_coms(self, pigeon):
@@ -302,6 +344,8 @@ class DE:
             p.update_angle_from_pose()
             p.eval()
 
+# ######################### START OF LSH ##########################
+
     def create_hashs(self):
         self.hashes = [np.random.randint(100, size=self.pop[0].nsca) for _ in range(self.n_hashes)]
 
@@ -309,7 +353,7 @@ class DE:
         # debug = True
 
         if self.hash_values is None:
-            self.hash_values = [[] for _ in range((self.n_hashes + 1) ** 2 + (self.n_hashes + 1))]
+            self.hash_values = [[] for _ in range((self.n_buckets + 1) ** 2 + (self.n_buckets + 1))]
         else:
             for k, v in enumerate(self.hash_values):
                 if len(v) > 0:
@@ -347,10 +391,10 @@ class DE:
             if maxh2 is None or h2 > maxh2:
                 maxh2 = h2
 
-        r1 = (maxh1 - minh1) / self.n_hashes
+        r1 = (maxh1 - minh1) / self.n_buckets
         b1 = random.random() * r1
 
-        r2 = (maxh2 - minh2) / self.n_hashes
+        r2 = (maxh2 - minh2) / self.n_buckets
         b2 = random.random() * r2
 
         if debug:
@@ -359,17 +403,22 @@ class DE:
 
         for i in range(self.pop_size):
             a, b = math.floor((tmp1[i] - minh1 + b1) / r1), math.floor((tmp2[i] - minh2 + b2) / r2)
-            v = (self.n_hashes) * a + b
+            v = (self.n_buckets) * a + b
 
-            if v < 0:
-                v = abs(v)
+            # if v < 0:
+                # v = abs(v)
 
-            if v >= len(self.hash_values):
-                print("v %8d  len %8d  a %10d %20.10f  b %10d %20.10f" %
-                      (b, len(self.hash_values), a, b, tmp1[i], tmp2[i]))
-                v = 0
+            # if v >= len(self.hash_values):
+                # print("v %8d  len %8d  a %10d %20.10f  b %10d %20.10f" %
+                      # (b, len(self.hash_values), a, b, tmp1[i], tmp2[i]))
+                # v = 0
 
-            self.hash_values[v].append(i)
+            try:
+                self.hash_values[v].append(i)
+            except Exception:
+                print(v, len(self.hash_values))
+                import sys
+                sys.exit(-1)
 
         for n, i in enumerate(self.hash_values):
             if debug:
@@ -386,11 +435,10 @@ class DE:
         while old1 == self.active_hash1:
             self.active_hash1 = random.randint(0, self.n_hashes - 1)
 
-        while old2 == self.active_hash2:
+        while old2 == self.active_hash2 and self.active_hash1 == self.active_hash2:
             self.active_hash2 = random.randint(0, self.n_hashes - 1)
 
-        if self.active_hash1 == self.active_hash2:
-            self.change_hash()
+# ######################### END OF LSH ##########################
 
     def get_best(self):
         return self.pop[self.best_index].angles
@@ -496,6 +544,7 @@ class DE:
                         self.pop[i].stage1_mc()
                         self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
+                self.update_diversity()
 
             if self.diversity < self.reset_d_trigger:
                 print('d_reset')
@@ -505,6 +554,7 @@ class DE:
                         self.pop[i].stage1_mc()
                         self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
+                self.update_diversity()
 
             if (self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0):
                 print('Partial reset')
@@ -514,6 +564,7 @@ class DE:
                         self.pop[i].stage2_mc()
                         self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
+                self.update_diversity()
 
             if self.stage2_interval > 0 and it % self.stage2_interval == 0 and it > 0:
                 print('LS')
