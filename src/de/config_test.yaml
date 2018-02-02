@@ -1,7 +1,0 @@
-pop_size: 100
-c_rate: 1.0
-f_factor: 0.5
-max_iters: 5000
-pname: '1zdd'
-island_interval: 100
-allatom: True
