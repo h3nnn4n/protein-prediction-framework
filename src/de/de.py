@@ -536,12 +536,12 @@ class DE:
                                 self.pop[i].update_angle_from_pose()
                                 self.pop[i].eval()
 
-            if it % 50 == 0 and self.diversity < self.reset_rmsd_trigger:
+            if it % 50 == 0 and self.avg_rmsd() < self.reset_rmsd_trigger:
                 print('rmsd_reset')
                 for i in range(self.pop_size):
                     if random.random() < self.reset_rmsd_percent and i != self.best_index:
                         self.pop[i].reset()
-                        self.pop[i].stage1_mc()
+                        self.pop[i].stage1_mc(n=10)
                         self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
                 self.update_diversity()
