@@ -164,8 +164,6 @@ class DE:
                 self.sade_ops += [self.currToRand_lsh]
             elif op == "currToRand_rmsd":
                 self.sade_ops += [self.currToRand_rmsd]
-            elif op == "monte_carlo":
-                self.sade_ops += [self.monte_carlo]
             elif op == "rand1bin_global":
                 self.sade_ops += [self.rand1bin_global]
             elif op == "rand1bin_lsh":
@@ -186,6 +184,15 @@ class DE:
                 self.sade_ops += [self.rand2exp_global]
             elif op == "rand2exp_lsh":
                 self.sade_ops += [self.rand2exp_lsh]
+
+            elif op == "monte_carlo_3":
+                self.sade_ops += [self.monte_carlo_3]
+            elif op == "monte_carlo_3s":
+                self.sade_ops += [self.monte_carlo_3s]
+            elif op == "monte_carlo_9":
+                self.sade_ops += [self.monte_carlo_9]
+            elif op == "monte_carlo_9s":
+                self.sade_ops += [self.monte_carlo_9s]
 
                 # 'best1bin_lsh'
                 # 'best1exp_global'
@@ -628,13 +635,43 @@ class DE:
 
 # ########### MC operators
 
-    def monte_carlo(self, huehue):
+    def monte_carlo_3(self, huehue):
         if not self.sade_run:
             sade_k = 0
         else:
-            sade_k = self.sade_ops.index(self.monte_carlo)
+            sade_k = self.sade_ops.index(self.monte_carlo_3)
         self.sade_k = sade_k
 
+        self.monte_carlo_x(huehue, mode='3', k=sade_k)
+
+    def monte_carlo_3s(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_3s)
+        self.sade_k = sade_k
+
+        self.monte_carlo_x(huehue, mode='3s', k=sade_k)
+
+    def monte_carlo_9(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_9)
+        self.sade_k = sade_k
+
+        self.monte_carlo_x(huehue, mode='9', k=sade_k)
+
+    def monte_carlo_9s(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_9s)
+        self.sade_k = sade_k
+
+        self.monte_carlo_x(huehue, mode='9s', k=sade_k)
+
+    def monte_carlo_x(self, huehue, mode, k):
         f, cr = self.get_f_cr()
 
         t_angle = []
@@ -644,9 +681,9 @@ class DE:
 
         # self.pop[huehue].stage2_mc(n=1, temp=1.0)
 
-        self.trial.stage2_mc(n=5, temp=1.0)
-
         self.trial.new_angles(t_angle)
+        self.trial.stage2_mc(n=1, temp=1.0, mode=mode)
+
         self.trial.fix_bounds()
         self.trial.eval()
 

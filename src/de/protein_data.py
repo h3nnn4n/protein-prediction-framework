@@ -8,6 +8,16 @@ class ProteinData:
         self.bounds = rosetta_pack.bounds
         self.allatom = allatom
 
+        self.mc3 = None
+        self.mc3s = None
+        self.mc9 = None
+        self.mc9s = None
+
+        self.seq3 = None
+        self.seq3s = None
+        self.seq9 = None
+        self.seq9s = None
+
         if allatom:
             self.rosetta_pack.get_allatom_switch().apply(self.pose)
 
@@ -210,7 +220,7 @@ class ProteinData:
             r.apply(best)
             pd.get_packer().apply(best)
 
-    def stage2_mc(self, n=100, temp=2.0):
+    def stage2_mc(self, n=100, temp=2.0, mode='3s'):
         allatom = self.allatom
 
         pd = self.rosetta_pack
@@ -224,21 +234,53 @@ class ProteinData:
             r = pd.get_sidechain_recover()(best)
             pd.get_centroid_switch().apply(best)
 
-        mc = pd.get_new_mc(best, score, temp)
+        if mode == '3':
+            if self.mc3 is None:
+                self.mc3 = pd.get_new_mc(best, score, temp)
+                self.seq3 = pd.get_new_seq_mover()
+                self.seq3.add_mover(pd.get_3mer())
+        elif mode == '3s':
+            if self.mc3s is None:
+                self.mc3s = pd.get_new_mc(best, score, temp)
+                self.seq3s = pd.get_new_seq_mover()
+                self.seq3s.add_mover(pd.get_3mer_smooth())
+        elif mode == '9':
+            if self.mc9 is None:
+                self.mc9 = pd.get_new_mc(best, score, temp)
+                self.seq9 = pd.get_new_seq_mover()
+                self.seq9.add_mover(pd.get_9mer())
+        elif mode == '9s':
+            if self.mc9s is None:
+                self.mc9s = pd.get_new_mc(best, score, temp)
+                self.seq9s = pd.get_new_seq_mover()
+                self.seq9s.add_mover(pd.get_9mer_smooth())
 
-        seq = pd.get_new_seq_mover()
-        # seq.add_mover(pd.get_9mer())
-        # seq.add_mover(pd.get_9mer_smooth())
-        # seq.add_mover(pd.get_3mer())
-        seq.add_mover(pd.get_3mer_smooth())
+        if n == 1:
+            if mode == '3':
+                self.seq3.apply(best)
+                self.mc3.recover_low(best)
+                self.mc3.reset(best)
+            elif mode == '3s':
+                self.seq3s.apply(best)
+                self.mc3s.recover_low(best)
+                self.mc3s.reset(best)
+            elif mode == '9':
+                self.seq9.apply(best)
+                self.mc9.recover_low(best)
+                self.mc9.reset(best)
+            elif mode == '9s':
+                self.seq9s.apply(best)
+                self.mc9s.recover_low(best)
+                self.mc9s.reset(best)
+        else:
+            pass
+            # trial = pd.get_new_trial_mover(seq, mc)
 
-        trial = pd.get_new_trial_mover(seq, mc)
+            # folding = pd.get_new_rep_mover(trial, n)
+            # folding.apply(best)
 
-        folding = pd.get_new_rep_mover(trial, n)
-        folding.apply(best)
-
-        mc.recover_low(best)
-        mc.reset(best)
+        # mc.recover_low(best)
+        # mc.reset(best)
 
         if allatom:
             pd.get_allatom_switch().apply(best)
