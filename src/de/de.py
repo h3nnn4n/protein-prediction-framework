@@ -28,6 +28,9 @@ class DE:
 
         self.d = self.pop[0].pose.total_residue()
 
+        # Energy function
+        self.energy_function = None
+
         # Other stuff
         self.coil_only = False
         self.allatom = False
@@ -334,6 +337,7 @@ class DE:
             f.write('do_clearing: %d\n' % self.do_clearing)
             f.write('clearing_interval: %d\n' % self.clearing_interval)
             f.write('clearing_size: %d\n' % self.clearing_size)
+            f.write('energy_function: %s\n' % self.energy_function)
             f.flush()
 
     def set_coms(self, pigeon):

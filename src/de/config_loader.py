@@ -49,6 +49,8 @@ class ConfigLoader:
         self.options['clearing_interval'] = 10
         self.options['clearing_size'] = 1
 
+        self.options['energy_function'] = 'score3'
+
         self.parameters = []
         self.defaults = []
         self.p_values = []
