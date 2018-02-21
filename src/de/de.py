@@ -465,11 +465,7 @@ class DE:
         self.best_index = 0
         self.best_score = None
 
-        for i in range(self.pop_size):
-            self.mean += self.pop[i].score / self.pop_size
-            if self.best_score is None or self.pop[i].score < self.best_score:
-                self.best_score = self.pop[i].score
-                self.best_index = i
+        self.update_score_function()
 
         if self.stage0_init:
             self.log(it=-1)
@@ -479,16 +475,12 @@ class DE:
                     self.pop[i].stage1_mc()
                     self.pop[i].update_angle_from_pose()
                     self.pop[i].eval()
+        else:
+            for p in self.pop:
+                p.eval()
+            self.trial.eval()
 
-        self.mean = 0
-        self.best_index = 0
-        self.best_score = None
-
-        for i in range(self.pop_size):
-            self.mean += self.pop[i].score / self.pop_size
-            if self.best_score is None or self.pop[i].score < self.best_score:
-                self.best_score = self.pop[i].score
-                self.best_index = i
+        self.update_mean()
 
         self.log(it=0)
 
@@ -2447,6 +2439,21 @@ class DE:
             cr = self.sade_cr[self.huehue][self.sade_k]
 
         return f, cr
+
+    def update_score_function(self):
+        for p in self.pop:
+            p.set_score_function(self.energy_function)
+
+        self.trial.set_score_function(self.energy_function)
+
+    def update_mean(self):
+        for i in range(self.pop_size):
+            self.mean += self.pop[i].score / self.pop_size
+            if self.best_score is None or self.pop[i].score < self.best_score:
+                self.best_score = self.pop[i].score
+                self.best_index = i
+
+        return self.mean
 
     def update_diversity(self):
         diversity = 0

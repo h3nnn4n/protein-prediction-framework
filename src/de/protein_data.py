@@ -8,6 +8,8 @@ class ProteinData:
         self.bounds = rosetta_pack.bounds
         self.allatom = allatom
 
+        self.score_function = None
+
         self.mc3 = None
         self.mc3s = None
         self.mc9 = None
@@ -50,9 +52,13 @@ class ProteinData:
             index += 3 + n_sidechain_angles
 
         self.fix_bounds()
-        self.eval()
+        # self.eval()
         # self.print_angles()
         # print('Finished INIT', self.allatom)
+
+    def set_score_function(self, score='score3'):
+        self.score_function_name = score
+        self.score_function = self.rosetta_pack.get_score_function(score)
 
     def print_angles(self):
         index = 0
@@ -115,15 +121,16 @@ class ProteinData:
             index += 3 + n_sidechain_angles
 
     def eval(self, score=None):
-        if score is None and self.pose.is_centroid():
+        self.score = self.score_function(self.pose)
+        # if score is None and self.pose.is_centroid():
             # print('centroid')
-            score = self.rosetta_pack.get_score3()
+            # score = self.rosetta_pack.get_score3()
 
-        if score is None and not self.pose.is_centroid():
+        # if score is None and not self.pose.is_centroid():
             # print('allatom')
-            score = self.rosetta_pack.get_scorefxn()
+            # score = self.rosetta_pack.get_scorefxn()
 
-        self.score = score(self.pose)
+        # self.score = score(self.pose)
         # self.rosetta_pack.pymover.apply(self.pose)
 
     def fix_bounds(self):
@@ -227,7 +234,7 @@ class ProteinData:
         pd.set_starting_pose(self.angles)
 
         best = self.pose
-        score = pd.get_score3()
+        score = pd.get_score_function(self.score_function_name)
 
         r = None
         if allatom:
@@ -271,17 +278,16 @@ class ProteinData:
             elif mode == '9s':
                 mc = self.mc9s
                 seq = self.seq9s
+
+            mc.set_temperature(temp)
+            seq.apply(best)
+            mc.recover_low(best)
+            mc.reset(best)
         else:
-            pass
-            # trial = pd.get_new_trial_mover(seq, mc)
+            trial = pd.get_new_trial_mover(seq, mc)
 
-            # folding = pd.get_new_rep_mover(trial, n)
-            # folding.apply(best)
-
-        mc.set_temperature(temp)
-        seq.apply(best)
-        mc.recover_low(best)
-        mc.reset(best)
+            folding = pd.get_new_rep_mover(trial, n)
+            folding.apply(best)
 
         if allatom:
             pd.get_allatom_switch().apply(best)
