@@ -255,23 +255,22 @@ class ProteinData:
                 self.seq9s = pd.get_new_seq_mover()
                 self.seq9s.add_mover(pd.get_9mer_smooth())
 
+        seq = None
+        mc = None
+
         if n == 1:
             if mode == '3':
-                self.seq3.apply(best)
-                self.mc3.recover_low(best)
-                self.mc3.reset(best)
+                mc = self.mc3
+                seq = self.seq3
             elif mode == '3s':
-                self.seq3s.apply(best)
-                self.mc3s.recover_low(best)
-                self.mc3s.reset(best)
+                mc = self.mc3s
+                seq = self.seq3s
             elif mode == '9':
-                self.seq9.apply(best)
-                self.mc9.recover_low(best)
-                self.mc9.reset(best)
+                mc = self.mc9
+                seq = self.seq9
             elif mode == '9s':
-                self.seq9s.apply(best)
-                self.mc9s.recover_low(best)
-                self.mc9s.reset(best)
+                mc = self.mc9s
+                seq = self.seq9s
         else:
             pass
             # trial = pd.get_new_trial_mover(seq, mc)
@@ -279,8 +278,10 @@ class ProteinData:
             # folding = pd.get_new_rep_mover(trial, n)
             # folding.apply(best)
 
-        # mc.recover_low(best)
-        # mc.reset(best)
+        mc.set_temperature(temp)
+        seq.apply(best)
+        mc.recover_low(best)
+        mc.reset(best)
 
         if allatom:
             pd.get_allatom_switch().apply(best)

@@ -681,10 +681,13 @@ class DE:
 
         # self.pop[huehue].stage2_mc(n=1, temp=1.0)
 
-        self.trial.new_angles(t_angle)
-        self.trial.stage2_mc(n=1, temp=1.0, mode=mode)
+        _, cr = self.get_f_cr()
 
-        self.trial.fix_bounds()
+        self.trial.new_angles(t_angle)
+        self.trial.stage2_mc(n=1, temp=cr * 3.0, mode=mode)
+        self.trial.update_angle_from_pose()
+
+        # self.trial.fix_bounds()
         self.trial.eval()
 
         self.selection(self.pop[huehue])
