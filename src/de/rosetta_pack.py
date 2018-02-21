@@ -43,15 +43,20 @@ class RosettaPack():
         self.allatom_switch = pyrosetta.SwitchResidueTypeSetMover('fa_standard')
         self.centroid_switch = pyrosetta.SwitchResidueTypeSetMover('centroid')
         self.scorefxn = pyrosetta.get_fa_scorefxn()
-        self.score0 = pyrosetta.create_score_function('score0')
-        self.score1 = pyrosetta.create_score_function('score1')
-        self.score2 = pyrosetta.create_score_function('score2')
-        self.score3 = pyrosetta.create_score_function('score3')
-        self.score5 = pyrosetta.create_score_function('score5')
+
+        self.scores = {}
+        self.scores['score0'] = pyrosetta.create_score_function('score0')
+        self.scores['score1'] = pyrosetta.create_score_function('score1')
+        self.scores['score2'] = pyrosetta.create_score_function('score2')
+        self.scores['score3'] = pyrosetta.create_score_function('score3')
+        self.scores['score5'] = pyrosetta.create_score_function('score5')
+        self.scores['scorefxn'] = pyrosetta.get_fa_scorefxn()
 
         self.ramachandran = rama.Ramachandran()
-        p1 = "/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
-        p2 = "/usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
+        p1 = "/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/" + \
+             "rama/shapovalov/kappa75/all.ramaProb"
+        p2 = "/usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/s" + \
+             "hapovalov/kappa75/all.ramaProb"
 
         if os.path.exists(p1):
             self.ramachandran.load(path=p1)
@@ -122,7 +127,7 @@ class RosettaPack():
         self.minmover.movemap(self.movemap)
         self.minmover.score_function(self.scorefxn)
 
-        self.mc = pyrosetta.MonteCarlo(self.pose, self.score0, 2.0)
+        self.mc = pyrosetta.MonteCarlo(self.pose, self.scores['score0'], 2.0)
 
     def reset(self):
         self.random_rama_angles_to_pose(self.pose)
@@ -208,26 +213,32 @@ class RosettaPack():
 
         return ap
 
+    def get_score_function(self, name='score3'):
+        if name not in self.scores.keys():
+            self.scores[name] = pyrosetta.create_score_function('score3')
+
+        return self.scores[name]
+
     def get_score0(self):
-        return self.score0
+        return self.scores['score0']
 
     def get_score1(self):
-        return self.score1
+        return self.scores['score1']
 
     def get_score2(self):
-        return self.score2
+        return self.scores['score2']
 
     def get_score3(self):
-        return self.score3
+        return self.scores['score3']
 
     def get_score4(self):
-        return self.score4
+        return self.scores['score4']
 
     def get_score5(self):
-        return self.score5
+        return self.scores['score5']
 
     def get_scorefxn(self):
-        return self.scorefxn
+        return self.scores['scorefxn']
 
     def loop_modeling(self, todo):
         f = False
