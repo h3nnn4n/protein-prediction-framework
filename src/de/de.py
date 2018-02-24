@@ -30,6 +30,10 @@ class DE:
 
         # Energy function
         self.energy_function = None
+        self.current_energy_function = None
+        self.energy_options = []
+        self.parsed_energy_options = {}
+        self.spent_gens = 0
 
         # Other stuff
         self.coil_only = False
@@ -338,6 +342,7 @@ class DE:
             f.write('clearing_interval: %d\n' % self.clearing_interval)
             f.write('clearing_size: %d\n' % self.clearing_size)
             f.write('energy_function: %s\n' % self.energy_function)
+            f.write('energy_options: %s\n' % self.energy_options)
             f.flush()
 
     def set_coms(self, pigeon):
@@ -465,7 +470,7 @@ class DE:
         self.best_index = 0
         self.best_score = None
 
-        self.update_score_function()
+        self.update_score_function(step=False)
 
         if self.stage0_init:
             self.log(it=-1)
@@ -504,6 +509,8 @@ class DE:
 
             self.mean = 0
             self.best_index = 0
+
+            self.update_score_function()
 
             if self.do_lsh and it % self.change_interval == 0:
                 self.change_hash()
@@ -2440,11 +2447,70 @@ class DE:
 
         return f, cr
 
-    def update_score_function(self):
-        for p in self.pop:
-            p.set_score_function(self.energy_function)
+    def update_score_function(self, step=True):
+        def update_pop_score():
+            for p in self.pop:
+                p.set_score_function(self.current_energy_function)
 
-        self.trial.set_score_function(self.energy_function)
+            self.trial.set_score_function(self.current_energy_function)
+
+        if self.energy_function in ['score0', 'score1', 'score2', 'score3', 'score5']:
+            if not hasattr(self, 'single_score_update'):
+                self.single_score_update = True
+                self.current_energy_function = self.energy_function
+                update_pop_score()
+
+        elif self.energy_function == 'cascade':
+            if self.spent_gens == 0 and not hasattr(self, 'parsed_energy'):
+                first = self.parse_energy_options()
+                self.parsed_energy = True
+                self.current_energy_function = first
+                update_pop_score()
+
+            low, high, n = self.parsed_energy_options[self.current_energy_function]
+            # print(self.spent_gens, high, low, self.current_energy_function, n)
+            if high < self.spent_gens:
+                self.current_energy_function = n
+                update_pop_score()
+
+            if step:
+                self.spent_gens += 1
+
+    def parse_energy_options(self):
+        first = None
+        acc = 0
+        for w in self.energy_options:
+            a, b = w.split('_')
+            # if acc == 0:
+            #     self.current_energy_function = a
+            b = int(b)
+            acc += b
+            # print(a, b, acc - b, acc)
+            self.parsed_energy_options[a] = (acc - b, acc)
+
+            if first is None:
+                first = a
+
+        last = None
+        for k, w in enumerate(self.energy_options):
+            a, _ = w.split('_')
+
+            if k == 0:
+                last = a
+                continue
+
+            x, y = self.parsed_energy_options[last]
+            # print(last, x, y)
+            self.parsed_energy_options[last] = (x, y, a)
+            # print(last, self.parsed_energy_options[last])
+            last = a
+
+        x, y = self.parsed_energy_options[last]
+        self.parsed_energy_options[last] = (x, y, a)
+        # print(last, self.parsed_energy_options[last])
+        # print(last)
+
+        return first
 
     def update_mean(self):
         for i in range(self.pop_size):
