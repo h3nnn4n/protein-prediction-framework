@@ -34,6 +34,8 @@ class DE:
         self.energy_options = []
         self.parsed_energy_options = {}
         self.spent_gens = 0
+        self.spent_on_score = 0
+        self.total_evals_on_current_score = 0
 
         # ETA
         self.buffer_size = 10
@@ -244,6 +246,7 @@ class DE:
         self.sade_n_ops = len(self.sade_ops)
 
     def sade_reinit(self):
+        print('reinit')
         self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
         # self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]  # uniform
         self.sade_cr_m = [np.clip(random.gauss(0.75, 0.1), 0.6, 1.0) for k in range(self.sade_n_ops)]  # gaussian
@@ -504,7 +507,7 @@ class DE:
 
         it = 0
         while it < self.max_iters:
-            if self.sade_run and (it % self.sade_reinit_interval == 0 or it == 0):
+            if self.sade_run and (it % self.sade_reinit_interval == 0 or it == 0) and self.energy_function not in ['cascade']:
                 self.sade_reinit()
 
             if self.sade_run:
@@ -2485,9 +2488,17 @@ class DE:
             if high < self.spent_gens:
                 self.current_energy_function = n
                 update_pop_score(update_score=True)
+                self.sade_reinit()
+                self.spent_on_score = high - low
+                self.total_evals_on_current_score = self.spent_on_score
+
+            if self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and self.spent_on_score > 0 and \
+               self.spent_on_score < self.total_evals_on_current_score:
+                self.sade_reinit()
 
             if step:
                 self.spent_gens += 1
+                self.spent_on_score -= 1
 
     def parse_energy_options(self):
         first = None
