@@ -36,6 +36,7 @@ class DE:
         self.spent_gens = 0
 
         # Other stuff
+        self.extended_diversity_measurements = False
         self.coil_only = False
         self.allatom = False
 
@@ -343,6 +344,7 @@ class DE:
             f.write('clearing_size: %d\n' % self.clearing_size)
             f.write('energy_function: %s\n' % self.energy_function)
             f.write('energy_options: %s\n' % self.energy_options)
+            f.write('extended_diversity_measurements: %s\n' % self.extended_diversity_measurements)
             f.flush()
 
     def set_coms(self, pigeon):
@@ -2569,6 +2571,9 @@ class DE:
         self.pop[self.best_index].pose.dump_pdb(name)
 
     def avg_distance(self):
+        if not self.extended_diversity_measurements:
+            return 0
+
         s = 0
         c = 0
         pop = self.pop
@@ -2582,6 +2587,9 @@ class DE:
         return s / c
 
     def avg_rmsd(self):
+        if not self.extended_diversity_measurements:
+            return 0
+
         s = 0
         c = 0
 
@@ -2593,6 +2601,9 @@ class DE:
         return s / c
 
     def avg_rmsd_from_native(self):
+        if not self.extended_diversity_measurements:
+            return 0
+
         s = 0
         c = 0
 
