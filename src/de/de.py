@@ -35,6 +35,12 @@ class DE:
         self.parsed_energy_options = {}
         self.spent_gens = 0
 
+        # ETA
+        self.buffer_size = 10
+        self.time_buffer = [0 for _ in range(self.buffer_size)]
+        self.last_time = time.time()
+        self.time_pivot = 0
+
         # Other stuff
         self.extended_diversity_measurements = False
         self.coil_only = False
@@ -2623,8 +2629,19 @@ class DE:
             secs_per_iter = 0
             eta = 0
         else:
-            secs_per_iter = (time.time() - self.start_time) / it
+            now = time.time()
+            dt = now - self.last_time
+
+            if self.time_pivot >= self.buffer_size:
+                self.time_buffer[self.time_pivot % self.buffer_size] = dt
+            else:
+                for i in range(self.time_pivot, self.buffer_size):
+                    self.time_buffer[i] = dt
+
+            secs_per_iter = np.mean(self.time_buffer) / self.log_interval
             eta = (self.max_iters - it) * secs_per_iter
+            self.last_time = now
+            self.time_pivot += 1
 
         cr = ''  # '%3.2f' % self.c_rate
         probs = ''
