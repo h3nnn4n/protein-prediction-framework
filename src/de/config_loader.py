@@ -50,7 +50,9 @@ class ConfigLoader:
         self.options['clearing_size'] = 1
 
         self.options['energy_function'] = 'score3'
-        self.options['energy_options'] = []
+        self.options['energy_options'] = ['score0_200', 'score1_400', 'score2_1400', 'score3_2000', 'score5_1000']
+
+        self.options['extended_diversity_measurements'] = False
 
         self.parameters = []
         self.defaults = []
