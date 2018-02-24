@@ -2448,11 +2448,16 @@ class DE:
         return f, cr
 
     def update_score_function(self, step=True):
-        def update_pop_score():
+        def update_pop_score(update_score=False):
             for p in self.pop:
                 p.set_score_function(self.current_energy_function)
+                if update_score:
+                    p.eval()
 
             self.trial.set_score_function(self.current_energy_function)
+            if update_score:
+                self.trial.eval()
+                self.update_mean()
 
         if self.energy_function in ['score0', 'score1', 'score2', 'score3', 'score5']:
             if not hasattr(self, 'single_score_update'):
@@ -2471,7 +2476,7 @@ class DE:
             # print(self.spent_gens, high, low, self.current_energy_function, n)
             if high < self.spent_gens:
                 self.current_energy_function = n
-                update_pop_score()
+                update_pop_score(update_score=True)
 
             if step:
                 self.spent_gens += 1
