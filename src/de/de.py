@@ -40,7 +40,7 @@ class DE:
         # ETA
         self.buffer_size = 10
         self.time_buffer = [0 for _ in range(self.buffer_size)]
-        self.last_time = time.time()
+        self.last_time = 0
         self.time_pivot = 0
 
         # Other stuff
@@ -503,7 +503,9 @@ class DE:
         if self.do_lsh:
             self.apply_hash()
 
+        self.sade_reinit()
         self.start_time = time.time()
+        self.last_time = self.start_time
 
         it = 0
         while it < self.max_iters:
