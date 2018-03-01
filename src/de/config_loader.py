@@ -38,6 +38,7 @@ class ConfigLoader:
         self.options['sade_run'] = False
         self.options['sade_lp'] = 50
         self.options['sade_reinit_interval'] = 1000
+        self.options['sade_selection'] = 'tournament'
 
         self.options['do_crowding'] = False
         self.options['do_rmsd_crowding'] = False

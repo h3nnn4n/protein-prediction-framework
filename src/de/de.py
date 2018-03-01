@@ -102,6 +102,7 @@ class DE:
         self.sade_lp = 50
         self.sade_lp_left = self.sade_lp
         self.sade_f = []
+        self.sade_selection = None
 
         self.ops = []
 
@@ -294,13 +295,30 @@ class DE:
         self.sade_ops_probs = list(map(lambda x: x / norm, self.sade_ops_probs))
 
     def sade_get_op(self):
-        n = random.random()
-        a = 0.0
-        i = -1
+        if self.sade_selection == 'roulette':
+            n = random.random()
+            a = 0.0
+            i = -1
 
-        while a < n:
-            i += 1
-            a += self.sade_ops_probs[i]
+            while a < n:
+                i += 1
+                a += self.sade_ops_probs[i]
+        elif 'tournament' in self.sade_selection:
+            if self.sade_selection == 'tournament':
+                size = 2
+            else:
+                size = int(self.sade_selection[10:])
+
+            trial = random.sample(list(range(self.sade_n_ops)), k=size)
+            t_values = [self.sade_ops_probs[i] for i in trial]
+
+            w = 0
+            for k, v in zip(trial, t_values):
+                if v > w:
+                    w = v
+                    i = k
+
+            # print(i, self.sade_ops_probs[win])
 
         return self.sade_ops[i]
 
@@ -344,6 +362,7 @@ class DE:
             f.write('sade_run: %d\n' % self.sade_run)
             f.write('sade_lp: %d\n' % self.sade_lp)
             f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
+            f.write('sade_selection: %s\n' % self.sade_selection)
             f.write('do_crowding: %d\n' % self.do_crowding)
             f.write('do_rmsd_crowding: %d\n' % self.do_rmsd_crowding)
             f.write('crowding_factor: %d\n' % self.crowding_factor)
