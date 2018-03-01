@@ -11,8 +11,7 @@ class ConfigLoader:
         self.options['max_iters'] = 50
         self.options['c_rate'] = 1.0
         self.options['f_factor'] = 0.5
-        self.options['allatom'] = False
-        self.options['coil_only'] = False
+        self.options['mode'] = 'marathon'
 
         self.options['stage0_init'] = False
         self.options['stage2_interval'] = -1

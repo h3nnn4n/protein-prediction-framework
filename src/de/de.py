@@ -10,17 +10,17 @@ import string
 
 
 class DE:
-    def __init__(self, pop_size=50, pname='1zdd', c_rate=0.5, f_factor=0.5, max_iters=100, allatom=False):
+    def __init__(self, pop_size=50, pname='1zdd', c_rate=0.5, f_factor=0.5, max_iters=100):
         self.rosetta_pack = rosetta_pack.RosettaPack(pname)
 
         self.pname = pname
 
         self.pop_size = pop_size
-        self.pop = [protein_data.ProteinData(self.rosetta_pack, allatom=allatom) for _ in range(pop_size)]
+        self.pop = [protein_data.ProteinData(self.rosetta_pack) for _ in range(pop_size)]
         self.c_rate = c_rate
         self.f_factor = f_factor
 
-        self.trial = protein_data.ProteinData(self.rosetta_pack, allatom=allatom)
+        self.trial = protein_data.ProteinData(self.rosetta_pack)
         self.max_iters = max_iters
         self.spent_iters = 0
         self.m_nmdf = 0
@@ -46,7 +46,8 @@ class DE:
         # Other stuff
         self.extended_diversity_measurements = False
         self.coil_only = False
-        self.allatom = False
+
+        self.mode = None
 
         self.failsafe_verbose = False
 
@@ -130,12 +131,12 @@ class DE:
         self.sade_cr_m = None  # [random.random() for k in range(self.sade_n_ops)]
         self.sade_cr_memory = None  # [[] for k in range(self.sade_n_ops)]
 
-        self.sade_reinit_interval = 1000
+        self.sade_reinit_interval = None
 
         # Inner info
         self.mean = 0
         self.best_index = 0
-        self.best_score = 0
+        self.best_score = None
 
         print('Finished initialization')
 
@@ -359,8 +360,6 @@ class DE:
             f.write('c_rate: %f\n' % (self.c_rate))
             f.write('f_factor: %f\n' % (self.f_factor))
             f.write('max_iters: %d\n' % (self.max_iters))
-            f.write('coil_only: %d\n' % (self.coil_only))
-            f.write('allatom: %d\n' % (self.allatom))
             f.write('stage0_init: %d\n' % self.stage0_init)
             f.write('stage2_interval: %d\n' % self.stage2_interval)
             f.write('stage2_all_interval: %d\n' % self.stage2_all_interval)
@@ -512,13 +511,10 @@ class DE:
 
         self.create_hashs()
 
-        self.mean = 0
-        self.best_index = 0
-        self.best_score = None
-
         self.update_score_function(step=False)
 
         if self.stage0_init:
+            print('Stage0 init')
             self.log(it=-1)
             for i in range(self.pop_size):
                 if random.random() < .1:
@@ -543,8 +539,9 @@ class DE:
         self.last_time = self.start_time
 
         it = 0
-        while it < self.max_iters:
-            if self.sade_run and (it % self.sade_reinit_interval == 0 or it == 0) and self.energy_function not in ['cascade']:
+        while it < self.max_iters or self.move == 'marathon':
+            if self.sade_run and (self.sade_reinit_interval > 0 and it % self.sade_reinit_interval == 0) and \
+               self.energy_function not in ['cascade']:
                 self.sade_reinit()
 
             if self.sade_run:
@@ -553,10 +550,6 @@ class DE:
 
             it += 1
             self.it = it
-            self.best_score = None
-
-            self.mean = 0
-            self.best_index = 0
 
             self.update_score_function()
 
@@ -575,11 +568,6 @@ class DE:
                         self.sade_get_op()(i)
                     else:
                         self.rand1bin_global(i)
-                # self.mean += self.pop[i].score / self.pop_size
-
-                if self.best_score is None or self.pop[i].score < self.best_score:
-                    self.best_score = self.pop[i].score
-                    self.best_index = i
 
             if self.do_lsh and False:
                 for h in self.hash_values:
@@ -646,11 +634,7 @@ class DE:
                     self.pop[i].update_angle_from_pose()
                     self.pop[i].eval()
 
-            for i in range(self.pop_size):
-                self.mean += self.pop[i].score / self.pop_size
-                if self.best_score is None or self.pop[i].score < self.best_score:
-                    self.best_score = self.pop[i].score
-                    self.best_index = i
+            self.update_mean()
 
             if self.comm is not None and self.comm.size > 1 and self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
                 print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
@@ -2467,19 +2451,41 @@ class DE:
         f, cr = self.get_f_cr()
 
         if self.trial.score < candidate.score:
+            # for p in self.pop:
+                # if p is self.trial:
+                    # import sys
+                    # print('PANIC! Candidate found')
+                    # sys.exit()
+
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
                 self.sade_success_memory[ind][sade_k] += 1
             # t = self.pop[huehue]
             # self.pop[huehue] = self.trial
-            t = candidate
-            candidate = self.trial
-            self.trial = t
-            if self.trial is candidate:
+
+            # t = candidate
+            # candidate = self.trial
+            # self.trial = t
+
+            found = False
+            for k in range(self.pop_size):
+                p = self.pop[k]
+                if candidate is p:
+                    found = True
+                    t = self.pop[k]
+                    self.pop[k] = self.trial
+                    self.trial = t
+
+            if not found:
                 import sys
-                print('PANIC! Found duplicated reference in population')
+                print('PANIC! Candidate not found!')
                 sys.exit()
+
+            # if self.trial is candidate:
+                # import sys
+                # print('PANIC! Found duplicated reference in population')
+                # sys.exit()
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
@@ -2519,23 +2525,40 @@ class DE:
                 self.parsed_energy = True
                 self.current_energy_function = first
                 update_pop_score()
+            if self.mode == 'marathon':
+                low, high, n = self.parsed_energy_options[self.current_energy_function]
+                # print(self.spent_gens, high, low, self.current_energy_function, n)
+                if abs(self.mean - self.best_score) < 0.001:
+                    self.current_energy_function = n
+                    update_pop_score(update_score=True)
+                    self.sade_reinit()
+                    self.spent_on_score = high - low
+                    self.total_evals_on_current_score = self.spent_on_score
 
-            low, high, n = self.parsed_energy_options[self.current_energy_function]
-            # print(self.spent_gens, high, low, self.current_energy_function, n)
-            if high < self.spent_gens:
-                self.current_energy_function = n
-                update_pop_score(update_score=True)
-                self.sade_reinit()
-                self.spent_on_score = high - low
-                self.total_evals_on_current_score = self.spent_on_score
+                if self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and self.spent_on_score > 0 and \
+                   self.spent_on_score < self.total_evals_on_current_score:
+                    self.sade_reinit()
 
-            if self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and self.spent_on_score > 0 and \
-               self.spent_on_score < self.total_evals_on_current_score:
-                self.sade_reinit()
+                if step:
+                    self.spent_gens += 1
+                    self.spent_on_score -= 1
+            else:
+                low, high, n = self.parsed_energy_options[self.current_energy_function]
+                # print(self.spent_gens, high, low, self.current_energy_function, n)
+                if high < self.spent_gens:
+                    self.current_energy_function = n
+                    update_pop_score(update_score=True)
+                    self.sade_reinit()
+                    self.spent_on_score = high - low
+                    self.total_evals_on_current_score = self.spent_on_score
 
-            if step:
-                self.spent_gens += 1
-                self.spent_on_score -= 1
+                if self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and self.spent_on_score > 0 and \
+                   self.spent_on_score < self.total_evals_on_current_score:
+                    self.sade_reinit()
+
+                if step:
+                    self.spent_gens += 1
+                    self.spent_on_score -= 1
 
     def parse_energy_options(self):
         first = None
@@ -2574,6 +2597,7 @@ class DE:
         return first
 
     def update_mean(self):
+        self.mean = 0
         for i in range(self.pop_size):
             self.mean += self.pop[i].score / self.pop_size
             if self.best_score is None or self.pop[i].score < self.best_score:
@@ -2687,7 +2711,11 @@ class DE:
                     self.time_buffer[i] = dt
 
             secs_per_iter = np.mean(self.time_buffer) / self.log_interval
-            eta = (self.max_iters - it) * secs_per_iter
+            if self.mode == 'marathon':
+                eta = (self.max_iters) * secs_per_iter
+            else:
+                eta = (self.max_iters - it) * secs_per_iter
+
             self.last_time = now
             self.time_pivot += 1
 

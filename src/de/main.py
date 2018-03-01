@@ -11,7 +11,7 @@ def boot(conf_file):
     cf = config_loader.ConfigLoader(conf_file)
 
     d = de.DE(pop_size=cf['pop_size'], max_iters=cf['max_iters'], pname=cf['pname'],
-              f_factor=cf['f_factor'], c_rate=cf['c_rate'], allatom=cf['allatom'])
+              f_factor=cf['f_factor'], c_rate=cf['c_rate'])
 
     d.set_coms(c)
 
