@@ -34,8 +34,9 @@ set border 3
 set xrange[0:]
 set yrange[0:1]
 
-plot 'stats.dat' using 2:11 title 'best1bin'   with lines, \
-     'stats.dat' using 2:12 title 'rand1bin'   with lines, \
-     'stats.dat' using 2:13 title 'rand2bin'   with lines, \
-     'stats.dat' using 2:14 title 'currToRand' with lines, \
-     'stats.dat' using 2:15 title 'currToBest' with lines, \
+plot 'stats.dat' using 2:17 title 'rand1exp'      with lines, \
+     'stats.dat' using 2:18 title 'rand2exp'      with lines, \
+     'stats.dat' using 2:19 title 'best1exp'      with lines, \
+     'stats.dat' using 2:20 title 'best2exp'      with lines, \
+     'stats.dat' using 2:21 title 'currToRandExp' with lines, \
+     'stats.dat' using 2:22 title 'currToBestExp' with lines, \
