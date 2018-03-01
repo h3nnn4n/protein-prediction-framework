@@ -290,6 +290,7 @@ class DE:
                     self.sade_ops_probs[k] = s_s / (s_s + s_f) + 0.01
                 else:
                     self.sade_ops_probs[k] = 0.01
+            print(self.sade_ops_probs)
 
         norm = sum(self.sade_ops_probs)
         self.sade_ops_probs = list(map(lambda x: x / norm, self.sade_ops_probs))
@@ -314,9 +315,13 @@ class DE:
 
             w = 0
             for k, v in zip(trial, t_values):
+                # print(k, v, end='')
                 if v > w:
                     w = v
                     i = k
+                    # print(i)
+                # else:
+                    # print()
 
             # print(i, self.sade_ops_probs[win])
 
