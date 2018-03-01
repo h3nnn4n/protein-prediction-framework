@@ -539,7 +539,7 @@ class DE:
         self.last_time = self.start_time
 
         it = 0
-        while it < self.max_iters or self.move == 'marathon':
+        while it < self.max_iters or self.mode == 'marathon':
             if self.sade_run and (self.sade_reinit_interval > 0 and it % self.sade_reinit_interval == 0) and \
                self.energy_function not in ['cascade']:
                 self.sade_reinit()
