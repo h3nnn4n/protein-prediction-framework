@@ -302,8 +302,8 @@ class DE:
 
         norm = sum(self.sade_ops_probs)
         self.sade_ops_probs = list(map(lambda x: x / norm, self.sade_ops_probs))
-        if self.sade_lp_left <= 0:
-            print(self.sade_ops_probs)
+        # if self.sade_lp_left <= 0:
+            # print(self.sade_ops_probs)
 
     def sade_get_op(self):
         if self.sade_selection == 'roulette':
