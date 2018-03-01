@@ -283,17 +283,27 @@ class DE:
 
     def sade_update_ops(self):
         if self.sade_lp_left <= 0:
-            for k in range(self.sade_n_ops):
-                s_s = sum([self.sade_success_memory[i][k] for i in range(self.sade_lp)])
-                s_f = sum([self.sade_failure_memory[i][k] for i in range(self.sade_lp)])
-                if s_s + s_f > 0:
-                    self.sade_ops_probs[k] = s_s / (s_s + s_f) + 0.01
-                else:
-                    self.sade_ops_probs[k] = 0.01
-            print(self.sade_ops_probs)
+            if self.sade_selection == 'roulette':
+                for k in range(self.sade_n_ops):
+                    s_s = sum([self.sade_success_memory[i][k] for i in range(self.sade_lp)])
+                    s_f = sum([self.sade_failure_memory[i][k] for i in range(self.sade_lp)])
+                    if s_s + s_f > 0:
+                        self.sade_ops_probs[k] = s_s / (s_s + s_f) + 0.01
+                    else:
+                        self.sade_ops_probs[k] = 0.01
+            elif 'tournament' in self.sade_selection:
+                for k in range(self.sade_n_ops):
+                    s_s = sum([self.sade_success_memory[i][k] for i in range(self.sade_lp)])
+                    s_f = sum([self.sade_failure_memory[i][k] for i in range(self.sade_lp)])
+                    if s_s + s_f > 0:
+                        self.sade_ops_probs[k] = (s_s - s_f) + 0.01
+                    else:
+                        self.sade_ops_probs[k] = 0.01
 
         norm = sum(self.sade_ops_probs)
         self.sade_ops_probs = list(map(lambda x: x / norm, self.sade_ops_probs))
+        if self.sade_lp_left <= 0:
+            print(self.sade_ops_probs)
 
     def sade_get_op(self):
         if self.sade_selection == 'roulette':
@@ -323,7 +333,8 @@ class DE:
                 # else:
                     # print()
 
-            # print(i, self.sade_ops_probs[win])
+            # if self.sade_lp_left <= 0:
+                # print(i, self.sade_ops_probs[i])
 
         return self.sade_ops[i]
 
