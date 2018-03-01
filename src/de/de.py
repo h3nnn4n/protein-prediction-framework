@@ -138,6 +138,18 @@ class DE:
         self.best_index = 0
         self.best_score = None
 
+        self.mean_last_improv = None
+        self.mean_improv_value = 0
+        self.mean_last_improv_value = 0
+        self.mean_improv_threshold = 0.01
+        self.mean_improv_iter_threshold = 1000
+
+        self.last_improv = None
+        self.improv_value = 0
+        self.last_improv_value = 0
+        self.improv_threshold = 0.01
+        self.improv_iter_threshold = 5000
+
         print('Finished initialization')
 
 # ######################### START OF SADE ##########################
@@ -635,6 +647,7 @@ class DE:
                     self.pop[i].eval()
 
             self.update_mean()
+            self.update_threshold()
 
             if self.comm is not None and self.comm.size > 1 and self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
                 print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
@@ -2528,20 +2541,26 @@ class DE:
             if self.mode == 'marathon':
                 low, high, n = self.parsed_energy_options[self.current_energy_function]
                 # print(self.spent_gens, high, low, self.current_energy_function, n)
-                if abs(self.mean - self.best_score) < 0.001:
+                # if (self.best_score is not None and abs(self.mean - self.best_score) < 0.1):
+                if self.last_improv > self.improv_iter_threshold or self.mean_last_improv > self.mean_improv_iter_threshold:
+                    if self.last_improv > self.improv_iter_threshold:
+                        print('Next: last improv', self.last_improv, self.improv_iter_threshold)
+                    elif self.mean_last_improv > self.mean_improv_iter_threshold:
+                        print('Next: last mean improv', self.mean_last_improv, self.mean_improv_iter_threshold)
                     self.current_energy_function = n
                     update_pop_score(update_score=True)
                     self.sade_reinit()
-                    self.spent_on_score = high - low
+                    self.spent_on_score = 0
                     self.total_evals_on_current_score = self.spent_on_score
 
-                if self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and self.spent_on_score > 0 and \
-                   self.spent_on_score < self.total_evals_on_current_score:
+                # print(self.spent_gens, self.spent_on_score, self.total_evals_on_current_score)
+                if self.sade_reinit_interval > 0 and self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and \
+                   self.spent_on_score > 0 and self.spent_on_score != self.total_evals_on_current_score:
                     self.sade_reinit()
 
                 if step:
                     self.spent_gens += 1
-                    self.spent_on_score -= 1
+                    self.spent_on_score += 1
             else:
                 low, high, n = self.parsed_energy_options[self.current_energy_function]
                 # print(self.spent_gens, high, low, self.current_energy_function, n)
@@ -2605,6 +2624,21 @@ class DE:
                 self.best_index = i
 
         return self.mean
+
+    def update_threshold(self):
+        if self.mean_last_improv_value is None or self.mean_last_improv_value < self.mean:
+            self.mean_last_improv_value = self.mean
+            self.mean_improv_value = self.mean_last_improv_value - self.mean
+            self.mean_last_improv = 0
+        else:
+            self.mean_last_improv += 1
+
+        if self.last_improv_value is None or self.last_improv_value < self.best_score:
+            self.last_improv_value = self.best_score
+            self.improv_value = self.last_improv_value - self.best_score
+            self.last_improv = 0
+        else:
+            self.last_improv += 1
 
     def update_diversity(self):
         diversity = 0
