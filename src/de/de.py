@@ -2642,7 +2642,7 @@ class DE:
 
         if self.last_improv is None:
             self.last_improv = 0
-        elif self.last_improv_value < self.best_score or self.las > self.improv_iter_threshold:
+        elif self.last_improv_value < self.best_score or self.last_improv > self.improv_iter_threshold:
             print('Iter reset')
             self.last_improv_value = self.best_score
             self.improv_value = self.last_improv_value - self.best_score
