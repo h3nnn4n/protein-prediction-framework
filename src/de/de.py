@@ -523,7 +523,9 @@ class DE:
 
         self.create_hashs()
 
+        self.update_threshold()
         self.update_score_function(step=False)
+        # self.update_mean()
 
         if self.stage0_init:
             print('Stage0 init')
@@ -2544,9 +2546,11 @@ class DE:
                 # if (self.best_score is not None and abs(self.mean - self.best_score) < 0.1):
                 if self.last_improv > self.improv_iter_threshold or self.mean_last_improv > self.mean_improv_iter_threshold:
                     if self.last_improv > self.improv_iter_threshold:
-                        print('Next: last improv', self.last_improv, self.improv_iter_threshold)
+                        print('Iter reset!')
+                        # print('Next: last improv', self.last_improv, self.improv_iter_threshold)
                     elif self.mean_last_improv > self.mean_improv_iter_threshold:
-                        print('Next: last mean improv', self.mean_last_improv, self.mean_improv_iter_threshold)
+                        print('Mean reset!')
+                        # print('Next: last mean improv', self.mean_last_improv, self.mean_improv_iter_threshold)
                     self.current_energy_function = n
                     update_pop_score(update_score=True)
                     self.sade_reinit()
@@ -2626,14 +2630,20 @@ class DE:
         return self.mean
 
     def update_threshold(self):
-        if self.mean_last_improv_value is None or self.mean_last_improv_value < self.mean:
+        if self.mean_last_improv is None:
+            self.mean_last_improv = 0
+        elif self.mean_last_improv_value < self.mean or self.mean_last_improv > self.mean_improv_iter_threshold:
+            print('Mean reset')
             self.mean_last_improv_value = self.mean
             self.mean_improv_value = self.mean_last_improv_value - self.mean
             self.mean_last_improv = 0
         else:
             self.mean_last_improv += 1
 
-        if self.last_improv_value is None or self.last_improv_value < self.best_score:
+        if self.last_improv is None:
+            self.last_improv = 0
+        elif self.last_improv_value < self.best_score or self.las > self.improv_iter_threshold:
+            print('Iter reset')
             self.last_improv_value = self.best_score
             self.improv_value = self.last_improv_value - self.best_score
             self.last_improv = 0
