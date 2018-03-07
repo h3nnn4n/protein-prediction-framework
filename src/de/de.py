@@ -2551,6 +2551,9 @@ class DE:
                     elif self.mean_last_improv > self.mean_improv_iter_threshold:
                         print('Mean reset!')
                         # print('Next: last mean improv', self.mean_last_improv, self.mean_improv_iter_threshold)
+                    if self.current_energy_function == n:
+                        import sys
+                        sys.exit()
                     self.current_energy_function = n
                     update_pop_score(update_score=True)
                     self.sade_reinit()
@@ -2632,20 +2635,22 @@ class DE:
     def update_threshold(self):
         if self.mean_last_improv is None:
             self.mean_last_improv = 0
-        elif self.mean_last_improv_value < self.mean or self.mean_last_improv > self.mean_improv_iter_threshold:
-            print('Mean reset')
+            self.mean_last_improv_value = float("inf")
+        elif self.mean_last_improv_value > self.mean or self.mean_last_improv > self.mean_improv_iter_threshold:
+            # print('Mean reset')
+            self.mean_improv_value = self.mean - self.mean_last_improv_value
             self.mean_last_improv_value = self.mean
-            self.mean_improv_value = self.mean_last_improv_value - self.mean
             self.mean_last_improv = 0
         else:
             self.mean_last_improv += 1
 
         if self.last_improv is None:
             self.last_improv = 0
-        elif self.last_improv_value < self.best_score or self.last_improv > self.improv_iter_threshold:
-            print('Iter reset')
+            self.last_improv_value = float("inf")
+        elif self.last_improv_value > self.best_score or self.last_improv > self.improv_iter_threshold:
+            # print('Iter reset')
+            self.improv_value = self.best_score - self.last_improv_value
             self.last_improv_value = self.best_score
-            self.improv_value = self.last_improv_value - self.best_score
             self.last_improv = 0
         else:
             self.last_improv += 1
@@ -2775,8 +2780,8 @@ class DE:
                 for k in range(self.sade_n_ops):
                     probs += '%3.2f ' % self.sade_ops_probs[k]
 
-        string = "%2d %8d %12.4f %12.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
-        data = (0 if self.comm is None else self.comm.rank, it,
+        string = "0 %8d %8.4f %8.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
+        data = (it,
                 self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
                 rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr, probs)
 
@@ -2786,3 +2791,8 @@ class DE:
         self.stats.write((string + '\n') % data)
         # if it % 100 == 0:
         print(string % data)
+
+        print("%8.4f %8d %8.4f %8d" % (self.improv_value,
+                                       self.improv_iter_threshold - self.last_improv,
+                                       self.mean_improv_value,
+                                       self.mean_improv_iter_threshold - self.mean_last_improv))
