@@ -697,9 +697,9 @@ class DE:
         with open(name, 'w') as f:
             f.write('score:       %12.4f\n' % oldscore)
             f.write('scorefxn:    %12.4f\n' % score)
-            f.write('rmsd_after:  %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)))
+            f.write('rmsd_after:  %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
             f.write('rmsd_before: %12.4f\n' % rmsd)
-            f.write('rmsd_change: %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)))
+            f.write('rmsd_change: %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
 
     def print_hash(self):
         for n, i in enumerate(self.hash_values):
@@ -2655,11 +2655,12 @@ class DE:
 
         return self.mean
 
-    def update_threshold(self):
+    def update_threshold(self, force_update=False):
         if self.mean_last_improv is None:
             self.mean_last_improv = 0
             self.mean_last_improv_value = float("inf")
-        elif self.mean_last_improv_value > self.mean or self.mean_last_improv > self.mean_improv_iter_threshold:
+        # elif abs(self.mean_last_improv_value - self.mean) > self.mean_improv_threshold or self.mean_last_improv > self.mean_improv_iter_threshold:
+        elif abs(self.mean_last_improv_value - self.mean) > self.mean_improv_threshold:
             # print('Mean reset')
             self.mean_improv_value = self.mean - self.mean_last_improv_value
             self.mean_last_improv_value = self.mean
@@ -2670,7 +2671,8 @@ class DE:
         if self.last_improv is None:
             self.last_improv = 0
             self.last_improv_value = float("inf")
-        elif self.last_improv_value > self.best_score or self.last_improv > self.improv_iter_threshold:
+        # elif abs(self.last_improv_value - self.best_score) > self.improv_threshold or self.last_improv > self.improv_iter_threshold:
+        elif abs(self.last_improv_value - self.best_score) > self.improv_threshold:
             # print('Iter reset')
             self.improv_value = self.best_score - self.last_improv_value
             self.last_improv_value = self.best_score
