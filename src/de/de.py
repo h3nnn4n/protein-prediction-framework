@@ -66,6 +66,9 @@ class DE:
 
         self.config_name = None
         self.stats_name = None
+        self.ops_stats_name = None
+        self.stats = None
+        self.ops_stats = None
 
         # Clearing
         self.do_clearing = False
@@ -363,6 +366,9 @@ class DE:
                            (self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
         self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
         self.stats = open(self.stats_name, 'w')
+
+        self.ops_stats_name = self.rosetta_pack.protein_loader.original + '/' + "ops_" + self.name_suffix + ".dat"
+        self.ops_stats = open(self.ops_stats_name, 'w')
 
     def dump_config(self):
         self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
@@ -2796,3 +2802,15 @@ class DE:
                                        self.improv_iter_threshold - self.last_improv,
                                        self.mean_improv_value,
                                        self.mean_improv_iter_threshold - self.mean_last_improv))
+
+        if self.ops_stats is not None and self.sade_success_memory is not None:
+            string = ''
+
+            string += '%8d  ' % it
+
+            for k in range(self.sade_n_ops):
+                s_s = sum([self.sade_success_memory[i][k] for i in range(self.sade_lp)])
+                s_f = sum([self.sade_failure_memory[i][k] for i in range(self.sade_lp)])
+                string += '  %8d %8d %8d' % (s_s + s_f, s_s, s_f)
+            self.ops_stats.write(string + '\n')
+            self.ops_stats.flush()
