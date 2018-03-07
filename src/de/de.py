@@ -684,6 +684,23 @@ class DE:
         # end_time = time.time()
         # print("Processing took %f seconds" % (end_time - start_time))
 
+        self.dump_pbd_best(it)
+
+        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
+        oldscore = self.best_score
+        score = self.pop[self.best_index].repack()
+
+        name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % it) + self.name_suffix + ".pdb"
+        self.pop[self.best_index].repacked.dump_pdb(name)
+
+        name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
+        with open(name, 'w') as f:
+            f.write('score:       %12.4f\n' % oldscore)
+            f.write('scorefxn:    %12.4f\n' % score)
+            f.write('rmsd_after:  %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)))
+            f.write('rmsd_before: %12.4f\n' % rmsd)
+            f.write('rmsd_change: %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)))
+
     def print_hash(self):
         for n, i in enumerate(self.hash_values):
             if len(i) > 0:

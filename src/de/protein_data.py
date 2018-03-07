@@ -8,6 +8,8 @@ class ProteinData:
         self.bounds = rosetta_pack.bounds
         self.allatom = allatom
 
+        self.repacked = None
+
         self.score_function = None
 
         self.mc3 = None
@@ -293,3 +295,13 @@ class ProteinData:
             pd.get_allatom_switch().apply(best)
             r.apply(best)
             pd.get_packer().apply(best)
+
+    def repack(self):
+        pd = self.rosetta_pack
+        repack = pd.get_fast_relax()
+        best = pd.convert_to_allatom_pose(self.pose)
+        repack.apply(best)
+
+        self.repacked = best
+
+        return pd.get_scorefxn()(best)

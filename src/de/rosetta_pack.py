@@ -215,7 +215,10 @@ class RosettaPack():
 
     def get_score_function(self, name='score3'):
         if name not in self.scores.keys():
-            self.scores[name] = pyrosetta.create_score_function(name)
+            if name == 'scorefxn':
+                self.scores[name] = pyrosetta.get_fa_scorefxn()
+            else:
+                self.scores[name] = pyrosetta.create_score_function(name)
             # print('Requested %s' % name)
 
         return self.scores[name]
