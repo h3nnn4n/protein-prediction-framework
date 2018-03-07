@@ -11,7 +11,7 @@ class ConfigLoader:
         self.options['max_iters'] = 50
         self.options['c_rate'] = 1.0
         self.options['f_factor'] = 0.5
-        self.options['mode'] = 'marathon'
+        self.options['mode'] = 'normal'
 
         self.options['stage0_init'] = False
         self.options['stage2_interval'] = -1
