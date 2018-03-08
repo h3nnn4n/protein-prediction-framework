@@ -144,13 +144,13 @@ class DE:
         self.mean_last_improv = None
         self.mean_improv_value = 0
         self.mean_last_improv_value = 0
-        self.mean_improv_threshold = 0.01
+        self.mean_improv_threshold = 0.1
         self.mean_improv_iter_threshold = 1000
 
         self.last_improv = None
         self.improv_value = 0
         self.last_improv_value = 0
-        self.improv_threshold = 0.01
+        self.improv_threshold = 0.1
         self.improv_iter_threshold = 5000
 
         print('Finished initialization')
@@ -2647,6 +2647,7 @@ class DE:
 
     def update_mean(self):
         self.mean = 0
+        self.best_score = float('inf')
         for i in range(self.pop_size):
             self.mean += self.pop[i].score / self.pop_size
             if self.best_score is None or self.pop[i].score < self.best_score:
