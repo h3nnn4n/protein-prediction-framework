@@ -70,6 +70,9 @@ class DE:
         self.stats = None
         self.ops_stats = None
 
+        # Pop data dump
+        # nothing
+
         # Clearing
         self.do_clearing = False
         self.clearing_interval = 10
@@ -669,6 +672,9 @@ class DE:
 
             if False and it % 1000 == 0:
                 self.dump_pbd_best(it)
+
+            # if it % 250 == 0 or it == 1:
+                # self.dump_pop_data()
 
             if self.log_interval > 0 and it % self.log_interval == 0:
                 # self.pop[0].print_angles()
@@ -2715,6 +2721,18 @@ class DE:
             self.diversity = 0.0
 
         return self.diversity
+
+    def dump_pop_data(self):
+        data = []
+        for p in self.pop:
+            r = self.rosetta_pack.get_rmsd_from_pose(p.pose)
+            s = p.score
+            data.append((r, s))
+
+        name = self.rosetta_pack.protein_loader.original + '/' + ("popdata_%05d_" % self.it) + self.name_suffix + ".dat"
+        with open(name, 'w') as f:
+            for a, b in data:
+                f.write('%12.5f %12.5f\n' % (a, b))
 
     def dump_pbd_pop(self):
         pass
