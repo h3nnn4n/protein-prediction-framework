@@ -83,6 +83,10 @@ class DE:
         self.do_rmsd_crowding = False
         self.crowding_factor = None
 
+        # Moment of Inertia
+        self.centroids = None
+        self.moment_of_inertia = None
+
         # Island stuff
         self.comm = None  # Comunicator
         self.island_interval = 100
@@ -2581,8 +2585,9 @@ class DE:
                         print('Mean reset!')
                         # print('Next: last mean improv', self.mean_last_improv, self.mean_improv_iter_threshold)
                     if self.current_energy_function == n:
-                        import sys
-                        sys.exit()
+                        # import sys
+                        # sys.exit()
+                        self.mode = 'quit'
                     self.current_energy_function = n
                     update_pop_score(update_score=True)
                     self.sade_reinit()
@@ -2686,6 +2691,26 @@ class DE:
             self.last_improv = 0
         else:
             self.last_improv += 1
+
+    def update_moment_of_inertia(self):
+        pop_size = self.pop_size
+        n_dim = self.pop[0].nsca
+
+        if self.centroids is None:
+            self.centroids = [0 for _ in range(pop_size)]
+
+        for i in range(n_dim):
+            self.centroids[i] = 0.0
+            for j in range(pop_size):
+                self.centroids[i] += self.pop[j].angles[i] / pop_size
+
+        self.moment_of_inertia = 0.0
+
+        for i in range(n_dim):
+            for j in range(pop_size):
+                self.moment_of_inertia += (self.pop[j].angles[i] - self.centroids[i]) ** 2.0
+
+        return self.moment_of_inertia
 
     def update_diversity(self):
         diversity = 0
@@ -2827,7 +2852,7 @@ class DE:
         string = "0 %8d %8.4f %8.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
         data = (it,
                 self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
-                rmsd, self.avg_rmsd_from_native(), secs_per_iter, eta, cr, probs)
+                rmsd, self.update_moment_of_inertia(), secs_per_iter, eta, cr, probs)
 
         # print(self.sade_success_memory)
         # print(self.sade_failure_memory)
@@ -2836,10 +2861,10 @@ class DE:
         # if it % 100 == 0:
         print(string % data)
 
-        print("%8.4f %8d %8.4f %8d" % (self.improv_value,
-                                       self.improv_iter_threshold - self.last_improv,
-                                       self.mean_improv_value,
-                                       self.mean_improv_iter_threshold - self.mean_last_improv))
+        # print("%8.4f %8d %8.4f %8d" % (self.improv_value,
+        #                                self.improv_iter_threshold - self.last_improv,
+        #                                self.mean_improv_value,
+        #                                self.mean_improv_iter_threshold - self.mean_last_improv))
 
         if self.ops_stats is not None and self.sade_success_memory is not None:
             string = ''
