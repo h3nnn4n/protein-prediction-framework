@@ -2729,7 +2729,7 @@ class DE:
             s = p.score
             data.append((r, s))
 
-        name = self.rosetta_pack.protein_loader.original + '/' + ("popdata_%05d_" % self.it) + self.name_suffix + ".dat"
+        name = self.rosetta_pack.protein_loader.original + '/' + ("popdata_%08d_" % self.it) + self.name_suffix + ".dat"
         with open(name, 'w') as f:
             for a, b in data:
                 f.write('%12.5f %12.5f\n' % (a, b))
