@@ -12,6 +12,11 @@ class ProteinData:
 
         self.score_function = None
 
+        self.mover3 = None
+        self.mover3s = None
+        self.mover9 = None
+        self.mover9s = None
+
         self.mc3 = None
         self.mc3s = None
         self.mc9 = None
@@ -21,6 +26,11 @@ class ProteinData:
         self.seq3s = None
         self.seq9 = None
         self.seq9s = None
+
+        self.trial3 = None
+        self.trial3s = None
+        self.trial9 = None
+        self.trial9s = None
 
         if allatom:
             self.rosetta_pack.get_allatom_switch().apply(self.pose)
@@ -246,55 +256,67 @@ class ProteinData:
         if mode == '3':
             if self.mc3 is None:
                 self.mc3 = pd.get_new_mc(best, score, temp)
-                self.seq3 = pd.get_new_seq_mover()
-                self.seq3.add_mover(pd.get_3mer())
+                self.mover3 = pd.get_3mer()
+                self.trial3 = pd.get_new_trial_mover(self.mover3, self.mc3)
         elif mode == '3s':
             if self.mc3s is None:
                 self.mc3s = pd.get_new_mc(best, score, temp)
-                self.seq3s = pd.get_new_seq_mover()
-                self.seq3s.add_mover(pd.get_3mer_smooth())
+                self.mover3s = pd.get_3mer_smooth()
+                self.trial3s = pd.get_new_trial_mover(self.mover3s, self.mc3s)
         elif mode == '9':
             if self.mc9 is None:
                 self.mc9 = pd.get_new_mc(best, score, temp)
-                self.seq9 = pd.get_new_seq_mover()
-                self.seq9.add_mover(pd.get_9mer())
+                self.mover9 = pd.get_9mer()
+                self.trial9 = pd.get_new_trial_mover(self.mover9, self.mc9)
         elif mode == '9s':
             if self.mc9s is None:
                 self.mc9s = pd.get_new_mc(best, score, temp)
-                self.seq9s = pd.get_new_seq_mover()
-                self.seq9s.add_mover(pd.get_9mer_smooth())
+                self.mover9s = pd.get_9mer_smooth()
+                self.trial9s = pd.get_new_trial_mover(self.mover9s, self.mc9s)
 
-        seq = None
+        mover = None
         mc = None
+        evals = 0
 
-        if n == 1:
+        # if n == 1:
+        if True:
             if mode == '3':
                 mc = self.mc3
-                seq = self.seq3
+                mover = self.seq3
             elif mode == '3s':
                 mc = self.mc3s
-                seq = self.seq3s
+                mover = self.seq3s
             elif mode == '9':
                 mc = self.mc9
-                seq = self.seq9
+                mover = self.seq9
             elif mode == '9s':
                 mc = self.mc9s
-                seq = self.seq9s
+                mover = self.seq9s
 
             mc.set_temperature(temp)
-            seq.apply(best)
-            mc.recover_low(best)
-            mc.reset(best)
-        else:
-            trial = pd.get_new_trial_mover(seq, mc)
 
-            folding = pd.get_new_rep_mover(trial, n)
-            folding.apply(best)
+            original = self.score
+
+            for i in range(n):
+                mover.apply(best)
+                mc.recover_low(best)
+                mc.reset(best)
+                evals += 1
+
+            mc.reset(self.pose)
+
+        # else:
+            # trial = pd.get_new_trial_mover(seq, mc)
+
+            # folding = pd.get_new_rep_mover(trial, n)
+            # folding.apply(best)
 
         if allatom:
             pd.get_allatom_switch().apply(best)
             r.apply(best)
             pd.get_packer().apply(best)
+
+        return evals
 
     def repack(self):
         pd = self.rosetta_pack

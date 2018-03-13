@@ -70,6 +70,8 @@ class DE:
         self.stats = None
         self.ops_stats = None
 
+        self.spent_evals = 0
+
         # Pop data dump
         # nothing
 
@@ -2697,7 +2699,7 @@ class DE:
         n_dim = self.pop[0].nsca
 
         if self.centroids is None:
-            self.centroids = [0 for _ in range(pop_size)]
+            self.centroids = [0 for _ in range(n_dim)]
 
         for i in range(n_dim):
             self.centroids[i] = 0.0
@@ -2707,8 +2709,13 @@ class DE:
         self.moment_of_inertia = 0.0
 
         for i in range(n_dim):
+            w = 0
             for j in range(pop_size):
-                self.moment_of_inertia += (self.pop[j].angles[i] - self.centroids[i]) ** 2.0
+                w += (self.pop[j].angles[i] - self.centroids[i]) ** 2.0
+
+            self.moment_of_inertia += math.sqrt(w) / (pop_size - 1)
+
+        self.moment_of_inertia /= n_dim
 
         return self.moment_of_inertia
 
