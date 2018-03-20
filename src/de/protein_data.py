@@ -283,15 +283,19 @@ class ProteinData:
             if mode == '3':
                 mc = self.mc3
                 mover = self.seq3
+                mover = self.trial3
             elif mode == '3s':
                 mc = self.mc3s
                 mover = self.seq3s
+                mover = self.trial3s
             elif mode == '9':
                 mc = self.mc9
                 mover = self.seq9
+                mover = self.trial9
             elif mode == '9s':
                 mc = self.mc9s
                 mover = self.seq9s
+                mover = self.trial9s
 
             mc.set_temperature(temp)
 
