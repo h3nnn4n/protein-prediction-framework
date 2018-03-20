@@ -71,6 +71,7 @@ class DE:
         self.ops_stats = None
 
         self.spent_evals = 0
+        self.maximum_evals = 500000
 
         # Pop data dump
         # nothing
@@ -568,7 +569,7 @@ class DE:
         self.last_time = self.start_time
 
         it = 0
-        while it < self.max_iters or self.mode == 'marathon':
+        while self.maximum_evals > self.spent_evals or self.mode == 'marathon':
             if self.sade_run and (self.sade_reinit_interval > 0 and it % self.sade_reinit_interval == 0) and \
                self.energy_function not in ['cascade']:
                 self.sade_reinit()
@@ -591,12 +592,17 @@ class DE:
             for i in range(self.pop_size):
                 self.huehue = i
                 if self.do_lsh and not self.sade_run:
-                    self.rand1bin_lsh(i)
+                    ret = self.rand1bin_lsh(i)
                 else:
                     if self.sade_run:
-                        self.sade_get_op()(i)
+                        ret = self.sade_get_op()(i)
                     else:
-                        self.rand1bin_global(i)
+                        ret = self.rand1bin_global(i)
+
+                if ret is None:
+                    self.spent_evals += 1
+                else:
+                    self.spent_evals += ret
 
             if self.do_lsh and False:
                 for h in self.hash_values:
@@ -727,7 +733,7 @@ class DE:
             sade_k = self.sade_ops.index(self.monte_carlo_3)
         self.sade_k = sade_k
 
-        self.monte_carlo_x(huehue, mode='3', k=sade_k)
+        return self.monte_carlo_x(huehue, mode='3', k=sade_k)
 
     def monte_carlo_3s(self, huehue):
         if not self.sade_run:
@@ -736,7 +742,7 @@ class DE:
             sade_k = self.sade_ops.index(self.monte_carlo_3s)
         self.sade_k = sade_k
 
-        self.monte_carlo_x(huehue, mode='3s', k=sade_k)
+        return self.monte_carlo_x(huehue, mode='3s', k=sade_k)
 
     def monte_carlo_9(self, huehue):
         if not self.sade_run:
@@ -745,7 +751,7 @@ class DE:
             sade_k = self.sade_ops.index(self.monte_carlo_9)
         self.sade_k = sade_k
 
-        self.monte_carlo_x(huehue, mode='9', k=sade_k)
+        return self.monte_carlo_x(huehue, mode='9', k=sade_k)
 
     def monte_carlo_9s(self, huehue):
         if not self.sade_run:
@@ -754,7 +760,7 @@ class DE:
             sade_k = self.sade_ops.index(self.monte_carlo_9s)
         self.sade_k = sade_k
 
-        self.monte_carlo_x(huehue, mode='9s', k=sade_k)
+        return self.monte_carlo_x(huehue, mode='9s', k=sade_k)
 
     def monte_carlo_x(self, huehue, mode, k):
         f, cr = self.get_f_cr()
@@ -769,13 +775,15 @@ class DE:
         _, cr = self.get_f_cr()
 
         self.trial.new_angles(t_angle)
-        self.trial.stage2_mc(n=1, temp=cr * 3.0, mode=mode)
+        evals = self.trial.stage2_mc(n=5, temp=cr * 3.0, mode=mode)
         self.trial.update_angle_from_pose()
 
         # self.trial.fix_bounds()
         self.trial.eval()
 
         self.selection(self.pop[huehue])
+
+        return evals
 
 # ########### RMSD operators
 
@@ -2856,8 +2864,8 @@ class DE:
                 for k in range(self.sade_n_ops):
                     probs += '%3.2f ' % self.sade_ops_probs[k]
 
-        string = "0 %8d %8.4f %8.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
-        data = (it,
+        string = "%8d %8d %8.4f %8.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
+        data = (self.spent_evals, it,
                 self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
                 rmsd, self.update_moment_of_inertia(), secs_per_iter, eta, cr, probs)
 

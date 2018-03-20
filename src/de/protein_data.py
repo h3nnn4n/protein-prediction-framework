@@ -303,8 +303,9 @@ class ProteinData:
 
             for i in range(n):
                 mover.apply(best)
-                mc.recover_low(best)
                 mc.reset(best)
+                if mc.lowest_score() < original:
+                    break
                 evals += 1
 
             mc.reset(self.pose)
