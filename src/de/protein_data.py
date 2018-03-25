@@ -300,12 +300,16 @@ class ProteinData:
             mc.set_temperature(temp)
 
             original = self.score
+            one_more = original is None
 
             for i in range(n):
                 mover.apply(best)
                 mc.reset(best)
                 if mc.lowest_score() < original:
-                    break
+                    if not one_more:
+                        break
+                    else:
+                        one_more = False
                 evals += 1
 
             mc.reset(self.pose)

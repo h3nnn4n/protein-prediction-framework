@@ -149,7 +149,7 @@ class DE:
         # Inner info
         self.mean = 0
         self.best_index = 0
-        self.best_score = None
+        self.best_score = float('inf')
 
         self.mean_last_improv = None
         self.mean_improv_value = 0
@@ -545,13 +545,13 @@ class DE:
 
         if self.stage0_init:
             print('Stage0 init')
-            self.log(it=-1)
-            for i in range(self.pop_size):
-                if random.random() < .1:
-                    self.pop[i].eval()
-                    self.pop[i].stage1_mc()
-                    self.pop[i].update_angle_from_pose()
-                    self.pop[i].eval()
+            # self.log(it=-1)
+            for p in self.pop:
+                p.eval()
+                p.stage1_mc()
+                p.update_angle_from_pose()
+                p.eval()
+            self.trial.eval()
         else:
             for p in self.pop:
                 p.eval()
@@ -2864,17 +2864,34 @@ class DE:
                 for k in range(self.sade_n_ops):
                     probs += '%3.2f ' % self.sade_ops_probs[k]
 
-        string = "%8d %8d %8.4f %8.4f %8.4f %8.4f %8.4f %8.4f %7.3f %8.3f  %s %s"
-        data = (self.spent_evals, it,
-                self.best_score, self.mean, self.update_diversity(), self.avg_rmsd(),
-                rmsd, self.update_moment_of_inertia(), secs_per_iter, eta, cr, probs)
+        string = ''
+
+        data = [('%8d', self.spent_evals),
+                ('%8d', it),
+                ('%8.4f', self.best_score),                 
+                ('%8.4f', self.mean),                       
+                ('%8.4f', self.update_diversity()),         
+                ('%8.4f', self.avg_rmsd()),                 
+                ('%8.4f', rmsd),                            
+                ('%8.4f', self.update_moment_of_inertia()), 
+                ('%7.3f', secs_per_iter),                   
+                ('%8.3f', eta),                             
+                ('%s', cr),
+                ('%s', probs)
+                ]
 
         # print(self.sade_success_memory)
         # print(self.sade_failure_memory)
 
-        self.stats.write((string + '\n') % data)
-        # if it % 100 == 0:
-        print(string % data)
+        for k, (a, b) in enumerate(data):
+            try:
+                string += a % b
+                string += ' '
+            except Exception:
+                print(k, a, b)
+
+        print(string)
+        self.stats.write(string + '\n')
 
         # print("%8.4f %8d %8.4f %8d" % (self.improv_value,
         #                                self.improv_iter_threshold - self.last_improv,
