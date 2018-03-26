@@ -34,6 +34,8 @@ if True:
             prefix = name[5:]
 
             stats_path = 'stats' + prefix
+            repack_path = 'repack' + prefix
+            ops_path = 'ops' + prefix
             parameters_path = 'parameters' + re.sub('.dat', '.yaml', prefix)
 
             base_name = prefix[2:6]
@@ -44,6 +46,12 @@ if True:
 
             os.rename(stats_path, base_name + '/' + stats_path)
             os.rename(parameters_path, base_name + '/' + parameters_path)
+
+            if os.path.exists(ops_path):
+                os.rename(ops_path, base_name + '/' + ops_path)
+
+            if os.path.exists(repack_path):
+                os.rename(repack_path, base_name + '/' + repack_path)
 
             for n in os.listdir():
                 if 'pdb' in n and prefix.split('.')[0] in n:
@@ -64,6 +72,8 @@ if True:
                     prefix = name[5:]
 
                     stats_path = 'stats' + prefix
+                    repack_path = 'repack' + prefix
+                    ops_path = 'ops' + prefix
                     parameters_path = 'parameters' + re.sub('.dat', '.yaml', prefix)
 
                     base_name = prefix[2:6]
@@ -84,6 +94,12 @@ if True:
 
                     os.rename(stats_path, p + '/' + stats_path)
                     os.rename(parameters_path, p + '/' + parameters_path)
+
+                    if os.path.exists(ops_path):
+                        os.rename(ops_path, p + '/' + ops_path)
+
+                    if os.path.exists(repack_path):
+                        os.rename(repack_path, p + '/' + repack_path)
 
                     if not os.path.exists(p + '/pdb'):
                         os.mkdir(p + '/pdb')
@@ -118,36 +134,51 @@ if True:
                 data = {}
                 data['best'] = []
                 data['mean'] = []
+                data['best_fxn'] = []
                 # data['dist'] = []
                 data['mdf'] = []
                 data['rmsd'] = []
+                data['rmsd_fxn'] = []
 
                 for case in cases:
-                    if 'stats' not in case:
-                        continue
+                    if 'stats' in case:
+                        with open(case, 'rt') as f:
+                            for l in f.readlines():
+                                line = l.rstrip().lstrip()
+                                tokens = re.sub("\s+", " ", line).split(' ')
 
-                    with open(case, 'rt') as f:
-                        for l in f.readlines():
-                            line = l.rstrip().lstrip()
-                            tokens = re.sub("\s+", " ", line).split(' ')
+                            if len(tokens) < 3:
+                                # print(tokens)
+                                continue
 
-                        if len(tokens) < 3:
-                            # print(tokens)
-                            continue
+                            best = float(tokens[2])
+                            mean = float(tokens[3])
+                            mdf = float(tokens[4])
+                            rmsd = float(tokens[6])
+                            # dist = float(tokens[4])
 
-                        best = float(tokens[2])
-                        mean = float(tokens[3])
-                        mdf = float(tokens[4])
-                        rmsd = float(tokens[6])
-                        # dist = float(tokens[4])
+                            data['best'].append(best)
+                            data['mean'].append(mean)
+                            # data['dist'].append(dist)
+                            data['mdf'].append(mdf)
+                            data['rmsd'].append(rmsd)
 
-                        data['best'].append(best)
-                        data['mean'].append(mean)
-                        # data['dist'].append(dist)
-                        data['mdf'].append(mdf)
-                        data['rmsd'].append(rmsd)
+                        # print(case, data['rmsd'][0])
+                    elif 'repack' in case:
+                        with open(case, 'rt') as f:
+                            for line in f.readlines():
+                                tokens = re.sub("\s+", " ", line.strip()).split(' ')
 
-                    # print(case, data['rmsd'][0])
+                                if 'scorefxn' in tokens[0]:
+                                    score = float(tokens[1])
+                                    # print('scorefxn', d)
+
+                                if 'rmsd_after' in tokens[0]:
+                                    rmsd = float(tokens[1])
+                                    # print('rmsd_after', d)
+
+                            data['rmsd_fxn'].append(rmsd)
+                            data['best_fxn'].append(score)
 
                 alldata[name] = data
                 raws[dname].append(name + '_raw.dat')
@@ -166,7 +197,8 @@ if True:
                             (np.median(data['best']), np.median(data['mean']), np.median(data['mdf']), np.median(data['rmsd'])))
 
                 os.chdir('..')
-            ps = ['best', 'mean', 'mdf', 'rmsd']
+
+            ps = ['best_fxn', 'best', 'mean', 'mdf', 'rmsd', 'rmsd_fxn']
 
             with open('all_data.dat', 'wt') as f:
                 for k, v in alldata.items():
