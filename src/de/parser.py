@@ -183,7 +183,9 @@ if True:
                 alldata[name] = data
                 raws[dname].append(name + '_raw.dat')
                 with open('../' + name + '_raw.dat', 'wt') as f:
-                    for i in range(len(data['best'])):
+                    w = min(map(len, [data[key] for key in data.keys()]))
+                    for i in range(w):
+
                         f.write('%f %f %f %f %f %f\n' % (data['best'][i], data['best_fxn'][i], data['mean'][i], data['mdf'][i], data['rmsd'][i], data['rmsd_fxn'][i]))
 
                 with open('../' + name + '_mean_std.dat', 'wt') as f:
