@@ -4,7 +4,7 @@ import re
 
 names = os.listdir()
 
-targets = ['all_best.dat', 'all_rmsd.dat']
+targets = ['all_best.dat', 'all_rmsd.dat', 'all_best_fxn.dat', 'all_rmsd_fxn.dat']
 
 data = {}
 keys = []
@@ -41,7 +41,7 @@ header = """\\begin{table}
       \hline"""
 
 tail = """  \end{tabular}
-  \caption{Comparison}
+  \caption{%s}
   \label{result}
 \end{table}"""
 
@@ -54,5 +54,6 @@ for key in keys:
                 print(v, end=' & ')
             else:
                 print(v, end=' \\\\ \hline\n')
-    print(tail)
+    caption = 'rmsd' if 'rmsd' in key else 'best'
+    print(tail % caption)
     print()
