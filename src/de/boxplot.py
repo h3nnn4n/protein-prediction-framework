@@ -17,7 +17,9 @@ def boxplot(target, names):
         data['best'] = []
         data['mean'] = []
         data['mdf'] = []
+        data['best_fxn'] = []
         data['rmsd'] = []
+        data['rmsd_fxn'] = []
 
         t = name
 
@@ -30,14 +32,18 @@ def boxplot(target, names):
                     continue
 
                 best = float(tokens[0])
-                mean = float(tokens[1])
-                mdf = float(tokens[2])
-                rmsd = float(tokens[3])
+                best_fxn = float(tokens[1])
+                mean = float(tokens[2])
+                mdf = float(tokens[3])
+                rmsd = float(tokens[4])
+                rmsd_fxn = float(tokens[5])
 
                 data['best'].append(best)
+                data['best_fxn'].append(best_fxn)
                 data['mean'].append(mean)
                 data['mdf'].append(mdf)
                 data['rmsd'].append(rmsd)
+                data['rmsd_fxn'].append(rmsd_fxn)
 
         alldata[name] = data
 
@@ -45,7 +51,7 @@ def boxplot(target, names):
     names = []
     keys = []
     for k, v in alldata.items():
-        x.append(v['best'])
+        x.append(v['best_fxn'])
         # x.append(v['rmsd'])
         names.append(k.split('.')[0][:-4])
         keys.append((k, k.split('.')[0][:-4]))
@@ -54,7 +60,7 @@ def boxplot(target, names):
 
     # print(alldata)
 
-    for mode in ['rmsd', 'best']:
+    for mode in ['rmsd_fxn', 'best_fxn']:
         for a, i in enumerate(keys):
             for b, j in enumerate(keys[a + 1:]):
                 p1 = alldata[i[0]][mode]
@@ -84,7 +90,7 @@ def boxplot(target, names):
     x = []
     names = []
     for k, v in alldata.items():
-        x.append(v['rmsd'])
+        x.append(v['rmsd_fxn'])
         # x.append(v['rmsd'])
         names.append(k.split('.')[0][:-4])
     names.sort()

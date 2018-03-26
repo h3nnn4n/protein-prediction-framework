@@ -4,7 +4,7 @@ import re
 
 names = os.listdir()
 
-targets = ['all_best.dat', 'all_rmsd.dat', 'all_best_fxn.dat', 'all_rmsd_fxn.dat']
+targets = ['all_best_fxn.dat', 'all_rmsd_fxn.dat']
 
 data = {}
 keys = []
