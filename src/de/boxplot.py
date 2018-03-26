@@ -50,6 +50,8 @@ def boxplot(target, names):
         names.append(k.split('.')[0][:-4])
         keys.append((k, k.split('.')[0][:-4]))
 
+    names.sort()
+
     # print(alldata)
 
     for mode in ['rmsd', 'best']:
@@ -85,6 +87,7 @@ def boxplot(target, names):
         x.append(v['rmsd'])
         # x.append(v['rmsd'])
         names.append(k.split('.')[0][:-4])
+    names.sort()
 
     fig, ax = plt.subplots()
 
