@@ -785,23 +785,13 @@ class DE:
         return self.monte_carlo_x(huehue, mode='shear', k=sade_k)
 
     def monte_carlo_x(self, huehue, mode, k):
-        f, cr = self.get_f_cr()
-
-        t_angle = []
-
-        for i in range(0, len(self.pop[huehue].angles)):
-            t_angle.append(self.pop[huehue].angles[i])
-
-        # self.pop[huehue].stage2_mc(n=1, temp=1.0)
-
         _, cr = self.get_f_cr()
 
-        self.trial.new_angles(t_angle)
-        evals = self.trial.stage2_mc(n=5, temp=cr * 3.0, mode=mode)
-        self.trial.update_angle_from_pose()
+        self.trial.pose.assign(self.pop[huehue].pose)
 
-        # self.trial.fix_bounds()
-        self.trial.eval()
+        evals = self.trial.stage2_mc(n=5, temp=cr * 3.0, mode=mode)
+
+        self.trial.update_angle_from_pose()
 
         self.selection(self.pop[huehue])
 
@@ -2557,15 +2547,23 @@ class DE:
                     self.pop[k] = self.trial
                     self.trial = t
 
-            if not found:
-                import sys
-                print('PANIC! Candidate not found!')
-                sys.exit()
+            # if not found:
+                # import sys
+                # print('PANIC! Candidate not found!')
+                # sys.exit()
 
-            # if self.trial is candidate:
+            # if self.pop[k] is candidate:
                 # import sys
                 # print('PANIC! Found duplicated reference in population')
                 # sys.exit()
+
+            # for i in range(self.pop_size):
+                # for j in range(i + 1, self.pop_size):
+                    # if self.pop[i].pose is self.pop[j].pose or self.pop[i] is self.pop[j] or self.pop[i] is self.trial or self.pop[i].pose is self.trial.pose:
+                        # import sys
+                        # print('PANIC! Found duplicated guy in population')
+                        # print(i, j)
+                        # sys.exit()
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
@@ -2890,14 +2888,14 @@ class DE:
 
         data = [('%8d', self.spent_evals),
                 ('%8d', it),
-                ('%8.4f', self.best_score),                 
-                ('%8.4f', self.mean),                       
-                ('%8.4f', self.update_diversity()),         
-                ('%8.4f', self.avg_rmsd()),                 
-                ('%8.4f', rmsd),                            
-                ('%8.4f', self.update_moment_of_inertia()), 
-                ('%7.3f', secs_per_iter),                   
-                ('%8.3f', eta),                             
+                ('%8.4f', self.best_score),
+                ('%8.4f', self.mean),
+                ('%8.4f', self.update_diversity()),
+                ('%8.4f', self.avg_rmsd()),
+                ('%8.4f', rmsd),
+                ('%8.4f', self.update_moment_of_inertia()),
+                ('%7.3f', secs_per_iter),
+                ('%8.3f', eta),
                 ('%s', cr),
                 ('%s', probs)
                 ]
