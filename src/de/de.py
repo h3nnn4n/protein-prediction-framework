@@ -236,6 +236,10 @@ class DE:
                 self.sade_ops += [self.monte_carlo_9]
             elif op == "monte_carlo_9s":
                 self.sade_ops += [self.monte_carlo_9s]
+            elif op == "monte_carlo_small":
+                self.sade_ops += [self.monte_carlo_small]
+            elif op == "monte_carlo_shear":
+                self.sade_ops += [self.monte_carlo_shear]
 
                 # 'best1bin_lsh'
                 # 'best1exp_global'
@@ -761,6 +765,24 @@ class DE:
         self.sade_k = sade_k
 
         return self.monte_carlo_x(huehue, mode='9s', k=sade_k)
+
+    def monte_carlo_small(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_small)
+        self.sade_k = sade_k
+
+        return self.monte_carlo_x(huehue, mode='small', k=sade_k)
+
+    def monte_carlo_shear(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_shear)
+        self.sade_k = sade_k
+
+        return self.monte_carlo_x(huehue, mode='shear', k=sade_k)
 
     def monte_carlo_x(self, huehue, mode, k):
         f, cr = self.get_f_cr()

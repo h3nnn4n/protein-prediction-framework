@@ -165,6 +165,12 @@ class RosettaPack():
     def get_shear_mover(self):
         return self.shearmover
 
+    def get_new_small_mover(self):
+        return pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, 2.0, 1)
+
+    def get_new_shear_mover(self):
+        return pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, 2.0, 1)
+
     def get_9mer(self):
         return self.mover_9mer
 
