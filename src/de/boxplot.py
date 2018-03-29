@@ -71,7 +71,7 @@ def boxplot(target, names):
                 w = scipy.stats.wilcoxon(p1[:ml], p2[:ml])[1]
 
                 if w < 0.05:
-                    print("%8s %26s %26s %8.5f %8.5f %8.5f %8d" % (mode, i[1], j[1], w, np.mean(p1[:ml]), np.mean(p2[:ml]), ml))
+                    print("%8s %26s %26s %8.5f %8.3f %8.3f %8d" % (mode, i[1], j[1], w, np.mean(p1[:ml]), np.mean(p2[:ml]), ml))
 
     fig, ax = plt.subplots()
 
