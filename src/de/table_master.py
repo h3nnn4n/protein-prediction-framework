@@ -70,6 +70,8 @@ p1ail = """ 1AIL    & DE$_{C_1}                 $& 357.84              & 25.00  
 
 transl = {'1zdd': p1zdd, '1crn': p1crn, '1enh': p1enh, '1ail': p1ail}
 
+keys = sorted(data.keys())
+
 
 for protein in proteins:
     br = float('inf')
@@ -97,7 +99,8 @@ for protein in proteins:
                 br = v['rmsd_fxn']['best']
                 brn = k
 
-    for k, v in data.items():
+    for k in keys:
+        v = data[k]
         if protein in k:
             ss = [("& %s &", k[5:].replace('_', '-')),
                   ("_%.2f#&", v['best_fxn']['best']),
