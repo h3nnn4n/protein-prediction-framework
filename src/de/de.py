@@ -40,7 +40,9 @@ class DE:
         # ETA
         self.buffer_size = 10
         self.time_buffer = [0 for _ in range(self.buffer_size)]
+        self.spent_eval_buffer = [0 for _ in range(self.buffer_size)]
         self.last_time = 0
+        self.last_spent_evals = 0
         self.time_pivot = 0
 
         # Other stuff
@@ -48,6 +50,7 @@ class DE:
         self.coil_only = False
 
         self.mode = None
+        self.stop_condition = None
 
         self.failsafe_verbose = False
 
@@ -71,7 +74,7 @@ class DE:
         self.ops_stats = None
 
         self.spent_evals = 0
-        self.maximum_evals = 500000
+        self.max_evals = 500000
 
         # Pop data dump
         # nothing
@@ -236,6 +239,10 @@ class DE:
                 self.sade_ops += [self.monte_carlo_9]
             elif op == "monte_carlo_9s":
                 self.sade_ops += [self.monte_carlo_9s]
+            elif op == "monte_carlo_small":
+                self.sade_ops += [self.monte_carlo_small]
+            elif op == "monte_carlo_shear":
+                self.sade_ops += [self.monte_carlo_shear]
 
                 # 'best1bin_lsh'
                 # 'best1exp_global'
@@ -321,7 +328,7 @@ class DE:
                 for k in range(self.sade_n_ops):
                     s_s = sum([self.sade_success_memory[i][k] for i in range(self.sade_lp)])
                     s_f = sum([self.sade_failure_memory[i][k] for i in range(self.sade_lp)])
-                    if s_s + s_f > 0:
+                    if s_s - s_f > 0:
                         self.sade_ops_probs[k] = (s_s - s_f) + 0.01
                     else:
                         self.sade_ops_probs[k] = 0.01
@@ -350,6 +357,7 @@ class DE:
             t_values = [self.sade_ops_probs[i] for i in trial]
 
             w = 0
+            i = None
             for k, v in zip(trial, t_values):
                 # print(k, v, end='')
                 if v > w:
@@ -358,6 +366,11 @@ class DE:
                     # print(i)
                 # else:
                     # print()
+
+            if i is None:
+                print('rip')
+                print(trial, t_values)
+                print(self.sade_ops_probs)
 
             # if self.sade_lp_left <= 0:
                 # print(i, self.sade_ops_probs[i])
@@ -388,6 +401,8 @@ class DE:
             f.write('c_rate: %f\n' % (self.c_rate))
             f.write('f_factor: %f\n' % (self.f_factor))
             f.write('max_iters: %d\n' % (self.max_iters))
+            f.write('max_evals: %d\n' % (self.max_evals))
+            f.write('stop_condition: %s\n' % (self.stop_condition))
             f.write('stage0_init: %d\n' % self.stage0_init)
             f.write('stage2_interval: %d\n' % self.stage2_interval)
             f.write('stage2_all_interval: %d\n' % self.stage2_all_interval)
@@ -568,9 +583,12 @@ class DE:
         self.start_time = time.time()
         self.last_time = self.start_time
 
-        it = 0
-        while self.maximum_evals > self.spent_evals or self.mode == 'marathon':
-            if self.sade_run and (self.sade_reinit_interval > 0 and it % self.sade_reinit_interval == 0) and \
+        self.stop_at_eval = 'evals' in self.stop_condition
+        self.stop_at_iter = 'iters' in self.stop_condition
+
+        self.it = 0
+        while (self.spent_evals < self.max_evals and self.stop_at_eval) or (self.it < self.max_iters and self.stop_at_iter) or self.mode == 'marathon':
+            if self.sade_run and (self.sade_reinit_interval > 0 and self.it % self.sade_reinit_interval == 0) and \
                self.energy_function not in ['cascade']:
                 self.sade_reinit()
 
@@ -578,15 +596,14 @@ class DE:
                 self.sade_update_parameters()
                 self.sade_update_ops()
 
-            it += 1
-            self.it = it
+            self.it += 1
 
             self.update_score_function()
 
-            if self.do_lsh and it % self.change_interval == 0:
+            if self.do_lsh and self.it % self.change_interval == 0:
                 self.change_hash()
 
-            if self.do_lsh and it % self.update_interval == 0:
+            if self.do_lsh and self.it % self.update_interval == 0:
                 self.apply_hash()
 
             for i in range(self.pop_size):
@@ -617,7 +634,7 @@ class DE:
                                 self.pop[i].update_angle_from_pose()
                                 self.pop[i].eval()
 
-            if it % 50 == 0 and self.avg_rmsd() < self.reset_rmsd_trigger:
+            if self.it % 50 == 0 and self.avg_rmsd() < self.reset_rmsd_trigger:
                 print('rmsd_reset')
                 for i in range(self.pop_size):
                     if random.random() < self.reset_rmsd_percent and i != self.best_index:
@@ -637,7 +654,7 @@ class DE:
                         self.pop[i].eval()
                 self.update_diversity()
 
-            if (self.partial_reset > 0 and it % self.partial_reset == 0 and it > 0):
+            if (self.partial_reset > 0 and self.it % self.partial_reset == 0 and self.it > 0):
                 print('Partial reset')
                 for i in range(self.pop_size):
                     if random.random() < .15 and i != self.best_index:
@@ -647,13 +664,13 @@ class DE:
                         self.pop[i].eval()
                 self.update_diversity()
 
-            if self.stage2_interval > 0 and it % self.stage2_interval == 0 and it > 0:
+            if self.stage2_interval > 0 and self.it % self.stage2_interval == 0 and self.it > 0:
                 print('LS')
                 self.pop[self.best_index].stage2_mc()
                 self.pop[self.best_index].update_angle_from_pose()
                 self.pop[self.best_index].eval()
 
-            if self.stage2_all_interval > 0 and it % self.stage2_all_interval == 0 and it > 0:
+            if self.stage2_all_interval > 0 and self.it % self.stage2_all_interval == 0 and self.it > 0:
                 print('NINJA MOVE')
                 self.rosetta_pack.loop_modeling(self.pop[self.best_index].pose)
                 self.pop[self.best_index].update_angle_from_pose()
@@ -672,7 +689,7 @@ class DE:
             self.update_mean()
             self.update_threshold()
 
-            if self.comm is not None and self.comm.size > 1 and self.island_interval > 0 and it % self.island_interval == 0 and it > 0:
+            if self.comm is not None and self.comm.size > 1 and self.island_interval > 0 and self.it % self.island_interval == 0 and self.it > 0:
                 print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
                 new_guy = self.comm.migration(self.get_best())
                 if new_guy is not None:
@@ -682,13 +699,13 @@ class DE:
                     self.pop[0].eval()
                     # print('Ha! migration')
 
-            if False and it % 1000 == 0:
+            if False and self.it % 1000 == 0:
                 self.dump_pbd_best(it)
 
-            # if it % 250 == 0 or it == 1:
+            # if self.it % 250 == 0 or self.it == 1:
                 # self.dump_pop_data()
 
-            if self.log_interval > 0 and it % self.log_interval == 0:
+            if self.log_interval > 0 and self.it % self.log_interval == 0:
                 # self.pop[0].print_angles()
                 self.log()
                 self.stats.flush()
@@ -702,13 +719,13 @@ class DE:
         # end_time = time.time()
         # print("Processing took %f seconds" % (end_time - start_time))
 
-        self.dump_pbd_best(it)
+        self.dump_pbd_best(self.it)
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
         oldscore = self.best_score
         score = self.pop[self.best_index].repack()
 
-        name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % it) + self.name_suffix + ".pdb"
+        name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % self.it) + self.name_suffix + ".pdb"
         self.pop[self.best_index].repacked.dump_pdb(name)
 
         name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
@@ -762,24 +779,32 @@ class DE:
 
         return self.monte_carlo_x(huehue, mode='9s', k=sade_k)
 
+    def monte_carlo_small(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_small)
+        self.sade_k = sade_k
+
+        return self.monte_carlo_x(huehue, mode='small', k=sade_k)
+
+    def monte_carlo_shear(self, huehue):
+        if not self.sade_run:
+            sade_k = 0
+        else:
+            sade_k = self.sade_ops.index(self.monte_carlo_shear)
+        self.sade_k = sade_k
+
+        return self.monte_carlo_x(huehue, mode='shear', k=sade_k)
+
     def monte_carlo_x(self, huehue, mode, k):
-        f, cr = self.get_f_cr()
-
-        t_angle = []
-
-        for i in range(0, len(self.pop[huehue].angles)):
-            t_angle.append(self.pop[huehue].angles[i])
-
-        # self.pop[huehue].stage2_mc(n=1, temp=1.0)
-
         _, cr = self.get_f_cr()
 
-        self.trial.new_angles(t_angle)
-        evals = self.trial.stage2_mc(n=5, temp=cr * 3.0, mode=mode)
-        self.trial.update_angle_from_pose()
+        self.trial.pose.assign(self.pop[huehue].pose)
 
-        # self.trial.fix_bounds()
-        self.trial.eval()
+        evals = self.trial.stage2_mc(n=5, temp=cr * 3.0, mode=mode)
+
+        self.trial.update_angle_from_pose()
 
         self.selection(self.pop[huehue])
 
@@ -2535,15 +2560,23 @@ class DE:
                     self.pop[k] = self.trial
                     self.trial = t
 
-            if not found:
-                import sys
-                print('PANIC! Candidate not found!')
-                sys.exit()
+            # if not found:
+                # import sys
+                # print('PANIC! Candidate not found!')
+                # sys.exit()
 
-            # if self.trial is candidate:
+            # if self.pop[k] is candidate:
                 # import sys
                 # print('PANIC! Found duplicated reference in population')
                 # sys.exit()
+
+            # for i in range(self.pop_size):
+                # for j in range(i + 1, self.pop_size):
+                    # if self.pop[i].pose is self.pop[j].pose or self.pop[i] is self.pop[j] or self.pop[i] is self.trial or self.pop[i].pose is self.trial.pose:
+                        # import sys
+                        # print('PANIC! Found duplicated guy in population')
+                        # print(i, j)
+                        # sys.exit()
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
@@ -2778,7 +2811,7 @@ class DE:
         pass
 
     def dump_pbd_best(self, it):
-        name = self.rosetta_pack.protein_loader.original + '/' + ("best_%05d_" % it) + self.name_suffix + ".pdb"
+        name = self.rosetta_pack.protein_loader.original + '/' + ("best_%05d_" % self.it) + self.name_suffix + ".pdb"
         self.pop[self.best_index].pose.dump_pdb(name)
 
     def avg_distance(self):
@@ -2832,10 +2865,15 @@ class DE:
 
         if it < 1:
             secs_per_iter = 0
-            eta = 0
+            secs_per_eval = 0
+            eta_evals = 0
+            eta_iters = 0
         else:
             now = time.time()
             dt = now - self.last_time
+            de = (self.spent_evals - self.last_spent_evals)
+
+            self.spent_eval_buffer[self.time_pivot % self.buffer_size] = de
 
             if self.time_pivot >= self.buffer_size:
                 self.time_buffer[self.time_pivot % self.buffer_size] = dt
@@ -2844,13 +2882,40 @@ class DE:
                     self.time_buffer[i] = dt
 
             secs_per_iter = np.mean(self.time_buffer) / self.log_interval
+            secs_per_eval = sum(self.time_buffer) / sum(self.spent_eval_buffer)
+            eta_evals = (self.max_evals - self.spent_evals) * secs_per_eval
+
             if self.mode == 'marathon':
-                eta = (self.max_iters) * secs_per_iter
+                eta_iters = self.max_iters * secs_per_iter
             else:
-                eta = (self.max_iters - it) * secs_per_iter
+                eta_iters = (self.max_iters - it) * secs_per_iter
 
             self.last_time = now
+            self.last_spent_evals = self.spent_evals
             self.time_pivot += 1
+
+        eta = None
+
+        # if it >= 1:
+            # if self.stop_at_eval and not self.stop_at_iter:
+                # eta = eta_evals
+                # speed = secs_per_eval
+            # elif self.stop_at_iter and not self.stop_at_eval:
+                # eta = eta_iters
+                # speed = secs_per_iter
+            # elif self.stop_at_eval and self.stop_at_iter:
+                # eta = min(eta_evals, eta_iters)
+                # if eta_evals < eta_iters:
+                    # eta = eta_evals
+                    # speed = 0
+                # else:
+                    # eta = eta_iters
+                    # speed = secs_per_iter
+            # else:
+                # pass
+        # else:
+            # speed = 0
+            # eta = 0
 
         cr = ''  # '%3.2f' % self.c_rate
         probs = ''
@@ -2868,14 +2933,16 @@ class DE:
 
         data = [('%8d', self.spent_evals),
                 ('%8d', it),
-                ('%8.4f', self.best_score),                 
-                ('%8.4f', self.mean),                       
-                ('%8.4f', self.update_diversity()),         
-                ('%8.4f', self.avg_rmsd()),                 
-                ('%8.4f', rmsd),                            
-                ('%8.4f', self.update_moment_of_inertia()), 
-                ('%7.3f', secs_per_iter),                   
-                ('%8.3f', eta),                             
+                ('%8.4f', self.best_score),
+                ('%8.4f', self.mean),
+                ('%8.4f', self.update_diversity()),
+                ('%8.4f', self.avg_rmsd()),
+                ('%8.4f', rmsd),
+                ('%8.4f', self.update_moment_of_inertia()),
+                ('%8.5f', secs_per_eval),
+                ('%8.2f', eta_evals),
+                ('%8.5f', secs_per_iter),
+                ('%8.2f', eta_iters),
                 ('%s', cr),
                 ('%s', probs)
                 ]

@@ -9,6 +9,8 @@ class ConfigLoader:
         self.options['pname'] = '1crn'
         self.options['pop_size'] = 100
         self.options['max_iters'] = 50
+        self.options['max_evals'] = 5000
+        self.options['stop_condition'] = 'evals iters'
         self.options['c_rate'] = 1.0
         self.options['f_factor'] = 0.5
         self.options['mode'] = 'normal'
@@ -37,7 +39,7 @@ class ConfigLoader:
         self.options['sade_run'] = False
         self.options['sade_lp'] = 50
         self.options['sade_reinit_interval'] = 1000
-        self.options['sade_selection'] = 'tournament'
+        self.options['sade_selection'] = 'roulette'
 
         self.options['do_crowding'] = False
         self.options['do_rmsd_crowding'] = False

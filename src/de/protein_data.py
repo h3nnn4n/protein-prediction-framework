@@ -16,21 +16,29 @@ class ProteinData:
         self.mover3s = None
         self.mover9 = None
         self.mover9s = None
+        self.moversmall = None
+        self.movershear = None
 
         self.mc3 = None
         self.mc3s = None
         self.mc9 = None
         self.mc9s = None
+        self.mcsmall = None
+        self.mcshear = None
 
-        self.seq3 = None
-        self.seq3s = None
-        self.seq9 = None
-        self.seq9s = None
+        # self.seq3 = None
+        # self.seq3s = None
+        # self.seq9 = None
+        # self.seq9s = None
+        # self.seqsmall = None
+        # self.seqshear = None
 
         self.trial3 = None
         self.trial3s = None
         self.trial9 = None
         self.trial9s = None
+        self.trialsmall = None
+        self.trialshear = None
 
         if allatom:
             self.rosetta_pack.get_allatom_switch().apply(self.pose)
@@ -232,7 +240,6 @@ class ProteinData:
         folding.apply(best)
 
         mc.recover_low(best)
-        mc.reset(best)
 
         if allatom:
             pd.get_allatom_switch().apply(best)
@@ -243,36 +250,45 @@ class ProteinData:
         allatom = self.allatom
 
         pd = self.rosetta_pack
-        pd.set_starting_pose(self.angles)
+        # pd.set_starting_pose(self.angles)
 
-        best = self.pose
         score = pd.get_score_function(self.score_function_name)
 
         r = None
         if allatom:
-            r = pd.get_sidechain_recover()(best)
-            pd.get_centroid_switch().apply(best)
+            r = pd.get_sidechain_recover()(self.pose)
+            pd.get_centroid_switch().apply(self.pose)
 
         if mode == '3':
             if self.mc3 is None:
-                self.mc3 = pd.get_new_mc(best, score, temp)
+                self.mc3 = pd.get_new_mc(self.pose, score, temp)
                 self.mover3 = pd.get_3mer()
                 self.trial3 = pd.get_new_trial_mover(self.mover3, self.mc3)
         elif mode == '3s':
             if self.mc3s is None:
-                self.mc3s = pd.get_new_mc(best, score, temp)
+                self.mc3s = pd.get_new_mc(self.pose, score, temp)
                 self.mover3s = pd.get_3mer_smooth()
                 self.trial3s = pd.get_new_trial_mover(self.mover3s, self.mc3s)
         elif mode == '9':
             if self.mc9 is None:
-                self.mc9 = pd.get_new_mc(best, score, temp)
+                self.mc9 = pd.get_new_mc(self.pose, score, temp)
                 self.mover9 = pd.get_9mer()
                 self.trial9 = pd.get_new_trial_mover(self.mover9, self.mc9)
         elif mode == '9s':
             if self.mc9s is None:
-                self.mc9s = pd.get_new_mc(best, score, temp)
+                self.mc9s = pd.get_new_mc(self.pose, score, temp)
                 self.mover9s = pd.get_9mer_smooth()
                 self.trial9s = pd.get_new_trial_mover(self.mover9s, self.mc9s)
+        elif mode == 'small':
+            if self.mcsmall is None:
+                self.mcsmall = pd.get_new_mc(self.pose, score, temp)
+                self.moversmall = pd.get_new_small_mover()
+                self.trialsmall = pd.get_new_trial_mover(self.moversmall, self.mcsmall)
+        elif mode == 'shear':
+            if self.mcshear is None:
+                self.mcshear = pd.get_new_mc(self.pose, score, temp)
+                self.movershear = pd.get_new_shear_mover()
+                self.trialshear = pd.get_new_trial_mover(self.movershear, self.mcshear)
 
         mover = None
         mc = None
@@ -282,48 +298,52 @@ class ProteinData:
         if True:
             if mode == '3':
                 mc = self.mc3
-                mover = self.seq3
+                # mover = self.seq3
                 mover = self.trial3
             elif mode == '3s':
                 mc = self.mc3s
-                mover = self.seq3s
+                # mover = self.seq3s
                 mover = self.trial3s
             elif mode == '9':
                 mc = self.mc9
-                mover = self.seq9
+                # mover = self.seq9
                 mover = self.trial9
             elif mode == '9s':
                 mc = self.mc9s
-                mover = self.seq9s
+                # mover = self.seq9s
                 mover = self.trial9s
+            elif mode == 'small':
+                mc = self.mcsmall
+                # mover = self.seqsmall
+                mover = self.trialsmall
+            elif mode == 'shear':
+                mc = self.mcshear
+                # mover = self.seqshear
+                mover = self.trialshear
 
             mc.set_temperature(temp)
+            mc.reset(self.pose)
 
             original = self.score
             one_more = original is None
 
             for i in range(n):
-                mover.apply(best)
-                mc.reset(best)
-                if mc.lowest_score() < original:
+                mover.apply(self.pose)
+                evals += 1
+                if self.pose.energies().total_energy() < original:
                     if not one_more:
                         break
                     else:
                         one_more = False
-                evals += 1
 
-            mc.reset(self.pose)
+            mc.recover_low(self.pose)
 
-        # else:
-            # trial = pd.get_new_trial_mover(seq, mc)
-
-            # folding = pd.get_new_rep_mover(trial, n)
-            # folding.apply(best)
+        self.score = self.pose.energies().total_energy()
 
         if allatom:
-            pd.get_allatom_switch().apply(best)
-            r.apply(best)
-            pd.get_packer().apply(best)
+            pd.get_allatom_switch().apply(self.pose)
+            r.apply(self.pose)
+            pd.get_packer().apply(self.pose)
 
         return evals
 
