@@ -1,6 +1,3 @@
-#!/usr/bin/python3.5
-# -*- coding: utf-8 -*-
-
 import re
 import os.path
 import math
@@ -137,11 +134,14 @@ if __name__ == "__main__":
     rama = Ramachandran()
     p1 = "/home/h3nnn4n/PyRosetta4.Release.python35.linux.release-147/setup/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
     p2 = "/usr/local/lib/python3.5/dist-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
+    p3 = "/usr/local/lib/python3.6/site-packages/pyrosetta-2018.22+release.99b36feae43-py3.6-macosx-10.13-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
 
     if os.path.exists(p1):
         rama.load(path=p1)
-    else:
+    elif os.path.exists(p2):
         rama.load(path=p2)
+    else:
+        rama.load(path=p3)
 
     rama.process()
 

@@ -57,11 +57,15 @@ class RosettaPack():
              "rama/shapovalov/kappa75/all.ramaProb"
         p2 = "/usr/lib/python3.5/site-packages/pyrosetta-4.0-py3.5-linux-x86_64.egg/pyrosetta/database/scoring/score_functions/rama/s" + \
              "hapovalov/kappa75/all.ramaProb"
+        p3 = "/usr/local/lib/python3.6/site-packages/pyrosetta-2018.22+release.99b36feae43-py3.6-macosx-10.13-x86_64.egg/pyrosetta/da" + \
+             "tabase/scoring/score_functions/rama/shapovalov/kappa75/all.ramaProb"
 
         if os.path.exists(p1):
             self.ramachandran.load(path=p1)
-        else:
+        elif os.path.exists(p2):
             self.ramachandran.load(path=p2)
+        else:
+            self.ramachandran.load(path=p3)
 
         self.ramachandran.process()
 
@@ -103,7 +107,8 @@ class RosettaPack():
 
         self.smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, temp, n_moves)
         self.shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, temp, n_moves)
-        self.minmover = pyrosetta.rosetta.protocols.simple_moves.MinMover()
+        #self.minmover = pyrosetta.rosetta.protocols.simple_moves.MinMover()
+        self.minmover = None  # pyrosetta.rosetta.protocols.simple_moves.MinMover()
 
         cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
 
@@ -120,12 +125,12 @@ class RosettaPack():
         self.task_pack = pyrosetta.standard_packer_task(self.pose)
         self.task_pack.restrict_to_repacking()
         self.task_pack.or_include_current(True)
-        self.pack_mover = pyrosetta.rosetta.protocols.simple_moves.PackRotamersMover(self.scorefxn, self.task_pack)
+        #self.pack_mover = pyrosetta.rosetta.protocols.simple_moves.PackRotamersMover(self.scorefxn, self.task_pack)
 
         self.fast_relax = pyrosetta.rosetta.protocols.relax.FastRelax(self.scorefxn)
 
-        self.minmover.movemap(self.movemap)
-        self.minmover.score_function(self.scorefxn)
+        #self.minmover.movemap(self.movemap)
+        #self.minmover.score_function(self.scorefxn)
 
         self.mc = pyrosetta.MonteCarlo(self.pose, self.get_score_function('score0'), 2.0)
 
@@ -199,7 +204,8 @@ class RosettaPack():
         return pyrosetta.rosetta.protocols.moves.RepeatMover(trial, n)
 
     def get_packer(self):
-        return self.pack_mover
+        #return self.pack_mover
+        return None
 
     def get_fast_relax(self):
         return self.fast_relax
