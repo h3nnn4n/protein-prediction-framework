@@ -77,41 +77,44 @@ def boxplot(target, names):
                     else:
                         print("%8s %35s %35s %8.5f %8.3f %8.3f %8d" % (mode, j[1], i[1], w, b, a, ml))
 
-    fig, ax = plt.subplots()
+    try:
+        fig, ax = plt.subplots()
 
-    # ax.set_title('1ZDD Boxplot for best Energy')
-    # ax.set_xlabel('xlabel')
-    ax.set_ylabel('Energy')
+        # ax.set_title('1ZDD Boxplot for best Energy')
+        # ax.set_xlabel('xlabel')
+        ax.set_ylabel('Energy')
 
-    ax.boxplot(x)
+        ax.boxplot(x)
 
-    xtickNames = plt.setp(ax, xticklabels=np.repeat(names, 1))
-    plt.setp(xtickNames, rotation=90, fontsize=10)
-    plt.tight_layout()
+        xtickNames = plt.setp(ax, xticklabels=np.repeat(names, 1))
+        plt.setp(xtickNames, rotation=90, fontsize=10)
+        plt.tight_layout()
 
-    plt.savefig(target + '_energy_boxplot.png')
+        plt.savefig(target + '_energy_boxplot.png')
 
-    x = []
-    names = []
-    for k, v in alldata.items():
-        x.append(v['rmsd_fxn'])
-        # x.append(v['rmsd'])
-        names.append(k.split('.')[0][:-4])
-    names.sort()
+        x = []
+        names = []
+        for k, v in alldata.items():
+            x.append(v['rmsd_fxn'])
+            # x.append(v['rmsd'])
+            names.append(k.split('.')[0][:-4])
+        names.sort()
 
-    fig, ax = plt.subplots()
+        fig, ax = plt.subplots()
 
-    # ax.set_title('1ZDD Boxplot for best RMSD')
-    # ax.set_xlabel('xlabel')
-    ax.set_ylabel('RMSD')
+        # ax.set_title('1ZDD Boxplot for best RMSD')
+        # ax.set_xlabel('xlabel')
+        ax.set_ylabel('RMSD')
 
-    ax.boxplot(x)
+        ax.boxplot(x)
 
-    xtickNames = plt.setp(ax, xticklabels=np.repeat(names, 1))
-    plt.setp(xtickNames, rotation=90, fontsize=10)
-    plt.tight_layout()
+        xtickNames = plt.setp(ax, xticklabels=np.repeat(names, 1))
+        plt.setp(xtickNames, rotation=90, fontsize=10)
+        plt.tight_layout()
 
-    plt.savefig(target + '_rmsd_boxplot.png')
+        plt.savefig(target + '_rmsd_boxplot.png')
+    except Exception:
+        pass
 
 
 if __name__ == '__main__':
