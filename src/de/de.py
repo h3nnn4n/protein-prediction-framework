@@ -719,6 +719,7 @@ class DE:
         # end_time = time.time()
         # print("Processing took %f seconds" % (end_time - start_time))
 
+        self.log()
         self.dump_pbd_best(self.it)
 
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
