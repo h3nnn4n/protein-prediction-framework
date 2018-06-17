@@ -731,20 +731,31 @@ class DE:
 
         repack_name = name
 
-        name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
-        with open(name, 'w') as f:
-            f.write('score:       %12.4f\n' % oldscore)
-            f.write('scorefxn:    %12.4f\n' % score)
-            f.write('rmsd_after:  %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
-            f.write('rmsd_before: %12.4f\n' % rmsd)
-            f.write('rmsd_change: %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
-
         tm_before = self.pop[self.best_index].run_tmscore()
         self.rosetta_pack.run_tmscore(name=repack_name)
         tm_after = self.rosetta_pack.get_tmscore()
 
-        print(tm_before)
-        print(tm_after)
+        name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
+        with open(name, 'w') as f:
+            f.write('score:              %12.4f\n' % oldscore)
+            f.write('scorefxn:           %12.4f\n' % score)
+            f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
+            f.write('rmsd_before:        %12.4f\n' % rmsd)
+            f.write('rmsd_change:        %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
+            f.write('tm_score_before:    %12.4f\n' % tm_before['tm_score'])
+            f.write('maxsub_before:      %12.4f\n' % tm_before['maxsub'])
+            f.write('gdt_ts_before:      %12.4f\n' % tm_before['gdt_ts'][0])
+            f.write('gdt_ha_before:      %12.4f\n' % tm_before['gdt_ha'][0])
+            f.write('tm_score_after:     %12.4f\n' % tm_after['tm_score'])
+            f.write('maxsub_after:       %12.4f\n' % tm_after['maxsub'])
+            f.write('gdt_ts_after:       %12.4f\n' % tm_after['gdt_ts'][0])
+            f.write('gdt_ha_after:       %12.4f\n' % tm_after['gdt_ha'][0])
+            f.write('tm_score_change:    %12.4f\n' % (tm_before['tm_score'] - tm_after['tm_score']))
+            f.write('maxsub_change:      %12.4f\n' % (tm_before['maxsub'] - tm_after['maxsub']))
+            f.write('gdt_ts_change:      %12.4f\n' % (tm_before['gdt_ts'][0] - tm_after['gdt_ts'][0]))
+            f.write('gdt_ha_change:      %12.4f\n' % (tm_before['gdt_ha'][0] - tm_after['gdt_ha'][0]))
+            f.write('gdt_ts_info_before: %12.4f\n' % tm_before['gdt_ts'][1])
+            f.write('gdt_ha_info_after:  %12.4f\n' % tm_after['gdt_ha'][1])
 
     def print_hash(self):
         for n, i in enumerate(self.hash_values):
