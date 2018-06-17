@@ -158,6 +158,9 @@ class RosettaPack():
             else:
                 return pyrosetta.rosetta.core.scoring.CA_rmsd(pose, pose2)
 
+    def get_native(self):
+        return self.native
+
     def get_sidechain_recover(self):
         return pyrosetta.rosetta.protocols.simple_moves.ReturnSidechainMover
 
