@@ -1,0 +1,3 @@
+[submodule "src/external/TMscore.py"]
+	path = src/external/TMscore.py
+	url = https://github.com/h3nnn4n/TMscore.py
