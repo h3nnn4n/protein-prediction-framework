@@ -1,3 +1,6 @@
 [submodule "src/external/TMscore.py"]
 	path = src/external/TMscore.py
 	url = https://github.com/h3nnn4n/TMscore.py
+[submodule "src/external/Ramachandran-Angle-Probability.py"]
+	path = src/external/ramachandran
+	url = http://github.com/h3nnn4n/Ramachandran-Angle-Probability.py
