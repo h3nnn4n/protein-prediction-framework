@@ -737,6 +737,8 @@ class DE:
             f.write('rmsd_before: %12.4f\n' % rmsd)
             f.write('rmsd_change: %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
 
+        self.pop[self.best_index].run_tmscore()
+
     def print_hash(self):
         for n, i in enumerate(self.hash_values):
             if len(i) > 0:

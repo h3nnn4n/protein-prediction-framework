@@ -6,6 +6,7 @@ import datetime
 import string
 import math
 import bounds
+import uuid
 import protein_loader
 import os
 
@@ -13,6 +14,7 @@ sys.path.append('../external')
 
 import ramachandran.src.ramachandran as rama
 import stride.src.stride as stride_
+import tmscore.src.TMscore as tmscore
 
 
 INIT = False
@@ -71,6 +73,8 @@ class RosettaPack():
 
         self.stride = stride_.Stride()
         self.stride.change_path("/home/h3nnn4n/Downloads/stride")
+
+        self.tmscore = tmscore.TMscore(path='../external/tmscore/src/TMscore')
 
         self.fragset3 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(3)
         self.fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
@@ -160,6 +164,12 @@ class RosettaPack():
 
     def get_native(self):
         return self.native
+
+    def run_tmscore(self, pose=None):
+        name = self.dump_tmp()
+        self.tmscore(self.native_path, name)
+        os.remove(name)
+        self.tmscore.print_info()
 
     def get_sidechain_recover(self):
         return pyrosetta.rosetta.protocols.simple_moves.ReturnSidechainMover
@@ -339,6 +349,11 @@ class RosettaPack():
             self.pose.set_phi(i + 1, data[i * 3 + 0])
             self.pose.set_psi(i + 1, data[i * 3 + 1])
             self.pose.set_omega(i + 1, data[i * 3 + 2])
+
+    def dump_tmp(self):
+        name = uuid.uuid4().hex
+        self.pose.dump_pdb("%s" % (name))
+        return name
 
     def dump(self, name, score, rmsd, prefix):
         now = datetime.datetime.now()

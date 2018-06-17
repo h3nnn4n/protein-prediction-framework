@@ -356,3 +356,7 @@ class ProteinData:
         self.repacked = best
 
         return pd.get_scorefxn()(best)
+
+    def run_tmscore(self):
+        pd = self.rosetta_pack
+        pd.run_tmscore()
