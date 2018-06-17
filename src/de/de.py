@@ -729,6 +729,8 @@ class DE:
         name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % self.it) + self.name_suffix + ".pdb"
         self.pop[self.best_index].repacked.dump_pdb(name)
 
+        repack_name = name
+
         name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
         with open(name, 'w') as f:
             f.write('score:       %12.4f\n' % oldscore)
@@ -737,7 +739,12 @@ class DE:
             f.write('rmsd_before: %12.4f\n' % rmsd)
             f.write('rmsd_change: %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
 
-        self.pop[self.best_index].run_tmscore()
+        tm_before = self.pop[self.best_index].run_tmscore()
+        self.rosetta_pack.run_tmscore(name=repack_name)
+        tm_after = self.rosetta_pack.get_tmscore()
+
+        print(tm_before)
+        print(tm_after)
 
     def print_hash(self):
         for n, i in enumerate(self.hash_values):

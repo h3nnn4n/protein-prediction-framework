@@ -165,11 +165,19 @@ class RosettaPack():
     def get_native(self):
         return self.native
 
-    def run_tmscore(self, pose=None):
-        name = self.dump_tmp()
+    def run_tmscore(self, name=None):
+        flag = False
+        if name is None:
+            flag = True
+            name = self.dump_tmp()
+
         self.tmscore(self.native_path, name)
-        os.remove(name)
-        self.tmscore.print_info()
+
+        if not flag:
+            os.remove(name)
+
+    def get_tmscore(self):
+        return self.tmscore.get_all()
 
     def get_sidechain_recover(self):
         return pyrosetta.rosetta.protocols.simple_moves.ReturnSidechainMover
@@ -351,7 +359,7 @@ class RosettaPack():
             self.pose.set_omega(i + 1, data[i * 3 + 2])
 
     def dump_tmp(self):
-        name = uuid.uuid4().hex
+        name = os.getcwd() + '/' + uuid.uuid4().hex
         self.pose.dump_pdb("%s" % (name))
         return name
 
