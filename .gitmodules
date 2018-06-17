@@ -1,5 +1,5 @@
 [submodule "src/external/TMscore.py"]
-	path = src/external/TMscore.py
+	path = src/external/tmscore
 	url = https://github.com/h3nnn4n/TMscore.py
 [submodule "src/external/Ramachandran-Angle-Probability.py"]
 	path = src/external/ramachandran
