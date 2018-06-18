@@ -2,12 +2,12 @@ import sys
 import os
 import os.path
 
-sys.path.append('../external')
+sys.path.append('../../external')
 
 import tmscore.src.TMscore as tmscore
 
 
-tmscore = tmscore.TMscore(path='../external/tmscore/src/TMscore')
+tmscore = tmscore.TMscore(path='../../external/tmscore/src/TMscore')
 
 path = {}
 path['1zdd'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1zdd/1zdd.pdb'
@@ -21,11 +21,11 @@ tests = set()
 tests_prots = set()
 
 
-def a():
+def do_stuff():
     dnames = os.listdir()
     for dname in dnames:
         if len(dname) == 4:
-            print(dname)
+            # print(dname)
             prots.add(dname)
             if dname not in data.keys():
                 data[dname] = {}
@@ -42,7 +42,7 @@ def a():
                 if name not in data[dname].keys():
                     data[dname][name] = {}
 
-                print(' ', name)
+                # print(' ', name)
                 os.chdir(name)
                 os.chdir('pdb')
                 pdbs = os.listdir()
@@ -53,8 +53,7 @@ def a():
                     if mode not in data[dname][name].keys():
                         data[dname][name][mode] = []
 
-                    # print('  ', mode, ' ', pdb.split('__'))
-                    print('  ', pdb)
+                    # print('  ', pdb)
                     tmscore(path[dname], pdb)
                     scores = tmscore.get_all()
                     data[dname][name][mode].append(scores)
@@ -64,4 +63,5 @@ def a():
             os.chdir('..')
 
 
-a()
+if __name__ == '__main__':
+    do_stuff()
