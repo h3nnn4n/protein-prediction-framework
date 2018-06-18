@@ -1,6 +1,7 @@
 import sys
 import os
 import os.path
+import pickle
 
 sys.path.append('../../external')
 
@@ -65,3 +66,6 @@ def do_stuff():
 
 if __name__ == '__main__':
     do_stuff()
+    ninja = (data, prots, tests, tests_prots)
+    with open('data.pickle', 'wb') as f:
+        pickle.dump(ninja, f)
