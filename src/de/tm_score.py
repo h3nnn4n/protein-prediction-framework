@@ -22,6 +22,30 @@ tests = set()
 tests_prots = set()
 
 
+def find_energy(name):
+    prefix = name
+
+    ind = name.find('__') + 2
+    prefix = name[ind:-4]
+
+    cwd = os.getcwd()
+    os.chdir('..')
+
+    names = os.listdir()
+
+    for name in names:
+        if prefix in name:
+            with open(name) as f:
+                for line in f.readlines():
+                    if 'scorefxn' in line:
+                        values = line.split(':')
+                        energy = float(values[1].strip())
+
+    os.chdir(cwd)
+
+    return energy
+
+
 def do_stuff():
     dnames = os.listdir()
     for dname in dnames:
@@ -57,6 +81,7 @@ def do_stuff():
                     # print('  ', pdb)
                     tmscore(path[dname], pdb)
                     scores = tmscore.get_all()
+                    scores['scorefxn'] = find_energy(pdb)
                     data[dname][name][mode].append(scores)
 
                 os.chdir('../..')
