@@ -30,7 +30,7 @@ pnames = set()
 # Organize the folders
 if True:
     for name in names:
-        if 'stats' in name:
+        if 'stats' in name and '.py' not in name:
             prefix = name[5:]
 
             stats_path = 'stats' + prefix
