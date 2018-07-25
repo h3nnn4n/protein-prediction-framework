@@ -44,6 +44,9 @@ class DE:
         self.last_time = 0
         self.last_spent_evals = 0
         self.time_pivot = 0
+        self.start_time = 0
+        self.end_time = 0
+        self.repack_time = 0
 
         # Other stuff
         self.extended_diversity_measurements = False
@@ -716,8 +719,7 @@ class DE:
 
             self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
 
-        # end_time = time.time()
-        # print("Processing took %f seconds" % (end_time - start_time))
+        self.end_time = time.time()
 
         self.log()
         self.dump_pbd_best(self.it)
@@ -735,8 +737,10 @@ class DE:
         self.rosetta_pack.run_tmscore(name=repack_name)
         tm_after = self.rosetta_pack.get_tmscore()
 
+        self.repack_time = time.time()
         name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
         with open(name, 'w') as f:
+            f.write('repack_time:        %12.4f\n' % (self.repack_time - self.end_time))
             f.write('score:              %12.4f\n' % oldscore)
             f.write('scorefxn:           %12.4f\n' % score)
             f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
@@ -2960,6 +2964,7 @@ class DE:
                 ('%8.4f', self.avg_rmsd()),
                 ('%8.4f', rmsd),
                 ('%8.4f', self.update_moment_of_inertia()),
+                ('%8.5f', (time.time() - self.start_time)),
                 ('%8.5f', secs_per_eval),
                 ('%8.2f', eta_evals),
                 ('%8.5f', secs_per_iter),
