@@ -2964,7 +2964,7 @@ class DE:
                 ('%8.4f', self.avg_rmsd()),
                 ('%8.4f', rmsd),
                 ('%8.4f', self.update_moment_of_inertia()),
-                ('%8.5f', (time.time() - self.start_time)),
+                ('%10.2f', (time.time() - self.start_time)),
                 ('%8.5f', secs_per_eval),
                 ('%8.2f', eta_evals),
                 ('%8.5f', secs_per_iter),
