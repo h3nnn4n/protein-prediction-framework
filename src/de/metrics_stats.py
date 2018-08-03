@@ -281,10 +281,10 @@ sns.color_palette("PuBuGn_d")
 
 f = plt.figure(figsize=(8, 5))
 pandas.tools.plotting.parallel_coordinates(df, 'labels')
-plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+lgd = plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
 
 plt.title(target_protein + ' parallel plot', color='black')
 
 plt.tight_layout()
 
-plt.savefig(target_protein + '_parallel.png')
+plt.savefig(target_protein + '_parallel.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
