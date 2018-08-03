@@ -15,6 +15,12 @@ path['1zdd'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1zdd/1zdd.pdb'
 path['1crn'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1crn/1crn.pdb'
 path['1enh'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1enh/1enh.pdb'
 path['1ail'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1ail/1ail.pdb'
+path['1acw'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1acw/1acw.pdb'
+path['1utg'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1utg/1utg.pdb'
+path['2pmr'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/2pmr/2pmr.pdb'
+path['1rop'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1rop/1rop.pdb'
+path['2mr9'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/2mr9/2mr9.pdb'
+path['3v1a'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/3v1a/3v1a.pdb'
 
 data = {}
 prots = set()

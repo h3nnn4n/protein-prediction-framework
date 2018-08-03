@@ -1,3 +1,5 @@
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.stats
 import scipy
@@ -114,6 +116,7 @@ def boxplot(target, names):
 
         plt.savefig(target + '_rmsd_boxplot.png')
     except Exception:
+        print('Could not render plots')
         pass
 
 
