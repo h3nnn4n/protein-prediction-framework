@@ -8,3 +8,6 @@ test*
 bkp*
 .DS_Store
 *.json
+*.dat
+*.pdb
+*.pyc
