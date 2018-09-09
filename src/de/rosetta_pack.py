@@ -12,9 +12,9 @@ import os
 
 sys.path.append('../external')
 
-import ramachandran.src.ramachandran as rama
-import stride.src.stride as stride_
-import tmscore.src.TMscore as tmscore
+import ramachandran.src.ramachandran as rama  # pylint: disable=E0401
+import stride.src.stride as stride_  # pylint: disable=E0401
+import tmscore.src.TMscore as tmscore  # pylint: disable=E0401
 
 
 INIT = False
@@ -111,8 +111,7 @@ class RosettaPack():
 
         self.smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, temp, n_moves)
         self.shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, temp, n_moves)
-        #self.minmover = pyrosetta.rosetta.protocols.simple_moves.MinMover()
-        self.minmover = None  # pyrosetta.rosetta.protocols.simple_moves.MinMover()
+        self.minmover = self.get_new_min_mover()
 
         cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
 
@@ -129,12 +128,13 @@ class RosettaPack():
         self.task_pack = pyrosetta.standard_packer_task(self.pose)
         self.task_pack.restrict_to_repacking()
         self.task_pack.or_include_current(True)
-        #self.pack_mover = pyrosetta.rosetta.protocols.simple_moves.PackRotamersMover(self.scorefxn, self.task_pack)
+        self.pack_mover = lambda _: None
+        # self.pack_mover = pyrosetta.rosetta.protocols.simple_moves.PackRotamersMover(self.scorefxn, self.task_pack)
 
         self.fast_relax = pyrosetta.rosetta.protocols.relax.FastRelax(self.scorefxn)
 
-        #self.minmover.movemap(self.movemap)
-        #self.minmover.score_function(self.scorefxn)
+        self.minmover.movemap(self.movemap)
+        self.minmover.score_function(self.get_score_function('score3'))
 
         self.mc = pyrosetta.MonteCarlo(self.pose, self.get_score_function('score0'), 2.0)
 
@@ -144,8 +144,8 @@ class RosettaPack():
     def random_rama_angles_to_pose(self, pose):
         for k, v in enumerate(self.target):
             phi, psi = self.ramachandran.get_random_angle(v)
-            pose.set_psi(k + 1, 180)
-            pose.set_phi(k + 1, 180)
+            pose.set_phi(k + 1, phi)
+            pose.set_psi(k + 1, psi)
 
     def get_new_pose(self):
         pose = pyrosetta.pose_from_sequence(self.target)
@@ -184,6 +184,18 @@ class RosettaPack():
 
     def get_min_mover(self):
         return self.minmover
+
+    def get_new_min_mover(self, mm=None, score='score3_smooth',
+                          alg='dfpmin_armijo_nonmonotone', tol=0.001):
+        if mm is None:
+            mm = self.movemap
+        return pyrosetta.rosetta.protocols.minimization_packing.MinMover(
+            mm,
+            self.get_score_function(score),
+            alg,
+            tol,
+            True
+        )
 
     def get_small_mover(self):
         return self.smallmover
@@ -225,8 +237,7 @@ class RosettaPack():
         return pyrosetta.rosetta.protocols.moves.RepeatMover(trial, n)
 
     def get_packer(self):
-        #return self.pack_mover
-        return None
+        return self.pack_mover
 
     def get_fast_relax(self):
         return self.fast_relax
@@ -252,7 +263,6 @@ class RosettaPack():
                 self.scores[name] = pyrosetta.get_fa_scorefxn()
             else:
                 self.scores[name] = pyrosetta.create_score_function(name)
-            # print('Requested %s' % name)
 
         return self.scores[name]
 
@@ -284,10 +294,10 @@ class RosettaPack():
         a = -1
 
         for i in range(1, len(ss) - 1):
-            if ss[i] != 'C' and ss[i+1] == 'C':
+            if ss[i] != 'C' and ss[i + 1] == 'C':
                 f = True
-                a = i+1
-            if f and ss[i] == 'C' and ss[i+1] != 'C':
+                a = i + 1
+            if f and ss[i] == 'C' and ss[i + 1] != 'C':
                 f = False
                 # print("loop = %d %d" % (a, i))
                 loops.append(((a + 1) - 0, (i + 1) + 0))
@@ -313,7 +323,6 @@ class RosettaPack():
 
         for loop_start, loop_end in loops:
             loop_cut = int(math.floor((loop_end + loop_start) / 2))
-            # prtnt("loop = %d %d %d" % (loop_start, loop_end, loop_cut))
 
             movemap = pyrosetta.MoveMap()
             movemap.set_bb_true_range(loop_start, loop_end)
@@ -341,7 +350,7 @@ class RosettaPack():
                 mc.recover_low(pose)
                 kT = kT * gamma
                 mc.set_temperature(kT)
-                for j in range(1, inner_cycles_low + 1):
+                for _ in range(1, inner_cycles_low + 1):
                     mover_3mer.apply(pose)
                     ccd_closure.apply(pose)
                     scorefxn_low(pose)
