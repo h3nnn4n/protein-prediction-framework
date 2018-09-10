@@ -173,8 +173,8 @@ class RosettaPack():
 
         self.tmscore(self.native_path, name)
 
-        if not flag:
-            os.remove(name)
+        # if not flag:
+            # os.remove(name)
 
     def get_tmscore(self):
         return self.tmscore.get_all()

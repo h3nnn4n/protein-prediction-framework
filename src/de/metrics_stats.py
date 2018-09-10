@@ -82,21 +82,28 @@ for mode in modes:
     if mode != 'before':
         continue
     for p in prots:
-        if target_protein != p:
-            continue
+        # print()
+        # print(p)
+        # if target_protein != p:
+            # continue
         for t in tests:
-            values[t] = []
-            print()
-            print(t)
+            # values[t] = []
+            # print()
+            # print(t)
             #for _ in metrics:
                 #for _ in range(10):
             #for _ in range(10):
                     #labels.append(t)
                 #labels.append(t)
-            labels.append(t)
+            # labels.append(t)
+
+            # if t not in ['sade_remc']:
+                # continue
 
             for m in metrics:
-                v = (general[mode][p][t][m])
+                if m in ['gdt_ha', 'maxsub', 'scorefxn', 'rmsd']:
+                    continue
+                # v = (general[mode][p][t][m])
 
                 #v = np.mean(v)
                 #if m in ['scorefxn', 'rmsd']:
@@ -105,7 +112,7 @@ for mode in modes:
                     #v = max(v)
 
                 #print(v)
-                values[t].append(v)
+                # values[t].append(v)
 
                 # print(t)
                 #if t != 'sade_remc':
@@ -114,42 +121,86 @@ for mode in modes:
                 #print(v)
                 #continue
 
-                m_ = True
+                if m == 'tm_score':
+                    v = (general[mode][p][t][m])
+                if m == 'rmsd':
+                    v = (general[mode][p][t][m])
+                if m == 'gdt_ha':
+                    v = (general[mode][p][t][m])
+                if m == 'gdt_ts':
+                    v = (general[mode][p][t][m])
+                if m == 'maxsub':
+                    v = (general[mode][p][t][m])
+                if m == 'scorefxn':
+                    v = (general[mode][p][t][m])
 
-                if p == target_protein and m == 'tm_score':
-                    if m_:
-                        tm.append(max(general[mode][p][t][m]))
-                    else:
-                        tm.append(general[mode][p][t][m])
-                if p == target_protein and m == 'rmsd':
-                    #rmsd.append(general[mode][p][t][m])
-                    #print(general[mode][p][t][m])
-                    if m_:
-                        rmsd.append(min(general[mode][p][t][m]))
-                    else:
-                        rmsd.append(general[mode][p][t][m])
-                if p == target_protein and m == 'gdt_ha':
-                    if m_:
-                        gdt_ha.append(max(general[mode][p][t][m]))
-                    else:
-                        gdt_ha.append(general[mode][p][t][m])
-                if p == target_protein and m == 'gdt_ts':
-                    if m_:
-                        gdt_ts.append(max(general[mode][p][t][m]))
-                    else:
-                        gdt_ts.append(general[mode][p][t][m])
-                if p == target_protein and m == 'maxsub':
-                    if m_:
-                        maxsub.append(max(general[mode][p][t][m]))
-                    else:
-                        maxsub.append(general[mode][p][t][m])
-                if p == target_protein and m == 'scorefxn':
-                    if m_:
-                        scorefxn.append(min(general[mode][p][t][m]))
-                    else:
-                        scorefxn.append(general[mode][p][t][m])
+                if m in ['scorefxn', 'rmsd']:
+                    mm = min(v)
+                else:
+                    mm = max(v)
+
+                print("%4s %35s %15s %6.3f %6.3f %6.3f" % (p, t, m, mm, np.mean(v), np.std(v)))
+
+                # if m == 'tm_score':
+                    # tm.append(general[mode][p][t][m])
+                # if m == 'rmsd':
+                    # rmsd.append(general[mode][p][t][m])
+                # if m == 'gdt_ha':
+                    # gdt_ha.append(general[mode][p][t][m])
+                # if m == 'gdt_ts':
+                    # gdt_ts.append(general[mode][p][t][m])
+                # if m == 'maxsub':
+                    # maxsub.append(general[mode][p][t][m])
+                # if m == 'scorefxn':
+                    # scorefxn.append(general[mode][p][t][m])
+
+                # m_ = True
+
+                # if p == target_protein and m == 'tm_score':
+                    # if m_:
+                        # tm.append(max(general[mode][p][t][m]))
+                    # else:
+                        # tm.append(general[mode][p][t][m])
+                # if p == target_protein and m == 'rmsd':
+                    # #rmsd.append(general[mode][p][t][m])
+                    # #print(general[mode][p][t][m])
+                    # if m_:
+                        # rmsd.append(min(general[mode][p][t][m]))
+                    # else:
+                        # rmsd.append(general[mode][p][t][m])
+                # if p == target_protein and m == 'gdt_ha':
+                    # if m_:
+                        # gdt_ha.append(max(general[mode][p][t][m]))
+                    # else:
+                        # gdt_ha.append(general[mode][p][t][m])
+                # if p == target_protein and m == 'gdt_ts':
+                    # if m_:
+                        # gdt_ts.append(max(general[mode][p][t][m]))
+                    # else:
+                        # gdt_ts.append(general[mode][p][t][m])
+                # if p == target_protein and m == 'maxsub':
+                    # if m_:
+                        # maxsub.append(max(general[mode][p][t][m]))
+                    # else:
+                        # maxsub.append(general[mode][p][t][m])
+                # if p == target_protein and m == 'scorefxn':
+                    # if m_:
+                        # scorefxn.append(min(general[mode][p][t][m]))
+                    # else:
+                        # scorefxn.append(general[mode][p][t][m])
+                # m_ = True
         # print()
     # print()
+
+# for mode in modes:
+    # if mode != 'before':
+        # continue
+    # for p in prots:
+        # for t in tests:
+            # print()
+            # print(t)
+            # for m in metrics:
+                # print(
 
 #n_groups = 8
 #n_groups = len(metrics)
@@ -211,18 +262,18 @@ for mode in modes:
 
 # plt.close()
 
-flatten = lambda l: [item for sublist in l for item in sublist]
+# flatten = lambda l: [item for sublist in l for item in sublist]
 #flatten = lambda i: i
 
-min_max_scaler = preprocessing.MinMaxScaler()
+# min_max_scaler = preprocessing.MinMaxScaler()
 
-def scale(a):
-    #b = np.asarray(flatten(a)).reshape(-1, 1)
-    b = np.asarray((a)).reshape(-1, 1)
-    c = min_max_scaler.fit_transform(b)
-    c = flatten(c.reshape(-1, 1))
+# def scale(a):
+    # #b = np.asarray(flatten(a)).reshape(-1, 1)
+    # b = np.asarray((a)).reshape(-1, 1)
+    # c = min_max_scaler.fit_transform(b)
+    # c = flatten(c.reshape(-1, 1))
 
-    return c
+    # return c
 
 #kappa = {
             #'gdt_ts': scale(gdt_ts),
@@ -244,18 +295,18 @@ def scale(a):
             #'labels': labels
         #}
 
-def invert(a):
-    return list(map(lambda x: (1.0 - x) * 0.15 + 0.25, a))
+# def invert(a):
+    # return list(map(lambda x: (1.0 - x) * 0.15 + 0.25, a))
 
-kappa = {
-            'gdt_ts': (gdt_ts),
-            'gdt_ha': (gdt_ha),
-            'tm_score': (tm),
-            'maxsub': (maxsub),
+# kappa = {
+            # 'gdt_ts': (gdt_ts),
+            # 'gdt_ha': (gdt_ha),
+            # 'tm_score': (tm),
+            # 'maxsub': (maxsub),
             #'rmsd': invert(scale(rmsd)),
             #'scorefxn': invert(scale(scorefxn)),
-            'labels': labels
-        }
+            # 'labels': labels
+        # }
 
 #print(kappa)
 
@@ -263,7 +314,7 @@ kappa = {
     #print(k, len(v))
     #print(k, (v))
 
-df = pd.DataFrame.from_dict(kappa, orient='columns')
+# df = pd.DataFrame.from_dict(kappa, orient='columns')
 
 #print(df.head())
 
@@ -277,14 +328,14 @@ df = pd.DataFrame.from_dict(kappa, orient='columns')
 
 #plt.savefig(target_protein + '_pairplot.png')
 
-sns.color_palette("PuBuGn_d")
+# sns.color_palette("PuBuGn_d")
 
-f = plt.figure(figsize=(8, 5))
-pandas.tools.plotting.parallel_coordinates(df, 'labels')
-lgd = plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+# f = plt.figure(figsize=(8, 5))
+# pandas.tools.plotting.parallel_coordinates(df, 'labels')
+# plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
 
-plt.title(target_protein + ' parallel plot', color='black')
+# plt.title(target_protein + ' parallel plot', color='black')
 
-plt.tight_layout()
+# plt.tight_layout()
 
-plt.savefig(target_protein + '_parallel.png', bbox_extra_artists=(lgd,), bbox_inches='tight')
+# plt.savefig(target_protein + '_parallel.png')
