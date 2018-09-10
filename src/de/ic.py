@@ -9,7 +9,6 @@ final_data = {}
 
 
 def ic(target, names):
-    merged = {}
     alldata = {}
     for name in names:
         if os.path.isdir(name) or 'raw' not in name or target not in name:
@@ -28,7 +27,7 @@ def ic(target, names):
         with open(t, 'rt') as f:
             for l in f.readlines():
                 line = l.rstrip().lstrip()
-                tokens = re.sub("\s+", " ", line).split(' ')
+                tokens = re.sub(r"\s+", " ", line).split(' ')
 
                 if len(tokens) < 2:
                     continue
@@ -108,5 +107,5 @@ if __name__ == '__main__':
         print()
         for l in final_data[k].keys():
             y = final_data[k][l]
-            w = scipy.stats.t.interval(0.95, len(y)-1, loc=np.mean(y), scale=scipy.stats.sem(y))
+            w = scipy.stats.t.interval(0.95, len(y) - 1, loc=np.mean(y), scale=scipy.stats.sem(y))
             print("%53s %8.4f %8.4f %8.4f" % (l, w[0], w[1], w[1] - w[0]))

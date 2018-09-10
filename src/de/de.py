@@ -53,7 +53,7 @@ class DE:
         self.coil_only = False
 
         self.mode = None
-        self.stop_condition = None
+        self.stop_condition = ''
 
         self.failsafe_verbose = False
 
@@ -122,33 +122,19 @@ class DE:
         self.sade_lp = 50
         self.sade_lp_left = self.sade_lp
         self.sade_f = []
-        self.sade_selection = None
+        self.sade_selection = ''
 
         self.ops = []
 
-        # self.ops = ["best1bin_global",
-                    # "best1exp_global",
-                    # "best2bin_global",
-                    # "best2exp_global",
-                    # "currToRand_exp_global",
-                    # "currToRand_global",
-                    # "rand1bin_global",
-                    # "rand1exp_global",
-                    # "rand2bin_global",
-                    # "rand2exp_global"]
+        self.sade_n_ops = None
+        self.sade_ops_probs = None
 
-        # self.set_sade_ops()
+        self.sade_success_memory = None
+        self.sade_failure_memory = None
 
-        self.sade_n_ops = None  # len(self.sade_ops)
-
-        self.sade_ops_probs = None  # [1 / self.sade_n_ops for _ in range(self.sade_n_ops)]
-
-        self.sade_success_memory = None  # [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
-        self.sade_failure_memory = None  # [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
-
-        self.sade_cr = None  # [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
-        self.sade_cr_m = None  # [random.random() for k in range(self.sade_n_ops)]
-        self.sade_cr_memory = None  # [[] for k in range(self.sade_n_ops)]
+        self.sade_cr = None
+        self.sade_cr_m = None
+        self.sade_cr_memory = None
 
         self.sade_reinit_interval = None
 
@@ -247,36 +233,6 @@ class DE:
             elif op == "monte_carlo_shear":
                 self.sade_ops += [self.monte_carlo_shear]
 
-                # 'best1bin_lsh'
-                # 'best1exp_global'
-                # 'best1exp_lsh'
-                # 'best2bin_global'
-                # 'best2bin_lsh'
-                # 'best2exp_global'
-                # 'best2exp_lsh'
-                # 'currToBest_exp_global'
-                # 'currToBest_exp_lsh'
-                # 'currToBest_global'
-                # 'currToBest_lsh'
-                # 'currToRand_exp_global'
-                # 'currToRand_exp_lsh'
-                # 'currToRand_exp_rmsd'
-                # 'currToRand_global'
-                # 'currToRand_lsh'
-                # 'currToRand_rmsd'
-                # 'monte_carlo'
-                # 'rand1bin_global'
-                # 'rand1bin_lsh'
-                # 'rand1bin_rmsd'
-                # 'rand1exp_global'
-                # 'rand1exp_lsh'
-                # 'rand1exp_rmsd'
-                # 'rand2bin_global'
-                # 'rand2bin_lsh'
-                # 'rand2exp_global'
-                # 'rand2exp_lsh'
-                # 'best1bin_global'
-
         if len(self.sade_ops) == 0:
             self.sade_ops += [self.rand1bin_global]
 
@@ -285,8 +241,7 @@ class DE:
     def sade_reinit(self):
         print('reinit')
         self.sade_cr = [[random.random() for k in range(self.sade_n_ops)] for i in range(self.pop_size)]
-        # self.sade_cr_m = [random.random() for k in range(self.sade_n_ops)]  # uniform
-        self.sade_cr_m = [np.clip(random.gauss(0.75, 0.1), 0.6, 1.0) for k in range(self.sade_n_ops)]  # gaussian
+        self.sade_cr_m = [np.clip(random.gauss(0.75, 0.1), 0.6, 1.0) for k in range(self.sade_n_ops)]
         self.sade_cr_memory = [[self.sade_cr_m[k]] for k in range(self.sade_n_ops)]
 
         self.sade_success_memory = [[0 for k in range(self.sade_n_ops)] for i in range(self.sade_lp)]
@@ -308,9 +263,6 @@ class DE:
                     print('Empty memory for k = %d %s!' % (k, self.sade_ops[k]))
                 else:
                     self.sade_cr_m[k] = np.median(self.sade_cr_memory[k])
-                    # if len(self.sade_cr_memory[k]) > 2000:
-                    #     m = np.median(self.sade_cr_memory[k])
-                    #     self.sade_cr_memory[k] = [m]
 
             self.sade_cr = [[np.clip(random.gauss(self.sade_cr_m[k], 0.1), 0.0, 1.0) for k in range(self.sade_n_ops)]
                             for i in range(self.pop_size)]
@@ -338,8 +290,6 @@ class DE:
 
         norm = sum(self.sade_ops_probs)
         self.sade_ops_probs = list(map(lambda x: x / norm, self.sade_ops_probs))
-        # if self.sade_lp_left <= 0:
-            # print(self.sade_ops_probs)
 
     def sade_get_op(self):
         if self.sade_selection == 'roulette':
@@ -362,21 +312,14 @@ class DE:
             w = 0
             i = None
             for k, v in zip(trial, t_values):
-                # print(k, v, end='')
                 if v > w:
                     w = v
                     i = k
-                    # print(i)
-                # else:
-                    # print()
 
             if i is None:
                 print('rip')
                 print(trial, t_values)
                 print(self.sade_ops_probs)
-
-            # if self.sade_lp_left <= 0:
-                # print(i, self.sade_ops_probs[i])
 
         return self.sade_ops[i]
 
@@ -512,20 +455,10 @@ class DE:
             a, b = math.floor((tmp1[i] - minh1 + b1) / r1), math.floor((tmp2[i] - minh2 + b2) / r2)
             v = (self.n_buckets) * a + b
 
-            # if v < 0:
-                # v = abs(v)
-
-            # if v >= len(self.hash_values):
-                # print("v %8d  len %8d  a %10d %20.10f  b %10d %20.10f" %
-                      # (b, len(self.hash_values), a, b, tmp1[i], tmp2[i]))
-                # v = 0
-
             try:
                 self.hash_values[v].append(i)
             except Exception:
-                print(v, len(self.hash_values))
-                import sys
-                sys.exit(-1)
+                raise IndexError(v, len(self.hash_values))
 
         for n, i in enumerate(self.hash_values):
             if debug:
@@ -612,12 +545,12 @@ class DE:
             for i in range(self.pop_size):
                 self.huehue = i
                 if self.do_lsh and not self.sade_run:
-                    ret = self.rand1bin_lsh(i)
+                    ret = self.rand1bin_lsh(i)  # pylint: disable=E1128
                 else:
                     if self.sade_run:
                         ret = self.sade_get_op()(i)
                     else:
-                        ret = self.rand1bin_global(i)
+                        ret = self.rand1bin_global(i)  # pylint: disable=E1111
 
                 if ret is None:
                     self.spent_evals += 1
@@ -696,28 +629,22 @@ class DE:
                 print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
                 new_guy = self.comm.migration(self.get_best())
                 if new_guy is not None:
-                    # self.pop[self.best_index].new_angles(new_guy)
-                    # self.pop[self.best_index].eval()
                     self.pop[0].new_angles(new_guy)
                     self.pop[0].eval()
-                    # print('Ha! migration')
 
             if False and self.it % 1000 == 0:
-                self.dump_pbd_best(it)
-
-            # if self.it % 250 == 0 or self.it == 1:
-                # self.dump_pop_data()
+                self.dump_pbd_best(self.it)
 
             if self.log_interval > 0 and self.it % self.log_interval == 0:
-                # self.pop[0].print_angles()
                 self.log()
                 self.stats.flush()
-                # if self.do_lsh:
-                    # self.print_hash()
 
                 sys.stdout.flush()
 
             self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
+
+        import ipdb
+        ipdb.set_trace(context=10)
 
         self.end_time = time.time()
 
@@ -884,7 +811,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -959,8 +886,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1017,7 +946,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1090,8 +1019,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1145,7 +1076,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1213,7 +1144,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1277,7 +1208,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1342,7 +1273,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1403,7 +1334,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1471,7 +1402,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1541,8 +1472,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1602,9 +1535,11 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) + \
-                                         (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) +
+                (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1660,8 +1595,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1721,9 +1658,11 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) + \
-                                         (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) +
+                (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1779,8 +1718,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1840,9 +1781,11 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) + \
-                                         (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) +
+                (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -1885,7 +1828,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1945,7 +1888,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -1999,7 +1942,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -2059,7 +2002,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -2113,7 +2056,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -2172,7 +2115,7 @@ class DE:
 
         f, cr = self.get_f_cr()
 
-        for k, v in enumerate(self.rosetta_pack.target):
+        for _, v in enumerate(self.rosetta_pack.target):
             na = 3 + self.rosetta_pack.bounds.getNumSideChainAngles(v)
             for j in range(na):
                 d = index + j
@@ -2231,8 +2174,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -2284,9 +2229,11 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) + \
-                                         (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) +
+                (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -2332,8 +2279,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -2385,9 +2334,11 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) + \
-                                         (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) +
+                (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -2433,8 +2384,10 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -2485,9 +2438,11 @@ class DE:
             t_angle.append(self.pop[huehue].angles[i])
 
         while L < ind1.nsca and r < cr:
-            t_angle[pivot % ind1.nsca] = ind1.angles[pivot % ind1.nsca] + \
-                                         (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) + \
-                                         (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            t_angle[pivot % ind1.nsca] = (
+                ind1.angles[pivot % ind1.nsca] +
+                (f * (ind2.angles[pivot % ind1.nsca] - ind3.angles[pivot % ind1.nsca])) +
+                (f * (ind4.angles[pivot % ind1.nsca] - ind5.angles[pivot % ind1.nsca]))
+            )
 
             r = random.random()
             L += 1
@@ -2513,7 +2468,7 @@ class DE:
     def crowding_selection(self):
         sade_k = self.sade_k
 
-        f, cr = self.get_f_cr()
+        _, cr = self.get_f_cr()
 
         ps = random.sample(range(self.pop_size), k=self.crowding_factor)
 
@@ -2539,8 +2494,7 @@ class DE:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
                 self.sade_success_memory[ind][sade_k] += 1
-            # t = self.pop[huehue]
-            # self.pop[huehue] = self.trial
+
             t = candidate
             candidate = self.trial
             self.trial = t
@@ -2556,52 +2510,20 @@ class DE:
     def standard_selection(self, candidate):
         sade_k = self.sade_k
 
-        f, cr = self.get_f_cr()
+        _, cr = self.get_f_cr()
 
         if self.trial.score < candidate.score:
-            # for p in self.pop:
-                # if p is self.trial:
-                    # import sys
-                    # print('PANIC! Candidate found')
-                    # sys.exit()
-
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
                 ind = self.it % self.sade_lp
                 self.sade_success_memory[ind][sade_k] += 1
-            # t = self.pop[huehue]
-            # self.pop[huehue] = self.trial
 
-            # t = candidate
-            # candidate = self.trial
-            # self.trial = t
-
-            found = False
             for k in range(self.pop_size):
                 p = self.pop[k]
                 if candidate is p:
-                    found = True
                     t = self.pop[k]
                     self.pop[k] = self.trial
                     self.trial = t
-
-            # if not found:
-                # import sys
-                # print('PANIC! Candidate not found!')
-                # sys.exit()
-
-            # if self.pop[k] is candidate:
-                # import sys
-                # print('PANIC! Found duplicated reference in population')
-                # sys.exit()
-
-            # for i in range(self.pop_size):
-                # for j in range(i + 1, self.pop_size):
-                    # if self.pop[i].pose is self.pop[j].pose or self.pop[i] is self.pop[j] or self.pop[i] is self.trial or self.pop[i].pose is self.trial.pose:
-                        # import sys
-                        # print('PANIC! Found duplicated guy in population')
-                        # print(i, j)
-                        # sys.exit()
         else:
             if self.sade_run:
                 ind = self.it % self.sade_lp
@@ -2919,29 +2841,6 @@ class DE:
             self.last_spent_evals = self.spent_evals
             self.time_pivot += 1
 
-        eta = None
-
-        # if it >= 1:
-            # if self.stop_at_eval and not self.stop_at_iter:
-                # eta = eta_evals
-                # speed = secs_per_eval
-            # elif self.stop_at_iter and not self.stop_at_eval:
-                # eta = eta_iters
-                # speed = secs_per_iter
-            # elif self.stop_at_eval and self.stop_at_iter:
-                # eta = min(eta_evals, eta_iters)
-                # if eta_evals < eta_iters:
-                    # eta = eta_evals
-                    # speed = 0
-                # else:
-                    # eta = eta_iters
-                    # speed = secs_per_iter
-            # else:
-                # pass
-        # else:
-            # speed = 0
-            # eta = 0
-
         cr = ''  # '%3.2f' % self.c_rate
         probs = ''
 
@@ -2956,22 +2855,23 @@ class DE:
 
         string = ''
 
-        data = [('%8d', self.spent_evals),
-                ('%8d', it),
-                ('%8.4f', self.best_score),
-                ('%8.4f', self.mean),
-                ('%8.4f', self.update_diversity()),
-                ('%8.4f', self.avg_rmsd()),
-                ('%8.4f', rmsd),
-                ('%8.4f', self.update_moment_of_inertia()),
-                ('%10.2f', (time.time() - self.start_time)),
-                ('%8.5f', secs_per_eval),
-                ('%8.2f', eta_evals),
-                ('%8.5f', secs_per_iter),
-                ('%8.2f', eta_iters),
-                ('%s', cr),
-                ('%s', probs)
-                ]
+        data = [
+            ('%8d', self.spent_evals),
+            ('%8d', it),
+            ('%8.4f', self.best_score),
+            ('%8.4f', self.mean),
+            ('%8.4f', self.update_diversity()),
+            ('%8.4f', self.avg_rmsd()),
+            ('%8.4f', rmsd),
+            ('%8.4f', self.update_moment_of_inertia()),
+            ('%10.2f', (time.time() - self.start_time)),
+            ('%8.5f', secs_per_eval),
+            ('%8.2f', eta_evals),
+            ('%8.5f', secs_per_iter),
+            ('%8.2f', eta_iters),
+            ('%s', cr),
+            ('%s', probs)
+        ]
 
         # print(self.sade_success_memory)
         # print(self.sade_failure_memory)

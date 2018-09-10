@@ -240,6 +240,7 @@ class ProteinData:
         folding.apply(best)
 
         mc.recover_low(best)
+        self.update_angle_from_pose()
 
         if allatom:
             pd.get_allatom_switch().apply(best)
@@ -344,6 +345,8 @@ class ProteinData:
             pd.get_allatom_switch().apply(self.pose)
             r.apply(self.pose)
             pd.get_packer().apply(self.pose)
+
+        self.update_angle_from_pose()
 
         return evals
 
