@@ -29,8 +29,12 @@ class ProteinLoader:
         dest = base + '/' + self.name
         if os.path.isdir(dest):
             os.chdir(dest)
-            if os.path.isfile(name + '.pdb'):
-                self.native_path = name + '.pdb'
+            native_path = name + '.pdb'
+            if os.path.isfile(native_path):
+                self.native_path = native_path
+            else:
+                raise FileNotFoundError('Could not find %s' % native_path)
+
 
             if os.path.isfile(name + '.fasta'):
                 with open(name + '.fasta', 'rt') as f:
@@ -52,10 +56,14 @@ class ProteinLoader:
             f3 = base + '/' + name + '/output/' + name + '.200.3mers'
             if os.path.isfile(f3):
                 self.fragset3_path = f3
+            else:
+                raise FileNotFoundError('Could not find %s' % f3)
 
             f9 = base + '/' + name + '/output/' + name + '.200.9mers'
             if os.path.isfile(f9):
                 self.fragset9_path = f9
+            else:
+                raise FileNotFoundError('Could not find %s' % f9)
 
 
         # os.chdir(original)

@@ -496,7 +496,7 @@ class DE:
 
         if self.stage0_init:
             print('Stage0 init')
-            # self.log(it=-1)
+            self.log(it=-1)
             for p in self.pop:
                 p.eval()
                 p.stage1_mc()
@@ -642,9 +642,6 @@ class DE:
                 sys.stdout.flush()
 
             self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
-
-        import ipdb
-        ipdb.set_trace(context=10)
 
         self.end_time = time.time()
 

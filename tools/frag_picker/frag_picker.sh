@@ -17,4 +17,4 @@ then
     mkdir $OUT
 fi
 
-$BIN -database $DATABASE -in::file::vall $VALL -in::file::fasta $FASTA -in::file::s $NATIVE -frags::ss_pred $SSPRED predA -out::file::frag_prefix $OUT/$NAME -frags::describe_fragments $OUT/$NAME.fsc -frags::scoring::config "../../tools/frag_picker/scoring.wghts"
+$BIN -database $DATABASE -in::file::vall $VALL -in::file::fasta $FASTA -in::file::s $NATIVE -frags::ss_pred $SSPRED predA -out::file::frag_prefix $OUT/$NAME -frags::describe_fragments $OUT/$NAME.fsc -frags::scoring::config "../../tools/frag_picker/scoring.wghts" -ignore_unrecognized_res

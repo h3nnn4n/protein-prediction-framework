@@ -20,7 +20,7 @@ import tmscore.src.TMscore as tmscore  # pylint: disable=E0401
 INIT = False
 
 if not INIT:  # Initialize rosetta only once
-    pyrosetta.init('-out:level 0')
+    pyrosetta.init('-out:level 0 -ignore_unrecognized_res')
 
     INIT = True
 
@@ -111,7 +111,11 @@ class RosettaPack():
 
         self.smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, temp, n_moves)
         self.shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, temp, n_moves)
-        self.minmover = self.get_new_min_mover()
+
+        try:
+            self.minmover = self.get_new_min_mover()
+        except Exception:
+            self.minmover = None
 
         cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
 
@@ -133,8 +137,9 @@ class RosettaPack():
 
         self.fast_relax = pyrosetta.rosetta.protocols.relax.FastRelax(self.scorefxn)
 
-        self.minmover.movemap(self.movemap)
-        self.minmover.score_function(self.get_score_function('score3'))
+        if self.minmover is not None:
+            self.minmover.movemap(self.movemap)
+            self.minmover.score_function(self.get_score_function('score3'))
 
         self.mc = pyrosetta.MonteCarlo(self.pose, self.get_score_function('score0'), 2.0)
 

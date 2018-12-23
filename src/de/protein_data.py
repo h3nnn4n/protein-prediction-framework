@@ -323,7 +323,7 @@ class ProteinData:
                 mover = self.trialshear
 
             mc.set_temperature(temp)
-            # mc.reset(self.pose)
+            mc.reset(self.pose)
 
             original = self.score
             one_more = original is None
