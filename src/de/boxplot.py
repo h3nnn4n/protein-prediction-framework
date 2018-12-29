@@ -82,7 +82,7 @@ def boxplot(target, names):
     try:
         fig, ax = plt.subplots()
 
-        # ax.set_title('1ZDD Boxplot for best Energy')
+        ax.set_title(target.upper() + ' Boxplot for best Energy')
         # ax.set_xlabel('xlabel')
         ax.set_ylabel('Energy')
 
@@ -104,7 +104,7 @@ def boxplot(target, names):
 
         fig, ax = plt.subplots()
 
-        # ax.set_title('1ZDD Boxplot for best RMSD')
+        ax.set_title(target.upper() + ' Boxplot for best RMSD')
         # ax.set_xlabel('xlabel')
         ax.set_ylabel('RMSD')
 
