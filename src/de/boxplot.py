@@ -80,6 +80,20 @@ def boxplot(target, names):
                         print("%8s %35s %35s %8.5f %8.3f %8.3f %8d" % (mode, j[1], i[1], w, b, a, ml))
 
     try:
+        x = []
+        names = []
+        for k, v in alldata.items():
+            x.append(v['best_fxn'])
+            names.append(k.split('.')[0][:-4])
+        names.sort()
+
+        if target == '1CRN':
+            print()
+            print()
+            print(x)
+            print()
+            print()
+
         fig, ax = plt.subplots()
 
         ax.set_title(target.upper() + ' Boxplot for best Energy')
@@ -98,7 +112,6 @@ def boxplot(target, names):
         names = []
         for k, v in alldata.items():
             x.append(v['rmsd_fxn'])
-            # x.append(v['rmsd'])
             names.append(k.split('.')[0][:-4])
         names.sort()
 
