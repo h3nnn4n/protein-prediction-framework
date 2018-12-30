@@ -103,7 +103,7 @@ def boxplot(target, names):
         ############
 
         names = sorted([k.split('.')[0][:-4] for k in alldata.keys()])
-        values_dict = {k.split('.')[0][:-4]: v['best_fxn'] for k, v in alldata.items()}
+        values_dict = {k.split('.')[0][:-4]: v['rmsd_fxn'] for k, v in alldata.items()}
         x = [values_dict[name] for name in names]
 
         fig, ax = plt.subplots()
