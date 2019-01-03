@@ -11,3 +11,10 @@ bkp*
 *.dat
 *.pdb
 *.pyc
+protein_data
+*ipynb
+bkp*
+todo*
+xa?
+.*bkp
+*test*
