@@ -8,6 +8,8 @@ class ProteinData:
         self.bounds = rosetta_pack.bounds
         self.allatom = allatom
 
+        self.enable_remc = True
+
         self.repacked = None
 
         self.score_function = None
@@ -323,7 +325,8 @@ class ProteinData:
                 mover = self.trialshear
 
             mc.set_temperature(temp)
-            mc.reset(self.pose)
+            if self.enable_remc:
+                mc.reset(self.pose)
 
             original = self.score
             one_more = original is None

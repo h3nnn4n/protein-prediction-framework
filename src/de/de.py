@@ -87,6 +87,10 @@ class DE:
         self.clearing_interval = 10
         self.clearing_size = 1
 
+        # REMC
+        self.enable_remc = True
+        self.update_remc()
+
         # Crowding
         self.do_crowding = False
         self.do_rmsd_crowding = False
@@ -156,6 +160,14 @@ class DE:
         self.improv_iter_threshold = 5000
 
         print('Finished initialization')
+
+# ######################### Config Update ##########################
+
+    def update_remc(self):
+        self.trial.enable_remc = self.enable_remc
+
+        for p in self.pop:
+            p.enable_remc = self.enable_remc
 
 # ######################### START OF SADE ##########################
 
@@ -367,6 +379,7 @@ class DE:
             f.write('sade_lp: %d\n' % self.sade_lp)
             f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
             f.write('sade_selection: %s\n' % self.sade_selection)
+            f.write('enable_remc: %s\n' % self.enable_remc)
             f.write('do_crowding: %d\n' % self.do_crowding)
             f.write('do_rmsd_crowding: %d\n' % self.do_rmsd_crowding)
             f.write('crowding_factor: %d\n' % self.crowding_factor)
