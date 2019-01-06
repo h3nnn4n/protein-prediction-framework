@@ -253,7 +253,7 @@ class ProteinData:
         allatom = self.allatom
 
         pd = self.rosetta_pack
-        # pd.set_starting_pose(self.angles)
+        pd.set_starting_pose(self.angles)
 
         score = pd.get_score_function(self.score_function_name)
 
@@ -325,7 +325,7 @@ class ProteinData:
                 mover = self.trialshear
 
             mc.set_temperature(temp)
-            if self.enable_remc:
+            if not self.enable_remc:
                 mc.reset(self.pose)
 
             original = self.score
