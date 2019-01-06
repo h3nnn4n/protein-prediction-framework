@@ -4,6 +4,8 @@ from operators.rand1bin_global import rand1bin_global
 from operators.rand2bin_global import rand2bin_global
 from operators.best1bin_global import best1bin_global
 from operators.best2bin_global import best2bin_global
+from operators.currToBest_global import currToBest_global
+from operators.currToRand_global import currToRand_global
 
 
 class Operators:
@@ -13,7 +15,9 @@ class Operators:
             'rand1bin_global': self.get_rand1bin_global,
             'rand2bin_global': self.get_rand2bin_global,
             'best1bin_global': self.get_best1bin_global,
-            'best2bin_global': self.get_best2bin_global
+            'best2bin_global': self.get_best2bin_global,
+            'currToBest_global': self.get_currToBest_global,
+            'currToRand_global': self.get_currToRand_global,
         }
 
     def get_random_individual(self):
@@ -25,6 +29,9 @@ class Operators:
 
     def get_best_individual(self):
         return self.de.pop[self.de.best_index]
+
+    def get_current_individual(self, current):
+        return self.de.pop[current]
 
     def get_operator(self, name):
         return self.available_operators[name]()
@@ -44,3 +51,11 @@ class Operators:
     def get_best2bin_global(self):
         self.best2bin_global = types.MethodType(best2bin_global, self)
         return self.best2bin_global
+
+    def get_currToBest_global(self):
+        self.currToBest_global = types.MethodType(currToBest_global, self)
+        return self.currToBest_global
+
+    def get_currToRand_global(self):
+        self.currToRand_global = types.MethodType(currToRand_global, self)
+        return self.currToRand_global
