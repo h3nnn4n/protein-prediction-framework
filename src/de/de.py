@@ -184,80 +184,8 @@ class DE:
         for op in self.ops:
             if op in self.operators.available_operators.keys():
                 self.sade_ops.append(self.operators.get_operator(op))
-                continue
-
-            if op == "best1bin_global":
-                self.sade_ops += [self.best1bin_global]
-            elif op == "best1bin_lsh":
-                self.sade_ops += [self.best1bin_lsh]
-            elif op == "best1exp_global":
-                self.sade_ops += [self.best1exp_global]
-            elif op == "best1exp_lsh":
-                self.sade_ops += [self.best1exp_lsh]
-            elif op == "best2bin_global":
-                self.sade_ops += [self.best2bin_global]
-            elif op == "best2bin_lsh":
-                self.sade_ops += [self.best2bin_lsh]
-            elif op == "best2exp_global":
-                self.sade_ops += [self.best2exp_global]
-            elif op == "best2exp_lsh":
-                self.sade_ops += [self.best2exp_lsh]
-            elif op == "currToBest_exp_global":
-                self.sade_ops += [self.currToBest_exp_global]
-            elif op == "currToBest_exp_lsh":
-                self.sade_ops += [self.currToBest_exp_lsh]
-            elif op == "currToBest_global":
-                self.sade_ops += [self.currToBest_global]
-            elif op == "currToBest_lsh":
-                self.sade_ops += [self.currToBest_lsh]
-            elif op == "currToRand_exp_global":
-                self.sade_ops += [self.currToRand_exp_global]
-            elif op == "currToRand_exp_lsh":
-                self.sade_ops += [self.currToRand_exp_lsh]
-            elif op == "currToRand_exp_rmsd":
-                self.sade_ops += [self.currToRand_exp_rmsd]
-            elif op == "currToRand_global":
-                self.sade_ops += [self.currToRand_global]
-            elif op == "currToRand_lsh":
-                self.sade_ops += [self.currToRand_lsh]
-            elif op == "currToRand_rmsd":
-                self.sade_ops += [self.currToRand_rmsd]
-            # elif op == "rand1bin_global":
-            #     self.sade_ops += [self.operators.rand1bin_global]
-            elif op == "rand1bin_lsh":
-                self.sade_ops += [self.rand1bin_lsh]
-            elif op == "rand1bin_rmsd":
-                self.sade_ops += [self.rand1bin_rmsd]
-            elif op == "rand1exp_global":
-                self.sade_ops += [self.rand1exp_global]
-            elif op == "rand1exp_lsh":
-                self.sade_ops += [self.rand1exp_lsh]
-            elif op == "rand1exp_rmsd":
-                self.sade_ops += [self.rand1exp_rmsd]
-            elif op == "rand2bin_global":
-                self.sade_ops += [self.rand2bin_global]
-            elif op == "rand2bin_lsh":
-                self.sade_ops += [self.rand2bin_lsh]
-            elif op == "rand2exp_global":
-                self.sade_ops += [self.rand2exp_global]
-            elif op == "rand2exp_lsh":
-                self.sade_ops += [self.rand2exp_lsh]
-
-            elif op == "monte_carlo_3":
-                self.sade_ops += [self.monte_carlo_3]
-            elif op == "monte_carlo_3s":
-                self.sade_ops += [self.monte_carlo_3s]
-            elif op == "monte_carlo_9":
-                self.sade_ops += [self.monte_carlo_9]
-            elif op == "monte_carlo_9s":
-                self.sade_ops += [self.monte_carlo_9s]
-            elif op == "monte_carlo_small":
-                self.sade_ops += [self.monte_carlo_small]
-            elif op == "monte_carlo_shear":
-                self.sade_ops += [self.monte_carlo_shear]
-
-        if len(self.sade_ops) == 0:
-            self.sade_ops += [self.rand1bin_global]
+            else:
+                raise ValueError('An invalid operator was requested: %s' % op)
 
         self.sade_n_ops = len(self.sade_ops)
 
@@ -275,8 +203,6 @@ class DE:
         self.sade_lp_left = self.sade_lp
 
     def sade_update_parameters(self):
-        # self.sade_f = [random.gauss(0.5, 0.3) for _ in range(self.pop_size)]
-
         if self.sade_lp_left <= 0:
             for k in range(self.sade_n_ops):
                 self.sade_cr_memory[k].sort()
@@ -520,7 +446,7 @@ class DE:
 
         if self.stage0_init:
             print('Stage0 init')
-            self.log(it=-1)
+            # self.log(it=-1)
             for p in self.pop:
                 p.eval()
                 p.stage1_mc()
@@ -534,7 +460,7 @@ class DE:
 
         self.update_mean()
 
-        self.log(it=0)
+        # self.log(it=0)
 
         if self.do_lsh:
             self.apply_hash()
@@ -611,7 +537,7 @@ class DE:
                 self.update_diversity()
                 # self.log()
 
-            if self.diversity < self.reset_d_trigger:
+            if self.it > 1 and self.diversity < self.reset_d_trigger:
                 print('d_reset')
                 for i in range(self.pop_size):
                     if random.random() < self.reset_d_percent and i != self.best_index:
@@ -666,7 +592,7 @@ class DE:
             if False and self.it % 1000 == 0:
                 self.dump_pbd_best(self.it)
 
-            if self.log_interval > 0 and self.it % self.log_interval == 0:
+            if self.log_interval > 0 and self.it % self.log_interval == 0 or self.it == 1:
                 self.log()
                 self.stats.flush()
 
@@ -797,17 +723,16 @@ class DE:
                 self.sade_failure_memory[ind][sade_k] += 1
 
     def get_f_cr(self):
-        f = self.f_factor
-        cr = self.c_rate
-
         if self.sade_run:
-            f = random.gauss(0.5, 0.3)
-            cr = self.sade_cr[self.huehue][self.sade_k]
+            return self.get_f(), self.get_cr()
 
-        return f, cr
+        return self.f_factor, self.c_rate
 
     def get_f(self):
         return random.gauss(0.5, 0.3)
+
+    def get_cr(self):
+        return self.sade_cr[self.huehue][self.sade_k]
 
     def update_score_function(self, step=True):
         def update_pop_score(update_score=False):
