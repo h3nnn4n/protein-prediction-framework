@@ -6,7 +6,8 @@ from operators.best1bin_global import best1bin_global
 from operators.best2bin_global import best2bin_global
 from operators.currToBest_global import currToBest_global
 from operators.currToRand_global import currToRand_global
-from operators.global_exp import currToRand_exp_global, currToBest_exp_global
+from operators.global_exp import currToRand_exp_global, currToBest_exp_global, \
+    rand1exp_global, rand2exp_global, best1exp_global, best2exp_global
 
 
 class Operators:
@@ -21,6 +22,10 @@ class Operators:
             'currToRand_global': self.get_currToRand_global,
             'currToRand_exp_global': self.get_currToRand_exp_global,
             'currToBest_exp_global': self.get_currToBest_exp_global,
+            'rand1exp_global': self.get_rand1exp_global,
+            'rand2exp_global': self.get_rand2exp_global,
+            'best1exp_global': self.get_best1exp_global,
+            'best2exp_global': self.get_best2exp_global
         }
 
     def get_random_individual(self):
@@ -70,3 +75,19 @@ class Operators:
     def get_currToBest_exp_global(self):
         self.currToBest_exp_global = types.MethodType(currToBest_exp_global, self)
         return self.currToBest_exp_global
+
+    def get_rand1exp_global(self):
+        self.rand1exp_global = types.MethodType(rand1exp_global, self)
+        return self.rand1exp_global
+
+    def get_rand2exp_global(self):
+        self.rand2exp_global = types.MethodType(rand2exp_global, self)
+        return self.rand2exp_global
+
+    def get_best1exp_global(self):
+        self.best1exp_global = types.MethodType(best1exp_global, self)
+        return self.best1exp_global
+
+    def get_best2exp_global(self):
+        self.best2exp_global = types.MethodType(best2exp_global, self)
+        return self.best2exp_global
