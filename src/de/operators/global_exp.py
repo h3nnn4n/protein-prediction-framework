@@ -86,4 +86,4 @@ def currToBest_exp_global(self, target):
         self.get_random_individual()
     ]
     # individuals.extend(self.get_random_individuals(n=2))
-    exp_base_operator(self, individuals, target, self.currToRand_exp_global)
+    exp_base_operator(self, individuals, target, self.currToBest_exp_global)

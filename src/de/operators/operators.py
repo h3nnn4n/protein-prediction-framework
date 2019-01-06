@@ -8,6 +8,8 @@ from operators.currToBest_global import currToBest_global
 from operators.currToRand_global import currToRand_global
 from operators.global_exp import currToRand_exp_global, currToBest_exp_global, \
     rand1exp_global, rand2exp_global, best1exp_global, best2exp_global
+from operators.rosetta_operators import monte_carlo_3, monte_carlo_3s, \
+    monte_carlo_9, monte_carlo_9s
 
 
 class Operators:
@@ -25,7 +27,11 @@ class Operators:
             'rand1exp_global': self.get_rand1exp_global,
             'rand2exp_global': self.get_rand2exp_global,
             'best1exp_global': self.get_best1exp_global,
-            'best2exp_global': self.get_best2exp_global
+            'best2exp_global': self.get_best2exp_global,
+            'monte_carlo_3': self.get_monte_carlo_3,
+            'monte_carlo_3s': self.get_monte_carlo_3s,
+            'monte_carlo_9': self.get_monte_carlo_9,
+            'monte_carlo_9s': self.get_monte_carlo_9s,
         }
 
     def get_random_individual(self):
@@ -91,3 +97,19 @@ class Operators:
     def get_best2exp_global(self):
         self.best2exp_global = types.MethodType(best2exp_global, self)
         return self.best2exp_global
+
+    def get_monte_carlo_3(self):
+        self.monte_carlo_3 = types.MethodType(monte_carlo_3, self)
+        return self.monte_carlo_3
+
+    def get_monte_carlo_3s(self):
+        self.monte_carlo_3s = types.MethodType(monte_carlo_3s, self)
+        return self.monte_carlo_3s
+
+    def get_monte_carlo_9(self):
+        self.monte_carlo_9 = types.MethodType(monte_carlo_9, self)
+        return self.monte_carlo_9
+
+    def get_monte_carlo_9s(self):
+        self.monte_carlo_9s = types.MethodType(monte_carlo_9s, self)
+        return self.monte_carlo_9s
