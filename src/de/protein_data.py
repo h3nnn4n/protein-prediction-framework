@@ -73,7 +73,7 @@ class ProteinData:
 
             index += 3 + n_sidechain_angles
 
-        self.fix_bounds()
+        # self.fix_bounds()
         # self.eval()
         # self.print_angles()
         # print('Finished INIT', self.allatom)
@@ -118,11 +118,9 @@ class ProteinData:
 
         self.eval()
 
-        self.fix_bounds()
-
     def new_angles(self, angles):
         index = 0
-        for k, ss in enumerate(self.rosetta_pack.ss_pred):
+        for k, _ in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
             phi, psi, omega = angles[index + 0], angles[index + 1], angles[index + 2]
 
@@ -145,12 +143,12 @@ class ProteinData:
     def eval(self, score=None):
         self.score = self.score_function(self.pose)
         # if score is None and self.pose.is_centroid():
-            # print('centroid')
-            # score = self.rosetta_pack.get_score3()
+        #     print('centroid')
+        #     score = self.rosetta_pack.get_score3()
 
         # if score is None and not self.pose.is_centroid():
-            # print('allatom')
-            # score = self.rosetta_pack.get_scorefxn()
+        #     print('allatom')
+        #     score = self.rosetta_pack.get_scorefxn()
 
         # self.score = score(self.pose)
         # self.rosetta_pack.pymover.apply(self.pose)
@@ -186,20 +184,8 @@ class ProteinData:
             index += 3 + n_sidechain_angles
 
     def update_angle_from_pose(self):
-        # for n, _ in enumerate(self.rosetta_pack.ss_pred):
-            # phi, psi, omega = self.pose.phi(n + 1), self.pose.psi(n + 1), self.pose.omega(n + 1)
-
-#             if self.angles[n * 3 + 0] - phi > 0.001 or self.angles[n * 3 + 1] - psi > 0.001:
-#                 print("%d" % n)
-#                 print("%8.3f %8.3f %8.3f" % (phi, psi, omega))
-#                 print("%8.3f %8.3f %8.3f" % (self.angles[n * 3 + 0], self.angles[n * 3 + 1], self.angles[n * 3 + 2]))
-
-            # self.angles[n * 3 + 0] = phi
-            # self.angles[n * 3 + 1] = psi
-            # self.angles[n * 3 + 2] = omega
-
         index = 0
-        for k, ss in enumerate(self.rosetta_pack.ss_pred):
+        for k, _ in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
             phi, psi, omega = self.pose.phi(k + 1), self.pose.psi(k + 1), self.pose.omega(k + 1)
 
@@ -215,45 +201,27 @@ class ProteinData:
             index += 3 + n_sidechain_angles
 
     def stage1_mc(self, n=100, temp=2.0):
-        allatom = self.allatom
-
         pd = self.rosetta_pack
-        pd.set_starting_pose(self.angles)
 
-        best = self.pose
         score = pd.get_score0()
 
-        r = None
-        if allatom:
-            r = pd.get_sidechain_recover()(best)
-            pd.get_centroid_switch().apply(best)
-
-        mc = pd.get_new_mc(best, score, temp)
+        mc = pd.get_new_mc(self.pose, score, temp)
 
         seq = pd.get_new_seq_mover()
         seq.add_mover(pd.get_9mer())
-        # seq.add_mover(pd.get_9mer_smooth())
-        # seq.add_mover(pd.get_3mer())
-        # seq.add_mover(pd.get_3mer_smooth())
-
         trial = pd.get_new_trial_mover(seq, mc)
-
         folding = pd.get_new_rep_mover(trial, n)
-        folding.apply(best)
 
-        mc.recover_low(best)
+        folding.apply(self.pose)
+
+        self.pose.assign(mc.lowest_score_pose())
         self.update_angle_from_pose()
-
-        if allatom:
-            pd.get_allatom_switch().apply(best)
-            r.apply(best)
-            pd.get_packer().apply(best)
+        self.eval()
 
     def stage2_mc(self, n=100, temp=2.0, mode='3s'):
         allatom = self.allatom
 
         pd = self.rosetta_pack
-        pd.set_starting_pose(self.angles)
 
         score = pd.get_score_function(self.score_function_name)
 
@@ -297,52 +265,50 @@ class ProteinData:
         mc = None
         evals = 0
 
-        # if n == 1:
-        if True:
-            if mode == '3':
-                mc = self.mc3
-                # mover = self.seq3
-                mover = self.trial3
-            elif mode == '3s':
-                mc = self.mc3s
-                # mover = self.seq3s
-                mover = self.trial3s
-            elif mode == '9':
-                mc = self.mc9
-                # mover = self.seq9
-                mover = self.trial9
-            elif mode == '9s':
-                mc = self.mc9s
-                # mover = self.seq9s
-                mover = self.trial9s
-            elif mode == 'small':
-                mc = self.mcsmall
-                # mover = self.seqsmall
-                mover = self.trialsmall
-            elif mode == 'shear':
-                mc = self.mcshear
-                # mover = self.seqshear
-                mover = self.trialshear
+        if mode == '3':
+            mc = self.mc3
+            # mover = self.seq3
+            mover = self.trial3
+        elif mode == '3s':
+            mc = self.mc3s
+            # mover = self.seq3s
+            mover = self.trial3s
+        elif mode == '9':
+            mc = self.mc9
+            # mover = self.seq9
+            mover = self.trial9
+        elif mode == '9s':
+            mc = self.mc9s
+            # mover = self.seq9s
+            mover = self.trial9s
+        elif mode == 'small':
+            mc = self.mcsmall
+            # mover = self.seqsmall
+            mover = self.trialsmall
+        elif mode == 'shear':
+            mc = self.mcshear
+            # mover = self.seqshear
+            mover = self.trialshear
 
-            mc.set_temperature(temp)
-            if not self.enable_remc:
-                mc.reset(self.pose)
+        mc.set_temperature(temp)
+        if not self.enable_remc:
+            mc.reset(self.pose)
 
-            original = self.score
-            one_more = original is None
+        self.eval()
+        original = self.score
+        one_more = original is None
 
-            for i in range(n):
-                mover.apply(self.pose)
-                evals += 1
-                if self.pose.energies().total_energy() < original:
-                    if not one_more:
-                        break
-                    else:
-                        one_more = False
+        for _ in range(n):
+            mover.apply(self.pose)
+            evals += 1
+            if self.pose.energies().total_energy() < original:
+                if not one_more:
+                    break
+                else:
+                    one_more = False
 
-            mc.recover_low(self.pose)
-
-        self.score = self.pose.energies().total_energy()
+        self.pose.assign(mc.lowest_score_pose())
+        self.score = mc.lowest_score()
 
         if allatom:
             pd.get_allatom_switch().apply(self.pose)
@@ -368,3 +334,7 @@ class ProteinData:
         pd.run_tmscore()
         self.tmscore = pd.get_tmscore()
         return self.tmscore
+
+    def copy(self, original):
+        self.new_angles(original.angles)
+        self.score = original.score

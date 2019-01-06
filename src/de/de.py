@@ -176,9 +176,6 @@ class DE:
         for p in self.pop:
             p.enable_remc = self.enable_remc
 
-# ######################### Module Loading #########################
-
-
 # ######################### START OF SADE ##########################
 
     def set_sade_ops(self):
@@ -599,13 +596,20 @@ class DE:
 
             if self.it % 50 == 0 and self.avg_rmsd() < self.reset_rmsd_trigger:
                 print('rmsd_reset')
+                # self.log()
+                # self.trial.stage1_mc(n=100)
+                # self.trial.reset()
                 for i in range(self.pop_size):
                     if random.random() < self.reset_rmsd_percent and i != self.best_index:
+                        # before = self.pop[i].score
+                        # import ipdb; ipdb.set_trace()
                         self.pop[i].reset()
-                        self.pop[i].stage1_mc(n=10)
-                        self.pop[i].update_angle_from_pose()
+                        self.pop[i].stage1_mc(n=100)
+                        # self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
+                        # print(i, before, self.pop[i].score)
                 self.update_diversity()
+                # self.log()
 
             if self.diversity < self.reset_d_trigger:
                 print('d_reset')
