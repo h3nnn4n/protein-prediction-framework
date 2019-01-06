@@ -167,6 +167,9 @@ class DE:
 
 # ######################### Config Update ##########################
 
+    def reload_config(self):
+        self.update_remc()
+
     def update_remc(self):
         self.trial.enable_remc = self.enable_remc
 
