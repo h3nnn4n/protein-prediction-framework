@@ -7,7 +7,7 @@ def base_monte_carlo(self, target, mode, operator):
 
     _, cr = self.de.get_f_cr()
     self.de.trial.pose.assign(self.de.pop[target].pose)
-    evals = self.de.trial.stage2_mc(n=10, temp=cr * 3.0, mode=mode)
+    evals = self.de.trial.stage2_mc(n=25, temp=cr * 3.0, mode=mode)
     self.de.trial.update_angle_from_pose()
     self.de.selection(self.de.pop[target])
 
