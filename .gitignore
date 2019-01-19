@@ -6,6 +6,7 @@
 *.tar
 *.tar.*
 *test*
+*yaml
 .*bkp
 .DS_Store
 __pycache__
