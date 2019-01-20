@@ -7,6 +7,9 @@ def load_data():
     with open('scipy_min_test.pickle', 'rb') as f:
         data = pickle.load(f)
 
+    with open('scipy_min_dual_annealing.pickle', 'rb') as f:
+        data = {**data, **pickle.load(f)}
+
     return data
 
 
@@ -33,6 +36,6 @@ for i in range(n_methods):
 
         p = dunn_result[i][j]
         if p < alpha / 2.0 and mean_a < mean_b:
-            print("metod_a: %12s  method_b: %12s  p: %8.4f  mean_a: %6.2f  mean_b: %6.2f" % (
+            print("metod_a: %15s  method_b: %15s  p: %8.4f  mean_a: %6.2f  mean_b: %6.2f" % (
                 method_a, method_b, p, mean_a, mean_b
             ))

@@ -52,6 +52,8 @@ class ProteinData:
         self.set_score_function()
         self.reset()
 
+        self.calls = 0
+
         # self.fix_bounds()
         # self.eval()
         # self.print_angles()
@@ -60,6 +62,8 @@ class ProteinData:
     def __call__(self, angles):
         self.new_angles(angles)
         self.eval()
+        self.calls += 1
+        # print("%6d %8.3f" % (self.calls, self.score))
         return self.score
 
     def set_score_function(self, score='score3'):
