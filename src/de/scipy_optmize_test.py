@@ -4,15 +4,15 @@ from protein_data import ProteinData
 from rosetta_pack import RosettaPack
 
 
-def run(n_runs=5):
+def run(n_runs=40):
     rp = RosettaPack(name='1zdd')
     pd = ProteinData(rp)
 
-    tol = 1e-1
+    tol = 1e-4
 
     methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B', 'TNC']
 
-    maxiter = 1000
+    maxiter = 10000
     disp = False
 
     results = {}
@@ -31,7 +31,6 @@ def run(n_runs=5):
             print(result.fun)
 
     return results
-
 
 data = run()
 
