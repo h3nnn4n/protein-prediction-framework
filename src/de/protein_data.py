@@ -72,7 +72,7 @@ class ProteinData:
 
     def print_angles(self):
         index = 0
-        for k, ss in enumerate(self.rosetta_pack.ss_pred):
+        for k, _ in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
             print("%4d %4d %8.3f %8.3f %8.3f " % (k, index, self.angles[index + 0], self.angles[index + 1], self.angles[index + 2]), end='')
             for i in range(n_sidechain_angles):
@@ -83,9 +83,16 @@ class ProteinData:
 
     def reset(self):
         index = 0
+        size = len(self.rosetta_pack.ss_pred)
         for k, ss in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
             phi, psi, omega = self.bounds.generateRandomAngles(ss)
+
+            if k == 0:
+                phi = 0.0
+            elif k == size - 1:
+                psi = 0.0
+                omega = 0.0
 
             self.pose.set_phi(k + 1, phi)
             self.pose.set_psi(k + 1, psi)
@@ -108,9 +115,16 @@ class ProteinData:
 
     def new_angles(self, angles):
         index = 0
+        size = len(self.rosetta_pack.ss_pred)
         for k, _ in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
             phi, psi, omega = angles[index + 0], angles[index + 1], angles[index + 2]
+
+            if k == 0:
+                phi = 0.0
+            elif k == size - 1:
+                psi = 0.0
+                omega = 0.0
 
             self.pose.set_phi(k + 1, phi)
             self.pose.set_psi(k + 1, psi)
@@ -328,4 +342,3 @@ class ProteinData:
     def copy(self, original):
         self.new_angles(original.angles)
         self.score = original.score
-
