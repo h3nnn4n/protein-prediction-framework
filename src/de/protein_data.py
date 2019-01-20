@@ -67,6 +67,9 @@ class ProteinData:
         return self.score
 
     def set_score_function(self, score='score3'):
+        if self.allatom:
+            score = 'scorefxn'
+
         self.score_function_name = score
         self.score_function = self.rosetta_pack.get_score_function(score)
 
