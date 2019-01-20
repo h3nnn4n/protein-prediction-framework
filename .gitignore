@@ -17,5 +17,6 @@ bkp*
 todo*
 xa?
 .*bkp
-*test*
+*test_*
+*tests_*
 .python-version

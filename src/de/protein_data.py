@@ -49,34 +49,18 @@ class ProteinData:
         self.angles = np.zeros(self.nsca)
         self.score = None
 
-        index = 0
-        for k, ss in enumerate(rosetta_pack.ss_pred):
-            n_sidechain_angles = self.bounds.getNumSideChainAngles(rosetta_pack.target[k])
-            phi, psi, omega = self.bounds.generateRandomAngles(ss)
-
-            # print(index, k, n_sidechain_angles, self.nsca)
-
-            self.pose.set_phi(k + 1, phi)
-            self.pose.set_psi(k + 1, psi)
-            self.pose.set_omega(k + 1, omega)
-
-            self.angles[index + 0] = phi
-            self.angles[index + 1] = psi
-            self.angles[index + 2] = omega
-
-            aa = self.rosetta_pack.target[k]
-            angles = self.bounds.generateRandomSidechainAngles(aa)
-            for kk, vv in enumerate(angles):
-                if self.allatom and n_sidechain_angles > 0:
-                    self.angles[index + 3 + kk] = vv
-                    self.pose.set_chi(kk + 1, k + 1, vv)
-
-            index += 3 + n_sidechain_angles
+        self.set_score_function()
+        self.reset()
 
         # self.fix_bounds()
         # self.eval()
         # self.print_angles()
         # print('Finished INIT', self.allatom)
+
+    def __call__(self, angles):
+        self.new_angles(angles)
+        self.eval()
+        return self.score
 
     def set_score_function(self, score='score3'):
         self.score_function_name = score
@@ -154,6 +138,8 @@ class ProteinData:
         # self.rosetta_pack.pymover.apply(self.pose)
 
     def fix_bounds(self):
+        return
+
         index = 0
         for n, ss in enumerate(self.rosetta_pack.ss_pred):
             phi = self.angles[index + 0]
@@ -338,3 +324,4 @@ class ProteinData:
     def copy(self, original):
         self.new_angles(original.angles)
         self.score = original.score
+
