@@ -20,3 +20,4 @@ xa?
 *test_*
 *tests_*
 .python-version
+*.pickle
