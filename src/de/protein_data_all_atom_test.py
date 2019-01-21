@@ -57,7 +57,7 @@ def test_angles_match_pose_after_new_angles():
             assert abs(a - b) < eps, "failed at angle #%d" % k
 
 
-def test_eval_score3():
+def test_eval_scorefxn():
     """
         test if the score is working correctly
         This test here could use some improvements
@@ -84,6 +84,21 @@ def test_eval_score3():
 
         assert score_rama < score_bad
         assert score_random < score_bad
+
+
+def test_eval_score3_vs_scorefxn():
+    """
+        test if the scorefxn is bigger than score3, which it should pretty
+        much always be
+    """
+    pd_centroid = ProteinData(rp, allatom=False)
+    pd_all_atom = ProteinData(rp, allatom=True)
+
+    for _ in range(repeats):
+        pd_centroid.reset()
+        pd_all_atom.reset()
+
+        assert pd_centroid.score < pd_all_atom.score
 
 
 def test_update_angle_from_pose():
@@ -135,7 +150,7 @@ def test_angles_match_pose_after_stage1_mc():
 
 
 def test_score_improves_with_stage2_mc():
-    return #  FIXME
+    return  # FIXME
     """
         test that the score improves with stage2 mc
     """
