@@ -13,6 +13,7 @@ def boot(conf_file):
 
     cf.inject(d)
 
+    d.reload_config()
     d.run()
 
 

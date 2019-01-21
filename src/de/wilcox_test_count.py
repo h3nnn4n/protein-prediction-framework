@@ -28,7 +28,7 @@ def ic(target, names):
         with open(t, 'rt') as f:
             for l in f.readlines():
                 line = l.rstrip().lstrip()
-                tokens = re.sub("\s+", " ", line).split(' ')
+                tokens = re.sub(r"\s+", " ", line).split(' ')
 
                 if len(tokens) < 2:
                     continue
