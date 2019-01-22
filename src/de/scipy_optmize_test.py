@@ -13,7 +13,7 @@ def run_minimize(n_runs=40):
 
     tol = 1e-4
 
-    methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B', 'TNC']
+    methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B', 'TNC', 'COBYLA']
 
     maxiter = 10000
     disp = False
@@ -95,12 +95,12 @@ def run_dual_annealing(results=None, pd=None, n_runs=40):
     return results
 
 
-data = run_others(n_runs=2)
+data = run_others(n_runs=40)
 
 with open('scipy_min_dual_annealing.pickle', 'wb') as f:
     pickle.dump(data, f)
 
-data = run_minimize(n_runs=10)
+data = run_minimize(n_runs=40)
 
 with open('scipy_min_test.pickle', 'wb') as f:
     pickle.dump(data, f)
