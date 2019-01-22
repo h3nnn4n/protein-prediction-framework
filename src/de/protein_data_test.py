@@ -3,7 +3,12 @@ import random
 from protein_data import ProteinData
 from rosetta_pack import RosettaPack
 
-rp = RosettaPack(name='1zdd')
+# TODO:
+# Test repacking
+# Test TM-Score
+
+pname = '1zdd'
+rp = RosettaPack(name=pname)
 eps = 1e-8  # The tolerance for comparing floats
 repeats = 10  # Number of times to repeat random tests
 stage2_modes = ['3', '3s', '9', '9s', 'shear', 'small']

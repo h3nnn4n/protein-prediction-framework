@@ -54,11 +54,6 @@ class ProteinData:
 
         self.calls = 0
 
-        # self.fix_bounds()
-        # self.eval()
-        # self.print_angles()
-        # print('Finished INIT', self.allatom)
-
     def __call__(self, angles):
         self.new_angles(angles)
         self.eval()
@@ -208,9 +203,15 @@ class ProteinData:
             index += 3 + n_sidechain_angles
 
     def stage1_mc(self, n=100, temp=2.0):
+        allatom = self.allatom
         pd = self.rosetta_pack
 
         score = pd.get_score0()
+
+        r = None
+        if allatom:
+            r = pd.get_sidechain_recover()(self.pose)
+            pd.get_centroid_switch().apply(self.pose)
 
         mc = pd.get_new_mc(self.pose, score, temp)
 
@@ -222,7 +223,16 @@ class ProteinData:
         folding.apply(self.pose)
 
         self.pose.assign(mc.lowest_score_pose())
+
+        if allatom:
+            pd.get_allatom_switch().apply(self.pose)
+            r.apply(self.pose)
+            # pd.get_packer().apply(self.pose)
+            # FIXME I guess
+            # TBH I dont remember what this does or why I need it
+
         self.update_angle_from_pose()
+
         self.eval()
 
     def stage2_mc(self, n=100, temp=2.0, mode='3s'):
@@ -232,10 +242,11 @@ class ProteinData:
 
         score = pd.get_score_function(self.score_function_name)
 
-        r = None
-        if allatom:
-            r = pd.get_sidechain_recover()(self.pose)
-            pd.get_centroid_switch().apply(self.pose)
+        if allatom and self.score_function_name != 'scorefxn':
+            raise RuntimeError(
+                "Expected self.score_function_name to be scorefxn but was %s" %
+                self.score_function_name
+            )
 
         if mode == '3':
             if self.mc3 is None:
@@ -316,12 +327,6 @@ class ProteinData:
 
         self.pose.assign(mc.lowest_score_pose())
         self.score = mc.lowest_score()
-
-        if allatom:
-            pd.get_allatom_switch().apply(self.pose)
-            r.apply(self.pose)
-            pd.get_packer().apply(self.pose)
-
         self.update_angle_from_pose()
 
         return evals

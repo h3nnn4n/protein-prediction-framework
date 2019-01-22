@@ -3,7 +3,12 @@ import random
 from protein_data import ProteinData
 from rosetta_pack import RosettaPack
 
-rp = RosettaPack(name='1zdd')
+# TODO:
+# Test side chain being putback after allatom -> centroid -> allatom
+# Test TM-Score
+
+pname = '1zdd'
+rp = RosettaPack(name=pname)
 eps = 1e-8  # The tolerance for comparing floats
 repeats = 10  # Number of times to repeat random tests
 stage2_modes = ['3', '3s', '9', '9s', 'shear', 'small']
@@ -117,7 +122,6 @@ def test_update_angle_from_pose():
 
 
 def test_score_improves_with_stage1_mc():
-    return  # FIXME
     """
         test that the score improves with stage1 mc
     """
@@ -135,7 +139,6 @@ def test_score_improves_with_stage1_mc():
 
 
 def test_angles_match_pose_after_stage1_mc():
-    return  # FIXME
     """
         test that angles match after stage1 mc
     """
@@ -150,7 +153,6 @@ def test_angles_match_pose_after_stage1_mc():
 
 
 def test_score_improves_with_stage2_mc():
-    return  # FIXME
     """
         test that the score improves with stage2 mc
     """

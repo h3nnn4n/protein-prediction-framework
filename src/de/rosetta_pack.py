@@ -132,8 +132,7 @@ class RosettaPack():
         self.task_pack = pyrosetta.standard_packer_task(self.pose)
         self.task_pack.restrict_to_repacking()
         self.task_pack.or_include_current(True)
-        self.pack_mover = lambda _: None
-        # self.pack_mover = pyrosetta.rosetta.protocols.simple_moves.PackRotamersMover(self.scorefxn, self.task_pack)
+        self.pack_mover = pyrosetta.rosetta.protocols.minimization_packing.PackRotamersMover(self.scorefxn, self.task_pack)
 
         self.fast_relax = pyrosetta.rosetta.protocols.relax.FastRelax(self.scorefxn)
 
@@ -171,15 +170,15 @@ class RosettaPack():
         return self.native
 
     def run_tmscore(self, name=None):
-        flag = False
+        # flag = False
         if name is None:
-            flag = True
+            # flag = True
             name = self.dump_tmp()
 
         self.tmscore(self.native_path, name)
 
         # if not flag:
-            # os.remove(name)
+        #     os.remove(name)
 
     def get_tmscore(self):
         return self.tmscore.get_all()
