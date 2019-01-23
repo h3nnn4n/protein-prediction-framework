@@ -1,5 +1,6 @@
 import pytest
 import random
+import os
 from protein_data import ProteinData
 from rosetta_pack import RosettaPack
 
@@ -22,6 +23,20 @@ def test_init():
     pd = ProteinData(rp)
 
     assert pd is not None  # Just asserting something
+
+
+def test_path_doesnt_change():
+    """
+        Test that the working dir does not change
+    """
+    original_path = os.getcwd()
+    ProteinData(rp)
+    after_path = os.getcwd()
+    ProteinData(rp)
+    after_path2 = os.getcwd()
+
+    assert original_path == after_path
+    assert original_path == after_path2
 
 
 def test_angles_match_pose_after_init():
