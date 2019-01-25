@@ -21,7 +21,7 @@ class ProteinLoader:
         if name is not None:
             self.name = name
 
-        # original = os.path.dirname(os.path.realpath(__file__))
+        original = os.path.dirname(os.path.realpath(__file__))
         self.original = os.getcwd()
 
         base = self.protein_data_path
@@ -35,7 +35,6 @@ class ProteinLoader:
             else:
                 raise FileNotFoundError('Could not find %s' % native_path)
 
-
             if os.path.isfile(name + '.fasta'):
                 with open(name + '.fasta', 'rt') as f:
                     self.target = ''
@@ -47,7 +46,7 @@ class ProteinLoader:
                 with open(name + '.psipred.ss2', 'rt') as f:
                     self.ss_pred = ''
                     for line in f.readlines()[1:]:
-                        tokens = re.sub("\s+", " ", line.rstrip().lstrip()).split(' ')
+                        tokens = re.sub(r"\s+", " ", line.rstrip().lstrip()).split(' ')
                         if len(tokens) < 3:
                             continue
 
@@ -65,8 +64,7 @@ class ProteinLoader:
             else:
                 raise FileNotFoundError('Could not find %s' % f9)
 
-
-        # os.chdir(original)
+        os.chdir(original)
 
     def show(self):
         print(self.name)
