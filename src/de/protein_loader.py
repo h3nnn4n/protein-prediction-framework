@@ -31,7 +31,7 @@ class ProteinLoader:
             os.chdir(dest)
             native_path = name + '.pdb'
             if os.path.isfile(native_path):
-                self.native_path = native_path
+                self.native_path = os.path.join(base, name, native_path)
             else:
                 raise FileNotFoundError('Could not find %s' % native_path)
 
