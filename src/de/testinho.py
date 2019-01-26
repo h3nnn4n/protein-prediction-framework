@@ -17,8 +17,20 @@ fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
 fragset3.read_fragment_file('../../protein_data/1zdd/output/1zdd.200.3mers')
 fragset9.read_fragment_file('../../protein_data/1zdd/output/1zdd.200.9mers')
 
+cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
+
 movemap = pyrosetta.MoveMap()
 movemap.set_bb(True)
+
+mover_3mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(fragset3, movemap)
+mover_9mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(fragset9, movemap)
+mover_3mer_smooth = pyrosetta.rosetta.protocols.simple_moves.SmoothFragmentMover(fragset3, movemap, cost)
+mover_9mer_smooth = pyrosetta.rosetta.protocols.simple_moves.SmoothFragmentMover(fragset9, movemap, cost)
+
+mover_3mer.set_movemap(movemap)
+mover_9mer.set_movemap(movemap)
+mover_3mer_smooth.set_movemap(movemap)
+mover_9mer_smooth.set_movemap(movemap)
 
 smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(movemap, temp, n_moves)
 shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(movemap, temp, n_moves)
