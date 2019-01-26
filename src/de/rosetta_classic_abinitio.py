@@ -24,6 +24,7 @@ class ClassicAbinitio:
     def setup_logs(self):
         self.init_time = time.time()
         self.now = datetime.datetime.now()
+        self.start_time = self.init_time
 
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
@@ -116,7 +117,7 @@ class ClassicAbinitio:
             ('%8.4f', rmsd),
             ('%8.4f', rmsd),
             ('%8.4f', 0),
-            ('%10.2f', 0),
+            ('%10.2f', (time.time() - self.start_time)),
             ('%8.5f', 0),
             ('%8.2f', 0),
             ('%8.5f', 0),
@@ -144,8 +145,12 @@ class ClassicAbinitio:
 
 if __name__ == '__main__':
     pname = '1zdd'
+    factor = 1
     if len(sys.argv) > 1:
         pname = sys.argv[1]
 
+    if len(sys.argv) > 2:
+        factor = int(sys.argv[2])
+
     c = ClassicAbinitio(pname)
-    c.run()
+    c.run(factor)
