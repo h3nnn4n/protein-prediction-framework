@@ -102,10 +102,6 @@ class DE:
         self.centroids = None
         self.moment_of_inertia = None
 
-        # Island stuff
-        self.comm = None  # Comunicator
-        self.island_interval = 100
-
         # LHS parameters
         self.do_lsh = False
         self.n_hashes = None
@@ -328,9 +324,6 @@ class DE:
             f.write('energy_options: %s\n' % self.energy_options)
             f.write('extended_diversity_measurements: %s\n' % self.extended_diversity_measurements)
             f.flush()
-
-    def set_coms(self, pigeon):
-        self.comm = pigeon
 
     def set_allatom(self):
         switch = self.rosetta_pack.allatom_switch
@@ -581,13 +574,6 @@ class DE:
 
             self.update_mean()
             self.update_threshold()
-
-            if self.comm is not None and self.comm.size > 1 and self.island_interval > 0 and self.it % self.island_interval == 0 and self.it > 0:
-                print("% is sending obj with score %f" % (self.comm.rank, self.best_score))
-                new_guy = self.comm.migration(self.get_best())
-                if new_guy is not None:
-                    self.pop[0].new_angles(new_guy)
-                    self.pop[0].eval()
 
             if False and self.it % 1000 == 0:
                 self.dump_pbd_best(self.it)
