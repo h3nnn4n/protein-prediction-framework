@@ -83,6 +83,30 @@ def test_run_tmscore():
     assert data['rmsd'] is not None
 
 
+def test_run_tmscore_path():
+    original_path = os.getcwd()
+    rp.run_tmscore()
+    after_path = os.getcwd()
+    rp.run_tmscore()
+    after_path2 = os.getcwd()
+
+    assert original_path == after_path
+    assert original_path == after_path2
+
+
+def test_get_tmscore_path():
+    original_path = os.getcwd()
+    rp.run_tmscore()
+    rp.get_tmscore()
+    after_path = os.getcwd()
+    rp.run_tmscore()
+    rp.get_tmscore()
+    after_path2 = os.getcwd()
+
+    assert original_path == after_path
+    assert original_path == after_path2
+
+
 def test_get_sidechain_recover():
     # TODO
     rp = RosettaPack(name=pname)

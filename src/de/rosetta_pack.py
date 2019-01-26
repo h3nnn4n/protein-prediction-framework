@@ -170,15 +170,15 @@ class RosettaPack():
         return self.native
 
     def run_tmscore(self, name=None):
-        # flag = False
+        clean_after = False
         if name is None:
-            # flag = True
+            clean_after = True
             name = self.dump_tmp()
 
         self.tmscore(self.native_path, name)
 
-        # if not flag:
-        #     os.remove(name)
+        if clean_after:
+            os.remove(name)
 
     def get_tmscore(self):
         return self.tmscore.get_all()
