@@ -1,4 +1,5 @@
 import time
+import sys
 import datetime
 import string
 import pyrosetta
@@ -7,9 +8,9 @@ from rosetta_pack import RosettaPack
 
 
 class ClassicAbinitio:
-    def __init__(self):
-        self.pname = '1zdd'
-        self.cname = 'abinitio'
+    def __init__(self, pname='1zdd'):
+        self.pname = pname
+        self.cname = 'classic-abinitio'
 
         self.rp = RosettaPack(self.pname)
         self.score3 = self.rp.get_score3()
@@ -141,5 +142,10 @@ class ClassicAbinitio:
         return self.rp.get_scorefxn()(best)
 
 
-c = ClassicAbinitio()
-c.run()
+if __name__ == '__main__':
+    pname = '1zdd'
+    if len(sys.argv) > 1:
+        pname = sys.argv[1]
+
+    c = ClassicAbinitio(pname)
+    c.run()
