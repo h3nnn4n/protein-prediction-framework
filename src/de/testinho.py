@@ -1,15 +1,24 @@
 import pyrosetta
+import random
 
 
 target = 'MTKQEKTALNMARFIRSQTLTLLEKLNELDADEQADICESLHDHADELYRSCLARFGDDGENL'
-temp = 1.0
+temp = 2.0
 n_moves = 5
 
 pyrosetta.init('-out:level 0')
 
-scorefxn = pyrosetta.get_fa_scorefxn()
+allatom = False
 pose = pyrosetta.pose_from_sequence(target)
-mc = pyrosetta.MonteCarlo(pose, scorefxn, temp)
+
+if allatom:
+    score_function = pyrosetta.get_fa_scorefxn()
+else:
+    centroid_switch = pyrosetta.SwitchResidueTypeSetMover('centroid')
+    score_function = pyrosetta.create_score_function('score3')
+    centroid_switch.apply(pose)
+
+mc = pyrosetta.MonteCarlo(pose, score_function, temp)
 
 fragset3 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(3)
 fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
@@ -36,20 +45,57 @@ smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(movemap, temp, 
 shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(movemap, temp, n_moves)
 minmover = pyrosetta.rosetta.protocols.minimization_packing.MinMover()
 
+if not allatom:
+    minmover.score_function(score_function)
+
 perturbation_seq = pyrosetta.rosetta.protocols.moves.SequenceMover()
 perturbation_seq.add_mover(smallmover)
 perturbation_seq.add_mover(shearmover)
-perturbation_rep = pyrosetta.rosetta.protocols.moves.RepeatMover(perturbation_seq, 10)
+perturbation_trial = pyrosetta.TrialMover(perturbation_seq, mc)
+perturbation_rep = pyrosetta.rosetta.protocols.moves.RepeatMover(perturbation_trial, 10)
+
+frag_trial_9mer = pyrosetta.TrialMover(mover_9mer, mc)
+frag_trial_3mer_smooth = pyrosetta.TrialMover(mover_3mer_smooth, mc)
+frag_sequence = pyrosetta.rosetta.protocols.moves.SequenceMover()
+frag_sequence.add_mover(frag_trial_9mer)
+frag_sequence.add_mover(frag_trial_3mer_smooth)
+frag_repeater = pyrosetta.rosetta.protocols.moves.RepeatMover(frag_sequence, 100)
 
 hopper = pyrosetta.rosetta.protocols.moves.SequenceMover()
 hopper.add_mover(perturbation_rep)
+hopper.add_mover(frag_repeater)
 hopper.add_mover(minmover)
 
 hopper_trial = pyrosetta.TrialMover(hopper, mc)
-hopper_rep = pyrosetta.rosetta.protocols.moves.RepeatMover(perturbation_seq, 100)
+hopper_rep = pyrosetta.rosetta.protocols.moves.RepeatMover(hopper_trial, 5)
 
 
-def run(n=100):
-    for i in range(n):
+def set_pose(pose, data):
+    for i in range(len(target)):
+        pose.set_phi(i + 1, data[i * 3 + 0])
+        pose.set_psi(i + 1, data[i * 3 + 1])
+        pose.set_omega(i + 1, data[i * 3 + 2])
+
+
+def reset_pose():
+    angles = [random.uniform(-180, 180) for _ in range(3 * len(target))]
+    set_pose(pose, angles)
+    score = score_function(pose)
+    mc.set_last_accepted(score)
+    mc.set_last_accepted_pose(pose)
+    mc.reset_counters()
+
+
+def run(evals=500000):
+    print("%8d %8d %12.4f %12.4f" % (0, mc.total_trials(), score_function(pose), mc.lowest_score()))
+    i = 0
+    while True:
         hopper_rep.apply(pose)
-        print("%8d %12.4f" % (i, scorefxn(pose)))
+        print("%8d %8d %12.4f %12.4f" % (i + 1, mc.total_trials(), score_function(pose), mc.lowest_score()))
+        if random.random() < 0.05:
+            mc.recover_low(pose)
+
+        if mc.total_trials() >= evals:
+            break
+
+        i += 1
