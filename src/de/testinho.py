@@ -11,6 +11,12 @@ scorefxn = pyrosetta.get_fa_scorefxn()
 pose = pyrosetta.pose_from_sequence(target)
 mc = pyrosetta.MonteCarlo(pose, scorefxn, temp)
 
+fragset3 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(3)
+fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
+
+fragset3.read_fragment_file('../../protein_data/1zdd/output/1zdd.200.3mers')
+fragset9.read_fragment_file('../../protein_data/1zdd/output/1zdd.200.9mers')
+
 movemap = pyrosetta.MoveMap()
 movemap.set_bb(True)
 
