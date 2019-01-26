@@ -334,7 +334,7 @@ class ProteinData:
     def repack(self):
         pd = self.rosetta_pack
         repack = pd.get_fast_relax()
-        best = pd.convert_to_allatom_pose(self.pose)
+        best = pd.copy_pose_to_allatom(self.pose)
         repack.apply(best)
 
         self.repacked = best
