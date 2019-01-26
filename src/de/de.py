@@ -299,7 +299,6 @@ class DE:
             f.write('stage2_all_interval: %d\n' % self.stage2_all_interval)
             f.write('partial_reset: %d\n' % self.partial_reset)
             f.write('log_interval: %d\n' % self.log_interval)
-            f.write('island_interval: %d\n' % self.island_interval)
             f.write('do_lsh: %d\n' % self.do_lsh)
             f.write('n_hashes: %d\n' % self.n_hashes)
             f.write('update_interval: %d\n' % self.update_interval)

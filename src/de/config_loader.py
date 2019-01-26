@@ -7,9 +7,9 @@ class ConfigLoader:
         self.options = {}
 
         self.options['pname'] = '1crn'
-        self.options['pop_size'] = 100
-        self.options['max_iters'] = 50
-        self.options['max_evals'] = 5000
+        self.options['pop_size'] = 10
+        self.options['max_iters'] = 10
+        self.options['max_evals'] = 100
         self.options['stop_condition'] = 'evals iters'
         self.options['c_rate'] = 1.0
         self.options['f_factor'] = 0.5
@@ -21,8 +21,6 @@ class ConfigLoader:
         self.options['partial_reset'] = -1
 
         self.options['log_interval'] = 10
-
-        self.options['island_interval'] = 100
 
         self.options['do_lsh'] = False
         self.options['n_hashes'] = 10
@@ -100,8 +98,6 @@ class ConfigLoader:
     def inject(self, de):
         for k, v in zip(self.parameters, self.p_values):
             if k not in de.__dict__.keys():
-                print('WARN: key %s was not found!' % k)
-                import sys
-                sys.exit()
+                raise KeyError('WARN: key %s was not found!' % k)
 
             de.__dict__[k] = v
