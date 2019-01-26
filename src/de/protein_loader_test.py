@@ -54,6 +54,16 @@ def test_returns_correct_path():
     assert len(target) == len(ss_pred)
 
 
+def test_raises_for_file_not_found():
+    """
+        Test that FileNotFoundError is raised if the protein data is not found
+    """
+    protein_loader = ProteinLoader()
+
+    with pytest.raises(FileNotFoundError):
+        protein_loader.load('babana_file')
+
+
 def test_that_it_runs():
     """
         Test that the protein loader gets the right files

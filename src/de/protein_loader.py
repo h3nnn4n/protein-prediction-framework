@@ -29,9 +29,10 @@ class ProteinLoader:
         dest = base + '/' + self.name
         if os.path.isdir(dest):
             os.chdir(dest)
-            native_path = name + '.pdb'
+            base_file = name + '.pdb'
+            native_path = os.path.join(base, name, base_file)
             if os.path.isfile(native_path):
-                self.native_path = os.path.join(base, name, native_path)
+                self.native_path = native_path
             else:
                 raise FileNotFoundError('Could not find %s' % native_path)
 
@@ -63,6 +64,8 @@ class ProteinLoader:
                 self.fragset9_path = f9
             else:
                 raise FileNotFoundError('Could not find %s' % f9)
+        else:
+            raise FileNotFoundError('Could not find base folder: %s' % dest)
 
         os.chdir(original)
 
