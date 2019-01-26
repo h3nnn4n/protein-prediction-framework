@@ -252,7 +252,7 @@ class RosettaPack():
     def get_allatom_switch(self):
         return self.allatom_switch
 
-    def convert_to_allatom_pose(self, pose):
+    def copy_pose_to_allatom(self, pose):
         ap = pyrosetta.Pose()
         ap.assign(pose)
 
@@ -260,6 +260,10 @@ class RosettaPack():
             self.allatom_switch.apply(ap)
 
         return ap
+
+    def convert_to_allatom_pose(self, pose):
+        if pose.is_centroid():
+            self.allatom_switch.apply(pose)
 
     def get_score_function(self, name='score3'):
         if name not in self.scores.keys():

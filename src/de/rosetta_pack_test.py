@@ -3,7 +3,9 @@ import os
 from rosetta_pack import RosettaPack
 
 pname = '1zdd'
+rp = RosettaPack(name=pname)
 eps = 1e-8
+
 
 def test_path_doesnt_change():
     """
@@ -23,9 +25,6 @@ def test_fragset_loaded():
     """
         Test that the 3 and 9mers fragments were loaded
     """
-
-    rp = RosettaPack(name=pname)
-
     assert rp.fragset3.size() > 0
     assert rp.fragset9.size() > 0
 
@@ -34,8 +33,6 @@ def test_random_rama_angles_to_pose():
     """
         Test that random_rama_angles_to_pose changes all angles
     """
-
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
 
     old_angles = rp.get_backbone_angles_from_pose(pose)
@@ -49,7 +46,6 @@ def test_random_rama_angles_to_pose():
 
 
 def test_get_new_pose():
-    rp = RosettaPack(name=pname)
     pose1 = rp.get_new_pose()
     pose2 = rp.get_new_pose()
 
@@ -57,7 +53,6 @@ def test_get_new_pose():
 
 
 def test_get_rmsd_from_pose():
-    rp = RosettaPack(name=pname)
     pose1 = rp.get_new_pose()
     pose2 = rp.get_new_pose()
 
@@ -66,7 +61,6 @@ def test_get_rmsd_from_pose():
 
 
 def test_get_native():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     native = rp.get_native()
 
@@ -75,7 +69,6 @@ def test_get_native():
 
 
 def test_run_tmscore():
-    rp = RosettaPack(name=pname)
     rp.run_tmscore()
     data = rp.get_tmscore()
 
@@ -97,7 +90,6 @@ def test_get_sidechain_recover():
 
 
 def test_get_min_mover():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     min_mover = rp.get_min_mover()
     score_function = rp.get_score_function()
@@ -111,7 +103,6 @@ def test_get_min_mover():
 
 
 def get_new_min_mover():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     min_mover = rp.get_min_mover()
     min_mover2 = rp.get_new_min_mover()
@@ -130,7 +121,6 @@ def get_new_min_mover():
 
 
 def test_get_small_mover():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     mover = rp.get_small_mover()
 
@@ -142,7 +132,6 @@ def test_get_small_mover():
 
 
 def get_new_small_mover():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     small_mover = rp.get_small_mover()
     small_mover2 = rp.get_new_small_mover()
@@ -160,7 +149,6 @@ def get_new_small_mover():
 
 
 def test_get_shear_mover():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     mover = rp.get_shear_mover()
 
@@ -172,7 +160,6 @@ def test_get_shear_mover():
 
 
 def get_new_shear_mover():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
     shear_mover = rp.get_shear_mover()
     shear_mover2 = rp.get_new_shear_mover()
@@ -190,7 +177,6 @@ def get_new_shear_mover():
 
 
 def test_fragments():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
 
     mover3mer = rp.get_3mer()
@@ -212,7 +198,6 @@ def test_fragments():
 
 
 def test_set_pose():
-    rp = RosettaPack(name=pname)
     pose = rp.get_new_pose()
 
     angles = rp.get_backbone_angles_from_pose(pose)
@@ -224,3 +209,145 @@ def test_set_pose():
     assert angles != angles2
     assert angles == angles3
     assert angles2 != angles3
+
+
+def test_mc():
+    pose = rp.get_new_pose()
+    mc = rp.get_mc()
+    mover9mer = rp.get_9mer()
+    score = rp.get_score3()
+
+    rp.set_pose(pose, [0 for _ in range(3 * len(pose.sequence()))])
+
+    score_before = score(pose)
+
+    for _ in range(10):
+        mover9mer.apply(pose)
+
+    score_after = score(pose)
+
+    assert score_after < score_before
+    assert mc.last_accepted_score() < score_before
+
+
+def test_get_new_mc():
+    pose = rp.get_new_pose()
+    score = rp.get_score3()
+    mc = rp.get_mc()
+    mc2 = rp.get_new_mc(pose, score)
+    mc3 = rp.get_new_mc(pose, score)
+    mover9mer = rp.get_9mer()
+
+    rp.set_pose(pose, [0 for _ in range(3 * len(pose.sequence()))])
+
+    score_before = score(pose)
+
+    for _ in range(10):
+        mover9mer.apply(pose)
+
+    score_after = score(pose)
+
+    assert score_after < score_before
+    assert mc.last_accepted_score() < score_before
+
+    assert mc is not mc2
+    assert mc is not mc3
+    assert mc2 is not mc3
+
+
+def test_get_new_trial_mover():
+    pose = rp.get_new_pose()
+    score = rp.get_score3()
+    mc = rp.get_mc()
+    mover9mer = rp.get_9mer()
+    trial_mover = rp.get_new_trial_mover(mover9mer, mc)
+
+    rp.set_pose(pose, [0 for _ in range(3 * len(pose.sequence()))])
+
+    score_before = score(pose)
+
+    for _ in range(10):
+        trial_mover.apply(pose)
+
+    score_after = score(pose)
+
+    assert score_after < score_before
+
+
+def test_get_new_seq_mover():
+    pose = rp.get_new_pose()
+    score = rp.get_score3()
+    mc = rp.get_mc()
+    mover3mer = rp.get_9mer()
+    mover9mer = rp.get_9mer()
+
+    seq_mover = rp.get_new_seq_mover()
+    seq_mover.add_mover(mover3mer)
+    seq_mover.add_mover(mover9mer)
+    trial_mover = rp.get_new_trial_mover(seq_mover, mc)
+
+    rp.set_pose(pose, [0 for _ in range(3 * len(pose.sequence()))])
+
+    score_before = score(pose)
+
+    for _ in range(10):
+        trial_mover.apply(pose)
+
+    score_after = score(pose)
+
+    assert score_after < score_before
+
+
+def test_get_new_rep_mover():
+    pose = rp.get_new_pose()
+    score = rp.get_score3()
+    mc = rp.get_mc()
+    mover9mer = rp.get_9mer()
+    trial_mover = rp.get_new_trial_mover(mover9mer, mc)
+    rep_mover = rp.get_new_rep_mover(trial_mover, 10)
+
+    rp.set_pose(pose, [0 for _ in range(3 * len(pose.sequence()))])
+
+    score_before = score(pose)
+    rep_mover.apply(pose)
+    score_after = score(pose)
+
+    assert score_after < score_before
+
+
+def test_get_centroid_switch():
+    pose = rp.get_new_pose()
+    switch = rp.get_centroid_switch()
+    switch_allatom = rp.get_allatom_switch()
+
+    assert pose.is_centroid()
+    switch.apply(pose)
+    assert pose.is_centroid()
+    switch_allatom.apply(pose)
+    assert pose.is_fullatom()
+    switch.apply(pose)
+    assert pose.is_centroid()
+
+
+def test_get_allatom_switch():
+    pose = rp.get_new_pose()
+    switch = rp.get_allatom_switch()
+
+    assert pose.is_centroid()
+    switch.apply(pose)
+    assert pose.is_fullatom()
+
+
+def test_convert_to_allatom_pose():
+    pose = rp.get_new_pose()
+    assert pose.is_centroid()
+    rp.convert_to_allatom_pose(pose)
+    assert pose.is_fullatom()
+
+
+def test_copy_pose_to_allatom():
+    pose = rp.get_new_pose()
+    assert pose.is_centroid()
+    new_pose = rp.copy_pose_to_allatom(pose)
+    assert new_pose.is_fullatom()
+    assert pose.is_centroid()
