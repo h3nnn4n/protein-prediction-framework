@@ -1,1 +1,0 @@
-mpirun -mca btl_tcp_if_exclude lo,docker0,virbr0 --allow-run-as-root -n 5 --hostfile hosts python3.5 -u jobmanager.py todo 2
