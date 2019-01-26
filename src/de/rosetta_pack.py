@@ -142,7 +142,7 @@ class RosettaPack():
 
         self.mc = pyrosetta.MonteCarlo(self.pose, self.get_score_function('score0'), 2.0)
 
-    def reset(self):
+    def _reset(self):
         self.random_rama_angles_to_pose(self.pose)
 
     def random_rama_angles_to_pose(self, pose):
@@ -159,7 +159,7 @@ class RosettaPack():
 
     def get_rmsd_from_pose(self, pose=None, pose2=None):
         if pose is None:
-            return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, self.pose)
+            raise TypeError('Rosetta pack with internal states is no longer suported')
         else:
             if pose2 is None:
                 return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, pose)
@@ -207,11 +207,11 @@ class RosettaPack():
     def get_shear_mover(self):
         return self.shearmover
 
-    def get_new_small_mover(self):
-        return pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, 2.0, 1)
+    def get_new_small_mover(self, temp=2.0, n_moves=1):
+        return pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, temp, n_moves)
 
-    def get_new_shear_mover(self):
-        return pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, 2.0, 1)
+    def get_new_shear_mover(self, temp=2.0, n_moves=1):
+        return pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, temp, n_moves)
 
     def get_9mer(self):
         return self.mover_9mer
@@ -370,6 +370,21 @@ class RosettaPack():
             self.pose.set_phi(i + 1, data[i * 3 + 0])
             self.pose.set_psi(i + 1, data[i * 3 + 1])
             self.pose.set_omega(i + 1, data[i * 3 + 2])
+
+    def set_pose(self, pose, data):
+        for i in range(len(self.target)):
+            pose.set_phi(i + 1, data[i * 3 + 0])
+            pose.set_psi(i + 1, data[i * 3 + 1])
+            pose.set_omega(i + 1, data[i * 3 + 2])
+
+    def get_backbone_angles_from_pose(self, pose):
+        angles = []
+        for i in range(len(self.target)):
+            angles.append(pose.phi(i + 1))
+            angles.append(pose.psi(i + 1))
+            angles.append(pose.omega(i + 1))
+
+        return angles
 
     def dump_tmp(self):
         name = os.getcwd() + '/' + uuid.uuid4().hex
