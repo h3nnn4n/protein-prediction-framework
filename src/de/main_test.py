@@ -18,6 +18,12 @@ def test_run():
     assert prefix_in_filelist('repack__', new_files)
     assert prefix_in_filelist('parameters__', new_files)
 
+    for file in new_files:
+        assert os.path.getsize(file) > 0
+
+    for file in new_files:
+        os.remove(file)
+
 
 def prefix_in_filelist(prefix, filelist):
     for file in filelist:
