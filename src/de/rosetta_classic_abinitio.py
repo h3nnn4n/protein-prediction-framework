@@ -40,6 +40,9 @@ class ClassicAbinitio:
             r_string
         )
 
+        self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
+        self.stats = open(self.stats_name, 'w')
+
     def run(self, factor=1):
         self.log()
         self.abinitio.set_cycles(factor)
@@ -54,15 +57,15 @@ class ClassicAbinitio:
         self.pose.dump_pdb(name)
 
     def dump_pdb_repacked(self, it=1):
-        name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % it) + self.name_suffix + ".pdb"
-        self.repacked.dump_pdb(name)
-
-        repack_name = name
-
         rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pose)
         oldscore = self.score3(self.pose)
 
         score = self.repack()
+
+        name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % it) + self.name_suffix + ".pdb"
+        self.repacked.dump_pdb(name)
+
+        repack_name = name
 
         self.rosetta_pack.pose.assign(self.pose)
         self.rosetta_pack.run_tmscore()
@@ -98,8 +101,13 @@ class ClassicAbinitio:
     def log(self, it=0):
         rmsd = self.rp.get_rmsd_from_pose(self.pose)
         energy = self.score3(self.pose)
+        evals = self.abinitio.total_trials()
+
+        if it == 0:
+            evals = 0
+
         data = [
-            ('%8d', self.abinitio.total_trials()),
+            ('%8d', evals),
             ('%8d', it),
             ('%8.4f', energy),
             ('%8.4f', energy),
@@ -123,6 +131,7 @@ class ClassicAbinitio:
                 print(k, a, b)
 
         print(string)
+        self.stats.write(string + '\n')
 
     def repack(self):
         repack = self.rp.get_fast_relax()
