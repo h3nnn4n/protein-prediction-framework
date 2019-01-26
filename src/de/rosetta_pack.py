@@ -94,6 +94,11 @@ class RosettaPack():
 
         ######################
 
+        self.movemap = pyrosetta.MoveMap()
+        self.movemap.set_bb(True)
+
+        ######################
+
         self.pymover = pyrosetta.PyMOLMover()
 
         self.pose = pyrosetta.pose_from_sequence(self.target)
@@ -105,9 +110,6 @@ class RosettaPack():
 
         temp = 1.0
         n_moves = 2
-
-        self.movemap = pyrosetta.MoveMap()
-        self.movemap.set_bb(True)
 
         self.smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, temp, n_moves)
         self.shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, temp, n_moves)
@@ -142,6 +144,9 @@ class RosettaPack():
 
         self.mc = pyrosetta.MonteCarlo(self.pose, self.get_score_function('score0'), 2.0)
 
+        self.abinitio = pyrosetta.rosetta.protocols.abinitio.ClassicAbinitio(self.fragset3, self.fragset9, self.movemap)
+        self.abinitio.init(self.pose)
+
     def _reset(self):
         self.random_rama_angles_to_pose(self.pose)
 
@@ -168,6 +173,9 @@ class RosettaPack():
 
     def get_native(self):
         return self.native
+
+    def get_rosetta_abinitio_protocol(self):
+        return self.abinitio
 
     def run_tmscore(self, name=None):
         clean_after = False
