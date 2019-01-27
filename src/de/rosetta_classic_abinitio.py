@@ -10,7 +10,7 @@ from rosetta_pack import RosettaPack
 class ClassicAbinitio:
     def __init__(self, pname='1zdd'):
         self.pname = pname
-        self.cname = 'classic-abinitio'
+        self.cname = '%s__classic-abinitio' % self.pname
 
         self.rp = RosettaPack(self.pname)
         self.score3 = self.rp.get_score3()
