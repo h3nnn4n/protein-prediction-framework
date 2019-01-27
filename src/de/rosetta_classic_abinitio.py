@@ -10,7 +10,7 @@ from rosetta_pack import RosettaPack
 class ClassicAbinitio:
     def __init__(self, pname='1zdd'):
         self.pname = pname
-        self.cname = 'classic-abinitio'
+        self.cname = '%s__classic-abinitio' % self.pname
 
         self.rp = RosettaPack(self.pname)
         self.score3 = self.rp.get_score3()
@@ -24,6 +24,7 @@ class ClassicAbinitio:
     def setup_logs(self):
         self.init_time = time.time()
         self.now = datetime.datetime.now()
+        self.start_time = self.init_time
 
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
@@ -43,6 +44,11 @@ class ClassicAbinitio:
 
         self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
         self.stats = open(self.stats_name, 'w')
+
+        self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
+        with open(self.config_name, 'w') as f:
+            f.write('hello world\n')
+            f.flush()
 
     def run(self, factor=1):
         self.log()
@@ -98,6 +104,7 @@ class ClassicAbinitio:
             f.write('gdt_ha_change:      %12.4f\n' % (tm_before['gdt_ha'][0] - tm_after['gdt_ha'][0]))
             f.write('gdt_ts_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
+            f.flush()
 
     def log(self, it=0):
         rmsd = self.rp.get_rmsd_from_pose(self.pose)
@@ -116,7 +123,7 @@ class ClassicAbinitio:
             ('%8.4f', rmsd),
             ('%8.4f', rmsd),
             ('%8.4f', 0),
-            ('%10.2f', 0),
+            ('%10.2f', (time.time() - self.start_time)),
             ('%8.5f', 0),
             ('%8.2f', 0),
             ('%8.5f', 0),
@@ -133,6 +140,7 @@ class ClassicAbinitio:
 
         print(string)
         self.stats.write(string + '\n')
+        self.stats.flush()
 
     def repack(self):
         repack = self.rp.get_fast_relax()
@@ -144,8 +152,12 @@ class ClassicAbinitio:
 
 if __name__ == '__main__':
     pname = '1zdd'
+    factor = 1
     if len(sys.argv) > 1:
         pname = sys.argv[1]
 
+    if len(sys.argv) > 2:
+        factor = int(sys.argv[2])
+
     c = ClassicAbinitio(pname)
-    c.run()
+    c.run(factor)
