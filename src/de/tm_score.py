@@ -3,12 +3,12 @@ import os
 import os.path
 import pickle
 
-sys.path.append('../../external')
+sys.path.append('../../../external')
 
 import tmscore.src.TMscore as tmscore
 
 
-tmscore = tmscore.TMscore(path='../../external/tmscore/src/TMscore')
+tmscore = tmscore.TMscore(path='../../../external/tmscore/src/TMscore')
 
 path = {}
 path['1zdd'] = '/home/h3nnn4n/progs/de_supimpa/protein_data/1zdd/1zdd.pdb'
