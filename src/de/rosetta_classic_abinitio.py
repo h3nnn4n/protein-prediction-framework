@@ -45,6 +45,11 @@ class ClassicAbinitio:
         self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
         self.stats = open(self.stats_name, 'w')
 
+        self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
+        with open(self.config_name, 'w') as f:
+            f.write('hello world\n')
+            f.flush()
+
     def run(self, factor=1):
         self.log()
         self.abinitio.set_cycles(factor)
@@ -99,6 +104,7 @@ class ClassicAbinitio:
             f.write('gdt_ha_change:      %12.4f\n' % (tm_before['gdt_ha'][0] - tm_after['gdt_ha'][0]))
             f.write('gdt_ts_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
+            f.flush()
 
     def log(self, it=0):
         rmsd = self.rp.get_rmsd_from_pose(self.pose)
@@ -134,6 +140,7 @@ class ClassicAbinitio:
 
         print(string)
         self.stats.write(string + '\n')
+        self.stats.flush()
 
     def repack(self):
         repack = self.rp.get_fast_relax()
