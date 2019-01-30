@@ -1,15 +1,15 @@
+from rosetta_pack import RosettaPack
 import pyrosetta
 import random
 
 
-target = 'MTKQEKTALNMARFIRSQTLTLLEKLNELDADEQADICESLHDHADELYRSCLARFGDDGENL'
+rp = RosettaPack(name='1zdd')
+
 temp = 2.0
 n_moves = 5
 
-pyrosetta.init('-out:level 0')
-
 allatom = False
-pose = pyrosetta.pose_from_sequence(target)
+pose = pyrosetta.pose_from_sequence(rp.target)
 
 if allatom:
     score_function = pyrosetta.get_fa_scorefxn()
@@ -30,6 +30,7 @@ cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
 
 movemap = pyrosetta.MoveMap()
 movemap.set_bb(True)
+movemap = rp.get_new_movemap_with_free_coil_and_loop()
 
 mover_3mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(fragset3, movemap)
 mover_9mer = pyrosetta.rosetta.protocols.simple_moves.ClassicFragmentMover(fragset9, movemap)
@@ -71,14 +72,14 @@ hopper_rep = pyrosetta.rosetta.protocols.moves.RepeatMover(hopper_trial, 5)
 
 
 def set_pose(pose, data):
-    for i in range(len(target)):
+    for i in range(len(rp.target)):
         pose.set_phi(i + 1, data[i * 3 + 0])
         pose.set_psi(i + 1, data[i * 3 + 1])
         pose.set_omega(i + 1, data[i * 3 + 2])
 
 
 def reset_pose():
-    angles = [random.uniform(-180, 180) for _ in range(3 * len(target))]
+    angles = [random.uniform(-180, 180) for _ in range(3 * len(rp.target))]
     set_pose(pose, angles)
     score = score_function(pose)
     mc.set_last_accepted(score)
