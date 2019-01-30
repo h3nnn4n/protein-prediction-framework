@@ -303,6 +303,22 @@ class RosettaPack():
     def get_scorefxn(self):
         return self.get_score_function('scorefxn')
 
+    def get_new_movemap(self, free_backbone=True):
+        movemap = pyrosetta.MoveMap()
+        movemap.set_bb(free_backbone)
+        return movemap
+
+    def set_movemap_to_coil_and_loop_only(self, movemap):
+        movemap.set_bb(False)
+        for k, ss in enumerate(self.ss_pred):
+            if ss == 'L' or ss == 'C':
+                movemap.set_bb(k + 1, True)
+
+    def get_new_movemap_with_free_coil_and_loop(self):
+        movemap = self.get_new_movemap()
+        self.set_movemap_to_coil_and_loop_only(movemap)
+        return movemap
+
     def loop_modeling(self, todo):
         f = False
         loops = []

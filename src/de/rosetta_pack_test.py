@@ -375,3 +375,44 @@ def test_copy_pose_to_allatom():
     new_pose = rp.copy_pose_to_allatom(pose)
     assert new_pose.is_fullatom()
     assert pose.is_centroid()
+
+
+def test_get_new_movemap():
+    movemap = rp.get_new_movemap()
+    movemap2 = rp.get_new_movemap()
+
+    assert movemap is not movemap2
+    assert movemap is not rp.movemap
+    assert movemap2 is not rp.movemap
+
+
+def test_get_new_movemap_free_backbone():
+    movemap = rp.get_new_movemap(free_backbone=True)
+    movemap2 = rp.get_new_movemap(free_backbone=True)
+    movemap3 = rp.get_new_movemap(free_backbone=False)
+
+    for i in range(len(rp.target)):
+        assert movemap.get_bb(i + 1)
+        assert movemap2.get_bb(i + 1)
+        assert not movemap3.get_bb(i + 1)
+
+
+def test_set_movemap_to_coil_and_loop_only():
+    movemap = rp.get_new_movemap()
+    rp.set_movemap_to_coil_and_loop_only(movemap)
+
+    for k, ss in enumerate(rp.ss_pred):
+        if ss == 'L' or ss == 'C':
+            assert movemap.get_bb(k + 1)
+        else:
+            assert not movemap.get_bb(k + 1)
+
+
+def test_get_new_movemap_with_free_coil_and_loop():
+    movemap = rp.get_new_movemap_with_free_coil_and_loop()
+
+    for k, ss in enumerate(rp.ss_pred):
+        if ss == 'L' or ss == 'C':
+            assert movemap.get_bb(k + 1)
+        else:
+            assert not movemap.get_bb(k + 1)
