@@ -43,6 +43,8 @@ class ProteinLoader:
                         l = line.rstrip()
                         self.target += l
 
+                self.target.split('>')[0]
+
             if os.path.isfile(name + '.psipred.ss2'):
                 with open(name + '.psipred.ss2', 'rt') as f:
                     self.ss_pred = ''
