@@ -1,6 +1,7 @@
 import numpy as np
 import boxplot
 import hashlib
+import data_dump
 import sys
 import re
 import os
@@ -145,7 +146,7 @@ if True:
                         with open(case, 'rt') as f:
                             for l in f.readlines():
                                 line = l.rstrip().lstrip()
-                                tokens = re.sub("\s+", " ", line).split(' ')
+                                tokens = re.sub(r"\s+", " ", line).split(' ')
 
                             if len(tokens) < 3:
                                 # print(tokens)
@@ -167,7 +168,7 @@ if True:
                     elif 'repack' in case:
                         with open(case, 'rt') as f:
                             for line in f.readlines():
-                                tokens = re.sub("\s+", " ", line.strip()).split(' ')
+                                tokens = re.sub(r"\s+", " ", line.strip()).split(' ')
 
                                 if 'scorefxn' in tokens[0]:
                                     score = float(tokens[1])
@@ -217,4 +218,6 @@ if True:
     for k, v in raws.items():
         os.chdir(k)
         boxplot.boxplot(k, v)
+        print()
+        data_dump.data_dump(k, v)
         os.chdir('..')
