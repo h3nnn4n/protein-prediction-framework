@@ -10,6 +10,7 @@ import os
 
 do_psspred = False
 do_psipred = True
+do_fragpicking = True
 
 psipred_path = '/home/h3nnn4n/progs/psipred'
 psipred_bin = 'runpsipred'
@@ -25,6 +26,8 @@ def fetch(target):
         return
 
     print("Summoning %s" % target)
+    pdbid, chain = get_pdb_code_and_chain(target)
+    target = pdbid.lower()
 
     os.makedirs(target)
     os.chdir(target)
@@ -33,7 +36,38 @@ def fetch(target):
     os.makedirs('psspred')
     os.makedirs('psipred')
 
-    pdbid = target.upper()
+    fetch_native_pdb(target, pdbid)
+    fetch_fasta(target, pdbid, chain)
+
+    if do_psspred:
+        run_psspred(target)
+
+    if do_psipred:
+        run_psipred(target)
+
+    if do_fragpicking:
+        frag_path = '../../tools/frag_picker/frag_picker.sh'
+        subprocess.call([frag_path, target])
+
+    os.chdir("../")
+
+
+def get_pdb_code_and_chain(target):
+    pdbid = target[0:4].upper()
+    chain = None
+
+    if '_' in target:
+        chain = target.split('_')[1]
+
+    print("using pdbid: %4s" % pdbid, end='')
+    if chain is not None:
+        print(' and chain: %s' % chain, end='')
+    print()
+
+    return pdbid, chain
+
+
+def fetch_native_pdb(target, pdbid):
     url = "http://files.rcsb.org/download/%s.pdb.gz" % pdbid
     r = requests.get(url)
 
@@ -44,6 +78,8 @@ def fetch(target):
     with gzip.open(target + '.pdb.gz', 'rb') as f_in, open(target + '.pdb', 'wb') as f_out:
         f_out.write(f_in.read())
 
+
+def fetch_fasta(target, pdbid, chain):
     url = "http://www.rcsb.org/pdb/download/downloadFastaFiles.do?structureIdList=%s&compressionType=uncompressed" % pdbid
     r = requests.get(url)
 
@@ -51,47 +87,73 @@ def fetch(target):
         for chunk in r.iter_content(chunk_size=128):
             fd.write(chunk)
 
-    if do_psspred:
-        pss_path = "/home/h3nnn4n/PSSpred/PSSpred.pl"
+    if count_nchain_in_fasta(target) > 1:
+        extract_chain_from_fasta(target, pdbid, chain)
 
-        if not os.path.isfile(pss_path):
-            pss_path = "/home/h3nnn4n/rosetta/PSSpred/PSSpred.pl"
 
-        os.chdir('psspred')
+def extract_chain_from_fasta(target, pdbid, target_chain):
+    lines = ''
+    with open(target + '.fasta', 'rt') as fd:
+        for line in fd.readlines():
+            lines = lines + line
 
-        subprocess.call([pss_path, '../' + target + '.fasta'])
+    for line in lines.split('>'):
+        if len(line) > 5:
+            chain = line[5]
+            if chain == target_chain:
+                with open(target + '.fasta', 'wt') as fd:
+                    fd.write('>' + line)
+                return
 
-        os.chdir("../")
+    raise Exception('Chain %s was not found on %s' % (chain, pdbid))
 
-        with open('psspred/seq.dat.ss', 'rt') as f_in, open(target + '.psipred.ss2', 'wt') as f_out:
-            c = 0
-            for line in f_in.readlines():
-                if c == 0:
-                    c += 1
-                    f_out.write('# PSIPRED VFORMAT (PSIPRED V2.6 by David Jones)\n')
-                else:
-                    f_out.write(line)
 
-    if do_psipred:
-        original_path = os.getcwd()
-        os.chdir(psipred_path)
+def count_nchain_in_fasta(target):
+    chain_count = 0
+    with open(target + '.fasta', 'rt') as fd:
+        for line in fd.readlines():
+            if '>' in line:
+                chain_count += 1
 
-        subprocess.call([
-            os.path.join(psipred_path, psipred_bin),
-            os.path.join(original_path, (target + '.fasta'))
-        ])
+    return chain_count
 
-        os.chdir(original_path)
 
-        src_file = os.path.join(psipred_path, target + '.ss2')
-        dest_file = os.path.join(original_path, target + '.psipred.ss2')
-        shutil.copyfile(src_file, dest_file)
+def run_psspred(target):
+    pss_path = "/home/h3nnn4n/PSSpred/PSSpred.pl"
 
-    frag_path = '../../tools/frag_picker/frag_picker.sh'
+    if not os.path.isfile(pss_path):
+        pss_path = "/home/h3nnn4n/rosetta/PSSpred/PSSpred.pl"
 
-    subprocess.call([frag_path, target])
+    os.chdir('psspred')
+
+    subprocess.call([pss_path, '../' + target + '.fasta'])
 
     os.chdir("../")
+
+    with open('psspred/seq.dat.ss', 'rt') as f_in, open(target + '.psipred.ss2', 'wt') as f_out:
+        c = 0
+        for line in f_in.readlines():
+            if c == 0:
+                c += 1
+                f_out.write('# PSIPRED VFORMAT (PSIPRED V2.6 by David Jones)\n')
+            else:
+                f_out.write(line)
+
+
+def run_psipred(target):
+    original_path = os.getcwd()
+    os.chdir(psipred_path)
+
+    subprocess.call([
+        os.path.join(psipred_path, psipred_bin),
+        os.path.join(original_path, (target + '.fasta'))
+    ])
+
+    os.chdir(original_path)
+
+    src_file = os.path.join(psipred_path, target + '.ss2')
+    dest_file = os.path.join(original_path, target + '.psipred.ss2')
+    shutil.copyfile(src_file, dest_file)
 
 
 for target in args:
