@@ -15,7 +15,6 @@
 .python-version
 __pycache__
 bkp*
-protein_data
 test*
 todo*
 xa?

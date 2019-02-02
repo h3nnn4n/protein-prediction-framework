@@ -4,3 +4,6 @@
 [submodule "src/external/Ramachandran-Angle-Probability.py"]
 	path = src/external/ramachandran
 	url = http://github.com/h3nnn4n/Ramachandran-Angle-Probability.py
+[submodule "protein_data"]
+	path = protein_data
+	url = https://github.com/h3nnn4n/protein-data
