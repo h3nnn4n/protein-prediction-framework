@@ -125,6 +125,7 @@ class DE:
         self.sade_lp_left = self.sade_lp
         # self.sade_f = []
         self.sade_selection = ''
+        self.sade_k = None
 
         self.ops = []
 
