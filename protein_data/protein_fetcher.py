@@ -1,26 +1,13 @@
-#!/usr/bin/python3.5
-
 import subprocess
 import requests
 import shutil
+import yaml
 import gzip
 import sys
 import os
 
 
-do_psspred = False
-do_psipred = True
-do_fragpicking = True
-
-psipred_path = '/home/h3nnn4n/progs/psipred'
-psipred_bin = 'runpsipred'
-
-args = sys.argv[1:]
-if len(args) < 1:
-    print("Missing arguments")
-
-
-def fetch(target):
+def fetch(config, target):
     if os.path.exists(target):
         print("Target exists, skipping...")
         return
@@ -46,7 +33,7 @@ def fetch(target):
         run_psipred(target)
 
     if do_fragpicking:
-        frag_path = '../../tools/frag_picker/frag_picker.sh'
+        frag_path = config['frag_path']
         subprocess.call([frag_path, target])
 
     os.chdir("../")
@@ -122,11 +109,8 @@ def count_nchain_in_fasta(target):
     return chain_count
 
 
-def run_psspred(target):
-    pss_path = "/home/h3nnn4n/PSSpred/PSSpred.pl"
-
-    if not os.path.isfile(pss_path):
-        pss_path = "/home/h3nnn4n/rosetta/PSSpred/PSSpred.pl"
+def run_psspred(config, target):
+    pss_path = config['pss_path']
 
     os.chdir('psspred')
 
@@ -144,7 +128,8 @@ def run_psspred(target):
                 f_out.write(line)
 
 
-def run_psipred(target):
+def run_psipred(config, target):
+    psipred_path = config['psipred_path']
     original_path = os.getcwd()
     os.chdir(psipred_path)
 
@@ -160,5 +145,21 @@ def run_psipred(target):
     shutil.copyfile(src_file, dest_file)
 
 
-for target in args:
-    fetch(target)
+def config_loader():
+    config_path = './protein_fetcher_config.yaml'
+
+    with open(config_path, 'rt') as f:
+        config = yaml.load(f)
+
+    return config
+
+
+if __name__ == "__main__":
+    config = config_loader()
+
+    args = sys.argv[1:]
+    if len(args) < 1:
+        print("Missing arguments")
+
+    for target in args:
+        fetch(config, target)
