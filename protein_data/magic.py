@@ -87,7 +87,11 @@ def fetch_fasta(target, pdbid, chain):
         for chunk in r.iter_content(chunk_size=128):
             fd.write(chunk)
 
-    if count_nchain_in_fasta(target) > 1:
+    chain_count = count_nchain_in_fasta(target)
+
+    if chain_count > 1:
+        if chain is None:
+            raise Exception('Target %s has %d chains but not was specified' % (pdbid, chain_count))
         extract_chain_from_fasta(target, pdbid, chain)
 
 
