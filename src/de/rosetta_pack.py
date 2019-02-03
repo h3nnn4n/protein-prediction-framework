@@ -167,11 +167,15 @@ class RosettaPack():
     def get_rosetta_abinitio_protocol(self):
         return self.abinitio
 
-    def run_tmscore(self, name=None):
+    def run_tmscore(self, name=None, pose=None):
         clean_after = False
-        if name is None:
+        if name is None and pose is not None:
             clean_after = True
-            name = self.dump_tmp()
+            name = self.dump_tmp(pose)
+        elif name is None and pose is None:
+            raise ValueError('The name and pose arguments cant both be None')
+        elif name is not None and pose is not None:
+            raise ValueError('The name and pose arguments cant both be set')
 
         self.tmscore(self.native_path, name)
 
@@ -321,9 +325,9 @@ class RosettaPack():
 
         return angles
 
-    def dump_tmp(self):
+    def dump_tmp(self, pose):
         name = os.getcwd() + '/' + uuid.uuid4().hex
-        self.pose.dump_pdb("%s" % (name))
+        pose.dump_pdb("%s" % (name))
         return name
 
     def dump(self, name, score, rmsd, prefix):

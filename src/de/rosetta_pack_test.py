@@ -85,7 +85,7 @@ def test_get_rmsd_from_pose_deprecation_raise():
     pose = rp.get_new_pose()
 
     with pytest.raises(TypeError):
-        assert rp.get_rmsd_from_pose(pose)
+        rp.get_rmsd_from_pose(pose)
 
 
 def test_get_native():
@@ -96,8 +96,9 @@ def test_get_native():
     assert native.sequence() == rp.target
 
 
-def test_run_tmscore():
-    rp.run_tmscore()
+def test_run_tmscore_with_pose():
+    pose = rp.get_new_pose()
+    rp.run_tmscore(pose=pose)
     data = rp.get_tmscore()
 
     assert len(data['gdt_ha']) == 2
@@ -111,11 +112,43 @@ def test_run_tmscore():
     assert data['rmsd'] is not None
 
 
+def test_run_tmscore_with_path():
+    pose = rp.get_new_pose()
+    path = rp.dump_tmp(pose)
+    rp.run_tmscore(name=path)
+    data = rp.get_tmscore()
+
+    assert len(data['gdt_ha']) == 2
+    assert len(data['gdt_ha'][1]) == 4
+
+    assert len(data['gdt_ts']) == 2
+    assert len(data['gdt_ts'][1]) == 4
+
+    assert data['tm_score'] is not None
+    assert data['maxsub'] is not None
+    assert data['rmsd'] is not None
+
+    if os.path.isfile(path):
+        os.remove(path)
+
+
+def test_run_tmscore_with_no_args():
+    with pytest.raises(ValueError):
+        rp.run_tmscore()
+
+
+def test_run_tmscore_with_too_many_args():
+    pose = rp.get_new_pose()
+    with pytest.raises(ValueError):
+        rp.run_tmscore(name='potato', pose=pose)
+
+
 def test_run_tmscore_path():
     original_path = os.getcwd()
-    rp.run_tmscore()
+    pose = rp.get_new_pose()
+    rp.run_tmscore(pose=pose)
     after_path = os.getcwd()
-    rp.run_tmscore()
+    rp.run_tmscore(pose=pose)
     after_path2 = os.getcwd()
 
     assert original_path == after_path
@@ -124,10 +157,12 @@ def test_run_tmscore_path():
 
 def test_get_tmscore_path():
     original_path = os.getcwd()
-    rp.run_tmscore()
+    pose = rp.get_new_pose()
+    rp.run_tmscore(pose=pose)
     rp.get_tmscore()
     after_path = os.getcwd()
-    rp.run_tmscore()
+    pose = rp.get_new_pose()
+    rp.run_tmscore(pose=pose)
     rp.get_tmscore()
     after_path2 = os.getcwd()
 
