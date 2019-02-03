@@ -84,3 +84,32 @@ def test_that_it_runs():
     assert native.sequence() == target
     assert fragset3.size() > 0
     assert fragset9.size() > 0
+
+
+def test_that_it_runs_without_init_name():
+    """
+        Test that the protein loader gets the right files
+    """
+    pyrosetta.init('-out:level 0 -ignore_unrecognized_res')
+    fragset3 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(3)
+    fragset9 = pyrosetta.rosetta.core.fragment.ConstantLengthFragSet(9)
+
+    protein_loader = ProteinLoader(name=pname)
+    protein_loader.load()
+    _, target, _, native_path, fragset3_path, fragset9_path = protein_loader.get_data()
+
+    native = pyrosetta.pose_from_pdb(native_path)
+
+    fragset3.read_fragment_file(fragset3_path)
+    fragset9.read_fragment_file(fragset9_path)
+
+    assert native.sequence() == target
+    assert fragset3.size() > 0
+    assert fragset9.size() > 0
+
+
+def test_load_raises_if_no_name_is_set():
+    protein_loader = ProteinLoader()
+
+    with pytest.raises(ValueError):
+        protein_loader.load()

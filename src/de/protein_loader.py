@@ -4,8 +4,7 @@ import re
 
 class ProteinLoader:
     def __init__(self, name=None):
-        if name is not None:
-            self.name = name
+        self.name = name
 
         self.fragset3_path = None
         self.fragset9_path = None
@@ -18,8 +17,13 @@ class ProteinLoader:
         self.protein_data_path = '../../protein_data'
 
     def load(self, name=None):
-        if name is not None:
+        if name is None:
+            name = self.name
+        else:
             self.name = name
+
+        if name is None and self.name is None:
+            raise ValueError('No protein was specified')
 
         original = os.path.dirname(os.path.realpath(__file__))
         self.original = os.getcwd()
@@ -71,19 +75,5 @@ class ProteinLoader:
 
         os.chdir(original)
 
-    def show(self):
-        print(self.name)
-        print(self.fragset3_path)
-        print(self.fragset9_path)
-        print(self.target)
-        print(self.ss_pred)
-        print(self.native_path)
-
     def get_data(self):
         return (self.name, self.target, self.ss_pred, self.native_path, self.fragset3_path, self.fragset9_path)
-
-
-if __name__ == '__main__':
-    x = ProteinLoader()
-    x.load('1rop')
-    x.show()
