@@ -153,8 +153,8 @@ class ClassicAbinitio:
         return self.rp.get_scorefxn()(best)
 
 
-if __name__ == '__main__':
-    pname = '1zdd'
+def main():
+    pname = '1crn'
     factor = 1
     if len(sys.argv) > 1:
         pname = sys.argv[1]
@@ -162,5 +162,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         factor = int(sys.argv[2])
 
-    c = ClassicAbinitio(pname)
-    c.run(factor)
+    ClassicAbinitio(pname).run(factor)
+
+
+if __name__ == '__main__':
+    main()
