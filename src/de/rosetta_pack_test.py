@@ -2,9 +2,31 @@ import pytest
 import os
 from rosetta_pack import RosettaPack
 
+
 pname = '1crn'
 rp = RosettaPack(name=pname)
 eps = 1e-8
+
+
+def test_it_loads_more_than_once():
+    rp = RosettaPack(name=pname)
+    assert rp is not None
+    rp = RosettaPack(name=pname)
+    assert rp is not None
+
+    import rosetta_pack
+
+    rp = rosetta_pack.RosettaPack(name=pname)
+    assert rp is not None
+    rp = rosetta_pack.RosettaPack(name=pname)
+    assert rp is not None
+
+    import rosetta_pack
+
+    rp = rosetta_pack.RosettaPack(name=pname)
+    assert rp is not None
+    rp = rosetta_pack.RosettaPack(name=pname)
+    assert rp is not None
 
 
 def test_path_doesnt_change():
@@ -57,7 +79,13 @@ def test_get_rmsd_from_pose():
     pose2 = rp.get_new_pose()
 
     assert rp.get_rmsd_from_pose(pose1, pose2) > 1
-    assert rp.get_rmsd_from_pose(pose1) > 1
+
+
+def test_get_rmsd_from_pose_deprecation_raise():
+    pose = rp.get_new_pose()
+
+    with pytest.raises(TypeError):
+        assert rp.get_rmsd_from_pose(pose)
 
 
 def test_get_native():
@@ -126,12 +154,13 @@ def test_get_min_mover():
     assert score_after < score_before
 
 
-def get_new_min_mover():
+def test_get_new_min_mover():
     pose = rp.get_new_pose()
     min_mover = rp.get_min_mover()
     min_mover2 = rp.get_new_min_mover()
-    min_mover3 = rp.get_new_min_mover()
+    min_mover3 = rp.get_new_min_mover(rp.movemap)
     score_function = rp.get_score_function()
+    rp.set_pose(pose, [0 for _ in range(3 * len(pose.sequence()))])
 
     score_before = score_function(pose)
     min_mover2.apply(pose)
@@ -155,7 +184,7 @@ def test_get_small_mover():
     assert old_angles != new_angles
 
 
-def get_new_small_mover():
+def test_get_new_small_mover():
     pose = rp.get_new_pose()
     small_mover = rp.get_small_mover()
     small_mover2 = rp.get_new_small_mover()
@@ -183,7 +212,7 @@ def test_get_shear_mover():
     assert old_angles != new_angles
 
 
-def get_new_shear_mover():
+def test_get_new_shear_mover():
     pose = rp.get_new_pose()
     shear_mover = rp.get_shear_mover()
     shear_mover2 = rp.get_new_shear_mover()
@@ -369,12 +398,30 @@ def test_convert_to_allatom_pose():
     assert pose.is_fullatom()
 
 
+def test_convert_to_allatom_pose_when_allatom():
+    pose = rp.get_new_pose()
+    rp.convert_to_allatom_pose(pose)
+    assert pose.is_fullatom()
+    rp.convert_to_allatom_pose(pose)
+    assert pose.is_fullatom()
+
+
 def test_copy_pose_to_allatom():
     pose = rp.get_new_pose()
     assert pose.is_centroid()
     new_pose = rp.copy_pose_to_allatom(pose)
     assert new_pose.is_fullatom()
     assert pose.is_centroid()
+    assert pose is not new_pose
+
+
+def test_copy_pose_to_allatom_when_allatom():
+    pose = rp.get_new_pose()
+    rp.convert_to_allatom_pose(pose)
+    assert pose.is_fullatom()
+    new_pose = rp.copy_pose_to_allatom(pose)
+    assert new_pose.is_fullatom()
+    assert pose is not new_pose
 
 
 def test_get_new_movemap():
@@ -416,3 +463,76 @@ def test_get_new_movemap_with_free_coil_and_loop():
             assert movemap.get_bb(k + 1)
         else:
             assert not movemap.get_bb(k + 1)
+
+
+def test_get_score0():
+    scoref = rp.get_score0()
+    scoref2 = rp.get_score0()
+
+    assert scoref is scoref2
+    assert scoref.get_name() == 'score0'
+
+
+def test_get_score1():
+    scoref = rp.get_score1()
+    scoref2 = rp.get_score1()
+
+    assert scoref is scoref2
+    assert scoref.get_name() == 'score1'
+
+
+def test_get_score2():
+    scoref = rp.get_score2()
+    scoref2 = rp.get_score2()
+
+    assert scoref is scoref2
+    assert scoref.get_name() == 'score2'
+
+
+def test_get_score3():
+    scoref = rp.get_score3()
+    scoref2 = rp.get_score3()
+
+    assert scoref is scoref2
+    assert scoref.get_name() == 'score3'
+
+
+def test_get_score5():
+    scoref = rp.get_score5()
+    scoref2 = rp.get_score5()
+
+    assert scoref is scoref2
+    assert scoref.get_name() == 'score5'
+
+
+def test_get_scorefxn():
+    scoref = rp.get_scorefxn()
+    scoref2 = rp.get_scorefxn()
+
+    assert scoref is scoref2
+    assert scoref.get_name() == 'ref2015'
+
+
+def test_get_rosetta_abinitio_protocol():
+    ab1 = rp.get_rosetta_abinitio_protocol()
+    ab2 = rp.get_rosetta_abinitio_protocol()
+
+    assert ab1 is ab2
+
+    pose = rp.get_new_pose()
+    scoref = rp.get_score3()
+    score_before = scoref(pose)
+    ab1.apply(pose)
+    score_after = scoref(pose)
+
+    assert score_after < score_before
+
+
+def test_get_fast_relax():
+    fast_relax = rp.get_fast_relax()
+    assert fast_relax.get_name() == 'FastRelax'
+
+
+def test_get_packer():
+    fast_relax = rp.get_packer()
+    assert fast_relax.get_name() == 'PackRotamersMover'

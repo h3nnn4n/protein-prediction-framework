@@ -114,10 +114,7 @@ class RosettaPack():
         self.smallmover = pyrosetta.rosetta.protocols.simple_moves.SmallMover(self.movemap, temp, n_moves)
         self.shearmover = pyrosetta.rosetta.protocols.simple_moves.ShearMover(self.movemap, temp, n_moves)
 
-        try:
-            self.minmover = self.get_new_min_mover()
-        except Exception:
-            self.minmover = None
+        self.minmover = self.get_new_min_mover()
 
         cost = pyrosetta.rosetta.protocols.simple_moves.GunnCost()
 
@@ -138,17 +135,13 @@ class RosettaPack():
 
         self.fast_relax = pyrosetta.rosetta.protocols.relax.FastRelax(self.scorefxn)
 
-        if self.minmover is not None:
-            self.minmover.movemap(self.movemap)
-            self.minmover.score_function(self.get_score_function('score3'))
+        self.minmover.movemap(self.movemap)
+        self.minmover.score_function(self.get_score_function('score3'))
 
         self.mc = pyrosetta.MonteCarlo(self.pose, self.get_score_function('score0'), 2.0)
 
         self.abinitio = pyrosetta.rosetta.protocols.abinitio.ClassicAbinitio(self.fragset3, self.fragset9, self.movemap)
         self.abinitio.init(self.pose)
-
-    def _reset(self):
-        self.random_rama_angles_to_pose(self.pose)
 
     def random_rama_angles_to_pose(self, pose):
         for k, v in enumerate(self.target):
@@ -163,13 +156,10 @@ class RosettaPack():
         return pose
 
     def get_rmsd_from_pose(self, pose=None, pose2=None):
-        if pose is None:
+        if pose2 is None:
             raise TypeError('Rosetta pack with internal states is no longer suported')
         else:
-            if pose2 is None:
-                return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, pose)
-            else:
-                return pyrosetta.rosetta.core.scoring.CA_rmsd(pose, pose2)
+            return pyrosetta.rosetta.core.scoring.CA_rmsd(pose, pose2)
 
     def get_native(self):
         return self.native
@@ -294,9 +284,6 @@ class RosettaPack():
     def get_score3(self):
         return self.get_score_function('score3')
 
-    def get_score4(self):
-        return self.get_score_function('score4')
-
     def get_score5(self):
         return self.get_score_function('score5')
 
@@ -318,86 +305,6 @@ class RosettaPack():
         movemap = self.get_new_movemap()
         self.set_movemap_to_coil_and_loop_only(movemap)
         return movemap
-
-    def loop_modeling(self, todo):
-        f = False
-        loops = []
-        ss = self.ss_pred
-        a = -1
-
-        for i in range(1, len(ss) - 1):
-            if ss[i] != 'C' and ss[i + 1] == 'C':
-                f = True
-                a = i + 1
-            if f and ss[i] == 'C' and ss[i + 1] != 'C':
-                f = False
-                # print("loop = %d %d" % (a, i))
-                loops.append(((a + 1) - 0, (i + 1) + 0))
-
-        pose = pyrosetta.pose_from_sequence(self.target)
-        pose.assign(todo)
-        # pose = todo
-        if not pose.is_centroid():
-            self.centroid_switch.apply(pose)
-
-        scorefxn_low = pyrosetta.create_score_function('cen_std')
-        scorefxn_low.set_weight(pyrosetta.rosetta.core.scoring.chainbreak, 1)
-
-        outer_cycles_low = 10
-        inner_cycles_low = 50
-
-        init_temp_low = 2.0
-        final_temp_low = 0.8
-        kT = 1.0
-
-        oldmm = self.movemap
-        mover_3mer = self.mover_3mer
-
-        for loop_start, loop_end in loops:
-            loop_cut = int(math.floor((loop_end + loop_start) / 2))
-
-            movemap = pyrosetta.MoveMap()
-            movemap.set_bb_true_range(loop_start, loop_end)
-            movemap.set_chi(True)
-
-            mover_3mer.set_movemap(movemap)
-
-            loop1 = pyrosetta.rosetta.protocols.loops.Loop(loop_start, loop_end, loop_cut)
-            ccd_closure = pyrosetta.rosetta.protocols.loops.loop_closure.ccd.CCDLoopClosureMover(loop1, movemap)
-            pyrosetta.rosetta.protocols.loops.add_single_cutpoint_variant(pose, loop1)
-            pyrosetta.rosetta.protocols.loops.set_single_loop_fold_tree(pose, loop1)
-
-            scorefxn_low(pose)
-            mc = pyrosetta.MonteCarlo(pose, scorefxn_low, kT)
-            gamma = pow((final_temp_low / init_temp_low), (1.0 / (outer_cycles_low * inner_cycles_low)))
-
-            for i in range(loop_start, loop_end + 1):
-                pose.set_phi(i, -180)
-                pose.set_psi(i, 180)
-
-            for i in range(loop_start, loop_end + 1):
-                mover_3mer.apply(pose)
-
-            for i in range(1, outer_cycles_low + 1):
-                mc.recover_low(pose)
-                kT = kT * gamma
-                mc.set_temperature(kT)
-                for _ in range(1, inner_cycles_low + 1):
-                    mover_3mer.apply(pose)
-                    ccd_closure.apply(pose)
-                    scorefxn_low(pose)
-                    mc.boltzmann(pose)
-
-            mc.recover_low(pose)
-
-        todo.assign(pose)
-        mover_3mer.set_movemap(oldmm)
-
-    def set_starting_pose(self, data):
-        for i in range(len(self.target)):
-            self.pose.set_phi(i + 1, data[i * 3 + 0])
-            self.pose.set_psi(i + 1, data[i * 3 + 1])
-            self.pose.set_omega(i + 1, data[i * 3 + 2])
 
     def set_pose(self, pose, data):
         for i in range(len(self.target)):

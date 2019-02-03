@@ -3,7 +3,7 @@ import pyrosetta
 import random
 
 
-rp = RosettaPack(name='1zdd')
+rp = RosettaPack(name='1crn')
 
 temp = 2.0
 n_moves = 5
