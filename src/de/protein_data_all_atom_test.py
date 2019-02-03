@@ -7,7 +7,7 @@ from rosetta_pack import RosettaPack
 # Test side chain being putback after allatom -> centroid -> allatom
 # Test TM-Score
 
-pname = '1zdd'
+pname = '1crn'
 rp = RosettaPack(name=pname)
 eps = 1e-8  # The tolerance for comparing floats
 repeats = 10  # Number of times to repeat random tests

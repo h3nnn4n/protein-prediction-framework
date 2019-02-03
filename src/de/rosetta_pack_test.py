@@ -2,7 +2,7 @@ import pytest
 import os
 from rosetta_pack import RosettaPack
 
-pname = '1zdd'
+pname = '1crn'
 rp = RosettaPack(name=pname)
 eps = 1e-8
 

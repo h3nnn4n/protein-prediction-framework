@@ -3,7 +3,7 @@ import os
 import pyrosetta
 from protein_loader import ProteinLoader
 
-pname = '1zdd'
+pname = '1crn'
 
 
 def test_path_doesnt_change_on_init():
