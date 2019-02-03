@@ -60,7 +60,25 @@ def test_run():
 
 def test_run_with_fake_file():
     with mock.patch("config_loader.ConfigLoader.get_config_file", mock.MagicMock(return_value=mocked_config)):
+        files_before = os.listdir()
         boot('not_a_file')
+        files_after = os.listdir()
+
+        s = set(files_before)
+        new_files = [x for x in files_after if x not in s]
+
+        assert prefix_in_filelist('best_0', new_files)
+        assert prefix_in_filelist('best_repacked_', new_files)
+        assert prefix_in_filelist('ops__', new_files)
+        assert prefix_in_filelist('stats__', new_files)
+        assert prefix_in_filelist('repack__', new_files)
+        assert prefix_in_filelist('parameters__', new_files)
+
+        for file in new_files:
+            assert os.path.getsize(file) > 0
+
+        for file in new_files:
+            os.remove(file)
 
 
 # Utils
