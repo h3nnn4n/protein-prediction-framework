@@ -342,9 +342,8 @@ class ProteinData:
         return pd.get_scorefxn()(best)
 
     def run_tmscore(self):
-        self.rosetta_pack.pose.assign(self.pose)
         pd = self.rosetta_pack
-        pd.run_tmscore()
+        pd.run_tmscore(pose=self.pose)
         self.tmscore = pd.get_tmscore()
         return self.tmscore
 

@@ -161,6 +161,9 @@ class RosettaPack():
         else:
             return pyrosetta.rosetta.core.scoring.CA_rmsd(pose, pose2)
 
+    def get_rmsd_from_native(self, pose):
+        return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, pose)
+
     def get_native(self):
         return self.native
 
@@ -331,16 +334,4 @@ class RosettaPack():
         return name
 
     def dump(self, name, score, rmsd, prefix):
-        now = datetime.datetime.now()
-        char_set = string.ascii_uppercase + string.digits
-        r_string = ''.join(random.sample(char_set * 6, 6))
-
-        name_prefix = ""
-        if prefix is not None:
-            name_prefix = prefix + "_"
-
-        name_sufix = "_%s_%04d_%02d_%02d__%02d_%02d_%02d__%s" % (name, now.year, now.month, now.day, now.hour, now.minute,
-                                                                 now.second, r_string)
-
-        self.pose.dump_pdb("%s%s_%010.5f_%010.5f_%s.pdb" %
-                           (name_prefix, name, score, rmsd, name_sufix))
+        raise Exception('Lets check if this is used somewhere')

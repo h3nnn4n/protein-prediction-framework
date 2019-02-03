@@ -591,7 +591,7 @@ class DE:
         self.log()
         self.dump_pbd_best(self.it)
 
-        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
+        rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose)
         oldscore = self.best_score
         score = self.pop[self.best_index].repack()
 
@@ -610,9 +610,9 @@ class DE:
             f.write('repack_time:        %12.4f\n' % (self.repack_time - self.end_time))
             f.write('score:              %12.4f\n' % oldscore)
             f.write('scorefxn:           %12.4f\n' % score)
-            f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
+            f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].repacked)))
             f.write('rmsd_before:        %12.4f\n' % rmsd)
-            f.write('rmsd_change:        %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].repacked)))
+            f.write('rmsd_change:        %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].repacked)))
             f.write('tm_score_before:    %12.4f\n' % tm_before['tm_score'])
             f.write('maxsub_before:      %12.4f\n' % tm_before['maxsub'])
             f.write('gdt_ts_before:      %12.4f\n' % tm_before['gdt_ts'][0])
@@ -626,6 +626,8 @@ class DE:
             f.write('gdt_ts_change:      %12.4f\n' % (tm_before['gdt_ts'][0] - tm_after['gdt_ts'][0]))
             f.write('gdt_ha_change:      %12.4f\n' % (tm_before['gdt_ha'][0] - tm_after['gdt_ha'][0]))
             f.write('gdt_ts_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0]))
+            f.write('gdt_ts_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0]))
+            f.write('gdt_ha_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
 
     def print_hash(self):
@@ -981,7 +983,7 @@ class DE:
 
         for i in range(self.pop_size):
             c += 1
-            s += self.rosetta_pack.get_rmsd_from_pose(self.pop[i].pose)
+            s += self.rosetta_pack.get_rmsd_from_native(self.pop[i].pose)
 
         return s / c
 
@@ -989,7 +991,7 @@ class DE:
         if it is None:
             it = self.it
 
-        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pop[self.best_index].pose)
+        rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose)
 
         if it < 1:
             secs_per_iter = 0

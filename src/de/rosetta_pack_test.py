@@ -81,6 +81,12 @@ def test_get_rmsd_from_pose():
     assert rp.get_rmsd_from_pose(pose1, pose2) > 1
 
 
+def test_get_rmsd_from_native():
+    pose = rp.get_new_pose()
+
+    assert rp.get_rmsd_from_native(pose) > 1
+
+
 def test_get_rmsd_from_pose_deprecation_raise():
     pose = rp.get_new_pose()
 
@@ -128,8 +134,7 @@ def test_run_tmscore_with_path():
     assert data['maxsub'] is not None
     assert data['rmsd'] is not None
 
-    if os.path.isfile(path):
-        os.remove(path)
+    os.remove(path)
 
 
 def test_run_tmscore_with_no_args():
@@ -171,9 +176,10 @@ def test_get_tmscore_path():
 
 
 def test_get_sidechain_recover():
-    # TODO
+    # TODO improve this
     rp = RosettaPack(name=pname)
-    rp.get_sidechain_recover()
+    sidechain_recover = rp.get_sidechain_recover()
+    assert sidechain_recover is not None
 
 
 def test_get_min_mover():
