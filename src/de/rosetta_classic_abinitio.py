@@ -43,7 +43,8 @@ class ClassicAbinitio:
         )
 
         self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
-        self.stats = open(self.stats_name, 'w')
+        with open(self.stats_name, 'wt') as f:
+            f.flush()
 
         self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
         with open(self.config_name, 'w') as f:
@@ -64,7 +65,7 @@ class ClassicAbinitio:
         self.pose.dump_pdb(name)
 
     def dump_pdb_repacked(self, it=1):
-        rmsd = self.rosetta_pack.get_rmsd_from_pose(self.pose)
+        rmsd = self.rosetta_pack.get_rmsd_from_native(self.pose)
         oldscore = self.score3(self.pose)
 
         score = self.repack()
@@ -75,7 +76,7 @@ class ClassicAbinitio:
         repack_name = name
 
         self.rosetta_pack.pose.assign(self.pose)
-        self.rosetta_pack.run_tmscore()
+        self.rosetta_pack.run_tmscore(pose=self.repacked)
         tm_before = self.rosetta_pack.get_tmscore()
 
         self.rosetta_pack.run_tmscore(name=repack_name)
@@ -87,9 +88,9 @@ class ClassicAbinitio:
             f.write('repack_time:        %12.4f\n' % (self.repack_time - self.end_time))
             f.write('score:              %12.4f\n' % oldscore)
             f.write('scorefxn:           %12.4f\n' % score)
-            f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_pose(self.repacked)))
+            f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_native(self.repacked)))
             f.write('rmsd_before:        %12.4f\n' % rmsd)
-            f.write('rmsd_change:        %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_pose(self.repacked)))
+            f.write('rmsd_change:        %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_native(self.repacked)))
             f.write('tm_score_before:    %12.4f\n' % tm_before['tm_score'])
             f.write('maxsub_before:      %12.4f\n' % tm_before['maxsub'])
             f.write('gdt_ts_before:      %12.4f\n' % tm_before['gdt_ts'][0])
@@ -107,7 +108,7 @@ class ClassicAbinitio:
             f.flush()
 
     def log(self, it=0):
-        rmsd = self.rp.get_rmsd_from_pose(self.pose)
+        rmsd = self.rp.get_rmsd_from_native(self.pose)
         energy = self.score3(self.pose)
         evals = self.abinitio.total_trials()
 
@@ -139,8 +140,10 @@ class ClassicAbinitio:
                 print(k, a, b)
 
         print(string)
-        self.stats.write(string + '\n')
-        self.stats.flush()
+
+        with open(self.stats_name, 'at') as f:
+            f.write(string + '\n')
+            f.flush()
 
     def repack(self):
         repack = self.rp.get_fast_relax()

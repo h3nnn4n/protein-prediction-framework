@@ -55,8 +55,8 @@ class ConfigLoader:
         self.options['pname'] = '1crn'
         self.options['pop_size'] = 10
         self.options['max_iters'] = 10
-        self.options['max_evals'] = 100
-        self.options['stop_condition'] = 'evals iters'
+        self.options['max_evals'] = 500
+        self.options['stop_condition'] = 'evals'
         self.options['c_rate'] = 1.0
         self.options['f_factor'] = 0.5
         self.options['mode'] = 'normal'
