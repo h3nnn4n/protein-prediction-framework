@@ -44,6 +44,9 @@ def exp_base_operator(self, individuals, target, operator):
             L += 1
             pivot += 1
 
+    else:
+        raise ValueError('Invalid number of individuals, please use 3 or 5')
+
     self.de.trial.new_angles(t_angle)
     self.de.trial.fix_bounds()
     self.de.trial.eval()

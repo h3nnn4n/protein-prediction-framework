@@ -3,7 +3,53 @@ import os
 
 
 class ConfigLoader:
-    def __init__(self, conf_file):
+    def __init__(self, conf_file=None):
+        self.conf_file = conf_file
+        self.set_default_options()
+
+        try:
+            self.inject_from_file()
+        except Exception as e:
+            print('Using default values because: %s\nWhile opening %s' % (e, conf_file))
+            if conf_file is None:
+                print('conf_file was not set')
+            else:
+                if os.path.isfile(conf_file):
+                    print('file exists')
+                else:
+                    print('file does not exist')
+                    for p in conf_file:
+                        print(p)
+            self.p_values = self.defaults
+
+    def __getitem__(self, key):
+        return self.p_values[self.parameters.index(key)]
+
+    def inject(self, de):
+        for k, v in zip(self.parameters, self.p_values):
+            if k not in de.__dict__.keys():
+                raise KeyError('WARN: key %s was not found!' % k)
+
+            de.__dict__[k] = v
+
+    def inject_from_file(self):
+        config = self.get_config_file()
+
+        for n, (k, _) in enumerate(zip(self.parameters, self.defaults)):
+            if k in config.keys():
+                self.p_values.append(config[k])
+            else:
+                self.p_values.append(self.defaults[n])
+
+    def get_config_file(self):
+        with open(self.conf_file, 'r') as f:
+            config = yaml.load(f)
+
+        return config
+
+    def set_default_options(self):
+        conf_file = self.conf_file
+
         self.options = {}
 
         self.options['pname'] = '1crn'
@@ -63,41 +109,3 @@ class ConfigLoader:
         for k in self.options.keys():
             self.parameters.append(k)
             self.defaults.append(self.options[k])
-
-        try:
-            with open(conf_file, 'r') as f:
-                try:
-                    config = yaml.load(f)
-
-                    for n, (k, v) in enumerate(zip(self.parameters, self.defaults)):
-                        if k in config.keys():
-                            self.p_values.append(config[k])
-                        else:
-                            self.p_values.append(self.defaults[n])
-                except yaml.YAMLError as ee:
-                    print(ee)
-        except Exception as e:
-            # print(e)
-            print('Using default values because: %s\nWhile opening %s' % (e, conf_file))
-            if conf_file is None:
-                print('conf_file was not set')
-            else:
-                if os.path.isfile(conf_file):
-                    print('file exists')
-                else:
-                    print('file does not exist')
-                    for p in conf_file:
-                        print(p)
-            self.p_values = self.defaults
-
-        # print(self.p_values)
-
-    def __getitem__(self, key):
-        return self.p_values[self.parameters.index(key)]
-
-    def inject(self, de):
-        for k, v in zip(self.parameters, self.p_values):
-            if k not in de.__dict__.keys():
-                raise KeyError('WARN: key %s was not found!' % k)
-
-            de.__dict__[k] = v
