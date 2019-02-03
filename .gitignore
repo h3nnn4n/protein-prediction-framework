@@ -18,3 +18,5 @@ bkp*
 test*
 todo*
 xa?
+.coverage
+htmlcov
