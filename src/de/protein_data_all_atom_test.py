@@ -152,29 +152,22 @@ def test_angles_match_pose_after_stage1_mc():
             assert abs(a - b) < eps, "failed at angle #%d" % k
 
 
-def test_score_improves_with_stage2_mc():
+def test_stage2_mc_runs():
     """
-        test that the score improves with stage2 mc
+        test that stage2 mc runs
     """
     pd = ProteinData(rp, allatom=True)
 
     for _ in range(repeats):
         for mode in stage2_modes:
-            if mode in ['shear', 'small']:
-                continue
 
             pd.new_angles(get_flat_angles(pd.nsca))
             pd.eval()
-            score_before = pd.score
 
-            pd.stage2_mc(n=100, temp=2.0, mode=mode)
-            score_after = pd.score
-
-            assert score_after < score_before, "Score should improve, mode: %s" % mode
+            pd.stage2_mc(n=10, temp=2.0, mode=mode)
 
 
 def test_angles_match_pose_after_stage2_mc():
-    return  # FIXME
     """
         test that angles match after stage2 mc
     """
@@ -183,10 +176,21 @@ def test_angles_match_pose_after_stage2_mc():
     for _ in range(repeats):
         for mode in stage2_modes:
             pd.new_angles(get_flat_angles(pd.nsca))
-            pd.stage2_mc(n=100, temp=2.0)
+            pd.stage2_mc(n=10, temp=2.0)
 
             for k, (a, b) in enumerate(get_angles_and_pose(pd)):
                 assert abs(a - b) < eps, "failed at angle #%d, mode: %s" % (k, mode)
+
+
+def test_dont_raise_stage2_mc_when_wrong_function():
+    """
+        test that angles match after stage2 mc
+    """
+    pd = ProteinData(rp, allatom=True)
+    pd.set_score_function('score3')
+    pd.stage2_mc(n=10, temp=2.0)
+
+    assert pd is not None
 
 
 def test_angles_match_pose_after_copy():
@@ -262,6 +266,14 @@ def test_call_evaluate_passed_angles():
             assert abs(a - b) < eps, "failed at angle #%d" % k
 
         assert skip_count == 3, "Should skip exactly 3 angles"
+
+
+def test_repack():
+    pd = ProteinData(rp)
+    assert pd.repacked is None
+    score = pd.repack()
+    assert pd.repacked is not None
+    assert type(score) is float
 
 # Utils
 

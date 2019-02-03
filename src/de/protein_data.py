@@ -154,8 +154,6 @@ class ProteinData:
         # self.rosetta_pack.pymover.apply(self.pose)
 
     def fix_bounds(self):
-        return
-
         index = 0
         for n, ss in enumerate(self.rosetta_pack.ss_pred):
             phi = self.angles[index + 0]
@@ -278,6 +276,8 @@ class ProteinData:
                 self.mcshear = pd.get_new_mc(self.pose, score, temp)
                 self.movershear = pd.get_new_shear_mover()
                 self.trialshear = pd.get_new_trial_mover(self.movershear, self.mcshear)
+        else:
+            raise NotImplementedError('The mode %s is not implemented')
 
         mover = None
         mc = None
