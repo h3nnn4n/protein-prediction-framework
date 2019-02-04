@@ -24,11 +24,9 @@ def main():
 def get_conf_and_reps():
     reps = 1
     if len(sys.argv) > 1:
-        for arg in sys.argv[1:]:
-            if os.path.isfile(arg):
-                conf = arg
-            else:
-                reps = int(arg)
+        conf = sys.argv[1]
+        if len(sys.argv) > 2:
+            reps = sys.argv[2]
     else:
         raise NotImplementedError('Running with not args is not supported')
 
