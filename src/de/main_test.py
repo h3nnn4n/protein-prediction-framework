@@ -1,7 +1,7 @@
 import os
 import mock
 import pytest
-from main import boot
+from main import boot, main
 
 
 mocked_config = {
@@ -36,9 +36,10 @@ mocked_config = {
 }
 
 
-def test_run():
+def test_run_from_main():
     files_before = os.listdir()
-    boot(None)
+    with mock.patch('sys.argv', ['main.py']):
+        main()
     files_after = os.listdir()
 
     s = set(files_before)

@@ -17,10 +17,14 @@ def boot(conf_file):
     d.run()
 
 
-if __name__ == '__main__':
+def main():
     if len(sys.argv) > 1:
         conf_file = sys.argv[1]
     else:
         conf_file = None
 
     boot(conf_file)
+
+
+if __name__ == '__main__':
+    main()
