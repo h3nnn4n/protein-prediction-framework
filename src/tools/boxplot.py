@@ -99,6 +99,7 @@ def boxplot(target, names):
         plt.tight_layout()
 
         plt.savefig(target + '_energy_boxplot.png')
+        plt.close()
 
         ############
 
@@ -119,6 +120,7 @@ def boxplot(target, names):
         plt.tight_layout()
 
         plt.savefig(target + '_rmsd_boxplot.png')
+        plt.close()
     except Exception:
         print('Could not render plots')
         pass
