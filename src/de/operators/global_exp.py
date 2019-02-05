@@ -8,18 +8,18 @@ def exp_base_operator(self, individuals, target, operator):
         sade_k = self.de.sade_ops.index(operator)
     self.de.sade_k = sade_k
 
-    cutPoint = random.randint(0, self.de.pop[0].nsca)
+    cutPoint = random.randint(0, self.de.pop[0].total_number_of_angles)
     t_angle = []
     f, cr = self.de.get_f_cr()
     L, r, pivot = 0, 0.0, cutPoint
 
-    for i in range(0, individuals[0].nsca):
+    for i in range(0, individuals[0].total_number_of_angles):
         t_angle.append(self.de.pop[target].angles[i])
 
     if len(individuals) == 3:
         ind1, ind2, ind3 = individuals
-        while L < ind1.nsca and r < cr:
-            index = pivot % ind1.nsca
+        while L < ind1.total_number_of_angles and r < cr:
+            index = pivot % ind1.total_number_of_angles
             t_angle[index] = (
                 ind1.angles[index] +
                 (f * (ind2.angles[index] - ind3.angles[index]))
@@ -32,8 +32,8 @@ def exp_base_operator(self, individuals, target, operator):
     elif len(individuals) == 5:
         ind1, ind2, ind3, ind4, ind5 = individuals
         f1, f2 = self.de.get_f(), self.de.get_f()
-        while L < ind1.nsca and r < cr:
-            index = pivot % ind1.nsca
+        while L < ind1.total_number_of_angles and r < cr:
+            index = pivot % ind1.total_number_of_angles
             t_angle[index] = (
                 ind1.angles[index] +
                 (f1 * (ind2.angles[index] - ind3.angles[index])) +

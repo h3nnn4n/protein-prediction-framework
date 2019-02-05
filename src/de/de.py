@@ -340,7 +340,7 @@ class DE:
 # ######################### START OF LSH ##########################
 
     def create_hashs(self):
-        self.hashes = [np.random.randint(100, size=self.pop[0].nsca) for _ in range(self.n_hashes)]
+        self.hashes = [np.random.randint(100, size=self.pop[0].total_number_of_angles) for _ in range(self.n_hashes)]
 
     def apply_hash(self, debug=False):
         # debug = True
@@ -867,7 +867,7 @@ class DE:
 
     def update_moment_of_inertia(self):
         pop_size = self.pop_size
-        n_dim = self.pop[0].nsca
+        n_dim = self.pop[0].total_number_of_angles
 
         if self.centroids is None:
             self.centroids = [0 for _ in range(n_dim)]
@@ -897,7 +897,7 @@ class DE:
 
         d = 0
 
-        nsca = len(self.pop[0].angles)
+        total_number_of_angles = len(self.pop[0].angles)
 
         for i in range(0, self.pop_size):
             for j in range(i + 1, self.pop_size):
@@ -906,10 +906,10 @@ class DE:
                 ind_a = self.pop[i].angles
                 ind_b = self.pop[j].angles
 
-                for d in range(0, nsca):
+                for d in range(0, total_number_of_angles):
                     aux_1 += (ind_a[d] - ind_b[d]) ** 2
 
-                aux_1 = math.sqrt(aux_1) / nsca
+                aux_1 = math.sqrt(aux_1) / total_number_of_angles
 
                 if j == i + 1 or aux_2 > aux_1:
                     aux_2 = aux_1

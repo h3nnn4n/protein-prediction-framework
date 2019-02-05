@@ -55,7 +55,7 @@ def test_angles_match_pose_after_new_angles():
     pd = ProteinData(rp, allatom=True)
 
     for _ in range(repeats):
-        angles = get_uniform_angles(size=pd.nsca)
+        angles = get_uniform_angles(size=pd.total_number_of_angles)
         pd.new_angles(angles)
 
         for k, (a, b) in enumerate(get_angles_and_pose(pd)):
@@ -72,8 +72,8 @@ def test_eval_scorefxn():
     for _ in range(repeats):
         pd.reset()
         angles_rama = pd.angles.copy()
-        angles_random = get_uniform_angles(size=pd.nsca)
-        angles_bad = get_flat_angles(size=pd.nsca)
+        angles_random = get_uniform_angles(size=pd.total_number_of_angles)
+        angles_bad = get_flat_angles(size=pd.total_number_of_angles)
 
         pd.new_angles(angles_rama)
         pd.eval()
@@ -113,7 +113,7 @@ def test_update_angle_from_pose():
     pd = ProteinData(rp, allatom=True)
 
     for _ in range(repeats):
-        random_angles = get_uniform_angles(size=pd.nsca)
+        random_angles = get_uniform_angles(size=pd.total_number_of_angles)
         set_pose_angles(pd, random_angles)
         pd.update_angle_from_pose()
 
@@ -128,7 +128,7 @@ def test_score_improves_with_stage1_mc():
     pd = ProteinData(rp, allatom=True)
 
     for _ in range(repeats):
-        pd.new_angles(get_flat_angles(pd.nsca))
+        pd.new_angles(get_flat_angles(pd.total_number_of_angles))
         pd.eval()
         score_before = pd.score
 
@@ -145,7 +145,7 @@ def test_angles_match_pose_after_stage1_mc():
     pd = ProteinData(rp, allatom=True)
 
     for _ in range(repeats):
-        pd.new_angles(get_flat_angles(pd.nsca))
+        pd.new_angles(get_flat_angles(pd.total_number_of_angles))
         pd.stage1_mc(n=100, temp=2.0)
 
         for k, (a, b) in enumerate(get_angles_and_pose(pd)):
@@ -161,7 +161,7 @@ def test_stage2_mc_runs():
     for _ in range(repeats):
         for mode in stage2_modes:
 
-            pd.new_angles(get_flat_angles(pd.nsca))
+            pd.new_angles(get_flat_angles(pd.total_number_of_angles))
             pd.eval()
 
             pd.stage2_mc(n=10, temp=2.0, mode=mode)
@@ -175,7 +175,7 @@ def test_angles_match_pose_after_stage2_mc():
 
     for _ in range(repeats):
         for mode in stage2_modes:
-            pd.new_angles(get_flat_angles(pd.nsca))
+            pd.new_angles(get_flat_angles(pd.total_number_of_angles))
             pd.stage2_mc(n=10, temp=2.0)
 
             for k, (a, b) in enumerate(get_angles_and_pose(pd)):
@@ -201,7 +201,7 @@ def test_angles_match_pose_after_copy():
     pd_target = ProteinData(rp, allatom=True)
 
     for _ in range(repeats):
-        pd_target.new_angles(get_flat_angles(pd_origin.nsca))
+        pd_target.new_angles(get_flat_angles(pd_origin.total_number_of_angles))
         pd_origin.reset()
         pd_target.copy(pd_origin)
 
@@ -213,7 +213,7 @@ def test_angles_match_pose_after_copy():
         for k, (a, b) in enumerate(get_angles_and_pose(pd_target)):
             assert abs(a - b) < eps, "failed at angle #%d" % k
 
-        for i in range(pd_origin.nsca):
+        for i in range(pd_origin.total_number_of_angles):
             assert abs(pd_origin.angles[i] - pd_target.angles[i]) < eps, "Angle vector of both proteins should match"
 
 
@@ -226,8 +226,8 @@ def test_call_scores_make_sense():
     for _ in range(repeats):
         pd.reset()
         angles_rama = pd.angles.copy()
-        angles_random = get_uniform_angles(size=pd.nsca)
-        angles_bad = get_flat_angles(size=pd.nsca)
+        angles_random = get_uniform_angles(size=pd.total_number_of_angles)
+        angles_bad = get_flat_angles(size=pd.total_number_of_angles)
 
         score_rama = pd(angles_rama)
         score_random = pd(angles_random)
@@ -246,7 +246,7 @@ def test_call_evaluate_passed_angles():
     for _ in range(repeats):
         pd.reset()
         angles_rama = pd.angles.copy()
-        angles_random = get_uniform_angles(size=pd.nsca)
+        angles_random = get_uniform_angles(size=pd.total_number_of_angles)
 
         pd.reset()  # Make sure that the rama angles dont match the ones in pose
 

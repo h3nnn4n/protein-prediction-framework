@@ -45,8 +45,9 @@ class ProteinData:
         if allatom:
             self.rosetta_pack.get_allatom_switch().apply(self.pose)
 
-        self.nsca = sum([(self.bounds.getNumSideChainAngles(ss) + 3) for ss in self.rosetta_pack.target])
-        self.angles = np.zeros(self.nsca)
+        self.number_of_backbone_angles = len(self.rosetta_pack.target) * 3
+        self.total_number_of_angles = sum([(self.bounds.getNumSideChainAngles(ss) + 3) for ss in self.rosetta_pack.target])
+        self.angles = np.zeros(self.total_number_of_angles)
         self.score = None
 
         self.set_score_function()
@@ -114,6 +115,19 @@ class ProteinData:
     def new_angles(self, angles):
         index = 0
         size = len(self.rosetta_pack.ss_pred)
+
+        if self.allatom and self.total_number_of_angles != len(angles):
+            raise ValueError('The angle list should be of size %d, but has size %d' % (
+                self.total_number_of_angles,
+                len(angles)
+            ))
+        elif len(angles) not in [self.total_number_of_angles, size]:
+            raise ValueError('The angle list should be of size %d (backbone) or %d (all atoms), but has size %d' % (
+                size,
+                self.total_number_of_angles,
+                len(angles)
+            ))
+
         for k, _ in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
             phi, psi, omega = angles[index + 0], angles[index + 1], angles[index + 2]
