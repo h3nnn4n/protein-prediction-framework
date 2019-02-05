@@ -26,7 +26,7 @@ def get_conf_and_reps():
     if len(sys.argv) > 1:
         conf = sys.argv[1]
         if len(sys.argv) > 2:
-            reps = sys.argv[2]
+            reps = int(sys.argv[2])
     else:
         raise NotImplementedError('Running with not args is not supported')
 
