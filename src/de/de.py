@@ -402,7 +402,7 @@ class DE:
                 self.locality_sensitive_hashing.change_hash()
 
             for i in range(self.pop_size):
-                self.huehue = i
+                self.target = i
                 if self.do_lsh and not self.sade_run:
                     ret = self.rand1bin_lsh(i)  # pylint: disable=E1128
                 else:
@@ -635,7 +635,10 @@ class DE:
         return random.gauss(0.5, 0.3)
 
     def get_cr(self):
-        return self.sade_cr[self.huehue][self.sade_k]
+        assert self.sade_k is not None, 'sade_k should not be None'
+        assert self.target is not None, 'target should not be None'
+
+        return self.sade_cr[self.target][self.sade_k]
 
     def update_score_function(self, step=True):
         def update_pop_score(update_score=False):

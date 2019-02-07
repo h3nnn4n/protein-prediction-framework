@@ -59,7 +59,7 @@ def rand1exp_lsh(self, target):
         sade_k = 0
     else:
         sade_k = self.de.sade_ops.index(self.rand1exp_lsh)
-    self.sade_k = sade_k
+    self.de.sade_k = sade_k
     hi = 0
 
     if self.de.locality_sensitive_hashing.hash_values is None:
@@ -78,7 +78,7 @@ def rand1exp_lsh(self, target):
     p2 = ps[1]
     p3 = ps[2]
 
-    cutPoint = random.randint(0, self.rosetta_pack.pose.total_residue())
+    cutPoint = random.randint(0, self.de.pop[0].total_number_of_angles)
 
     t_angle = []
 
