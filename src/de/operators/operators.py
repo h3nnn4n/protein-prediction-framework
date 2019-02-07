@@ -10,6 +10,7 @@ from operators.global_exp import currToRand_exp_global, currToBest_exp_global, \
     rand1exp_global, rand2exp_global, best1exp_global, best2exp_global
 from operators.rosetta_operators import monte_carlo_3, monte_carlo_3s, \
     monte_carlo_9, monte_carlo_9s, monte_carlo_3_coil_only
+from operators.lsh_operators import rand1exp_lsh
 
 
 class Operators:
@@ -33,6 +34,7 @@ class Operators:
             'monte_carlo_9': self.get_monte_carlo_9,
             'monte_carlo_9s': self.get_monte_carlo_9s,
             'monte_carlo_3_coil_only': self.get_monte_carlo_3_coil_only,
+            'rand1exp_lsh': self.get_rand1exp_lsh,
         }
 
     def get_random_individual(self):
@@ -118,3 +120,7 @@ class Operators:
     def get_monte_carlo_3_coil_only(self):
         self.monte_carlo_3_coil_only = types.MethodType(monte_carlo_3_coil_only, self)
         return self.monte_carlo_3_coil_only
+
+    def get_rand1exp_lsh(self):
+        self.rand1exp_lsh = types.MethodType(rand1exp_lsh, self)
+        return self.rand1exp_lsh

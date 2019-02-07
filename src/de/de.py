@@ -9,6 +9,7 @@ import datetime
 import string
 
 from operators.operators import Operators
+from locality_sensitive_hashing import LocalitySensitiveHashing
 
 
 class DE:
@@ -106,12 +107,6 @@ class DE:
         self.do_lsh = False
         self.n_hashes = None
         self.n_buckets = None
-        self.hashes = None
-        self.hash_values = None
-        self.active_hash1 = 0
-        self.active_hash2 = 1
-        self.tmp1 = None
-        self.tmp2 = None
         self.update_interval = None
         self.change_interval = None
 
@@ -166,12 +161,20 @@ class DE:
 
     def reload_config(self):
         self.update_remc()
+        self.update_lsh()
 
     def update_remc(self):
         self.trial.enable_remc = self.enable_remc
 
         for p in self.pop:
             p.enable_remc = self.enable_remc
+
+    def update_lsh(self):
+        if not self.do_lsh:
+            return
+
+        self.locality_sensitive_hashing = LocalitySensitiveHashing(de=self)
+        self.locality_sensitive_hashing.inject_parameters()
 
 # ######################### START OF SADE ##########################
 
@@ -302,6 +305,7 @@ class DE:
             f.write('log_interval: %d\n' % self.log_interval)
             f.write('do_lsh: %d\n' % self.do_lsh)
             f.write('n_hashes: %d\n' % self.n_hashes)
+            f.write('n_buckets: %d\n' % self.n_buckets)
             f.write('update_interval: %d\n' % self.update_interval)
             f.write('change_interval: %d\n' % self.change_interval)
             f.write('reset_d_trigger: %f\n' % self.reset_d_trigger)
@@ -337,92 +341,6 @@ class DE:
             p.update_angle_from_pose()
             p.eval()
 
-# ######################### START OF LSH ##########################
-
-    def create_hashs(self):
-        self.hashes = [np.random.randint(100, size=self.pop[0].total_number_of_angles) for _ in range(self.n_hashes)]
-
-    def apply_hash(self, debug=False):
-        # debug = True
-
-        if self.hash_values is None:
-            self.hash_values = [[] for _ in range((self.n_buckets + 1) ** 2 + (self.n_buckets + 1))]
-        else:
-            for k, v in enumerate(self.hash_values):
-                if len(v) > 0:
-                    self.hash_values[k] = []
-
-        minh1 = None
-        maxh1 = None
-        minh2 = None
-        maxh2 = None
-
-        if self.tmp1 is None:
-            self.tmp1 = np.empty(self.pop_size)
-
-        if self.tmp2 is None:
-            self.tmp2 = np.empty(self.pop_size)
-
-        tmp1 = self.tmp1
-        tmp2 = self.tmp2
-
-        for i in range(self.pop_size):
-            h1 = np.dot(self.hashes[self.active_hash1], self.pop[i].angles)
-            h2 = np.dot(self.hashes[self.active_hash2], self.pop[i].angles)
-            tmp1[i] = h1
-            tmp2[i] = h2
-
-            if minh1 is None or h1 < minh1:
-                minh1 = h1
-
-            if maxh1 is None or h1 > maxh1:
-                maxh1 = h1
-
-            if minh2 is None or h2 < minh2:
-                minh2 = h2
-
-            if maxh2 is None or h2 > maxh2:
-                maxh2 = h2
-
-        r1 = (maxh1 - minh1) / self.n_buckets
-        b1 = random.random() * r1
-
-        r2 = (maxh2 - minh2) / self.n_buckets
-        b2 = random.random() * r2
-
-        if debug:
-            print("r1: %8.3f  b1: %8.3f  minh1: %8.3f  maxh1: %8.3f" % (r1, b1, minh1, maxh1))
-            print("r2: %8.3f  b2: %8.3f  minh2: %8.3f  maxh2: %8.3f" % (r2, b2, minh2, maxh2))
-
-        for i in range(self.pop_size):
-            a, b = math.floor((tmp1[i] - minh1 + b1) / r1), math.floor((tmp2[i] - minh2 + b2) / r2)
-            v = (self.n_buckets) * a + b
-
-            try:
-                self.hash_values[v].append(i)
-            except Exception:
-                raise IndexError(v, len(self.hash_values))
-
-        for n, i in enumerate(self.hash_values):
-            if debug:
-                if len(i) > 0:
-                    print(n, i)
-
-        if debug:
-            print()
-
-    def change_hash(self):
-        old1 = self.active_hash1
-        old2 = self.active_hash2
-
-        while old1 == self.active_hash1:
-            self.active_hash1 = random.randint(0, self.n_hashes - 1)
-
-        while old2 == self.active_hash2 and self.active_hash1 == self.active_hash2:
-            self.active_hash2 = random.randint(0, self.n_hashes - 1)
-
-# ######################### END OF LSH ##########################
-
     def get_best(self):
         return self.pop[self.best_index].angles
 
@@ -431,7 +349,8 @@ class DE:
         self.open_stats()
         self.dump_config()
 
-        self.create_hashs()
+        if self.do_lsh:
+            self.locality_sensitive_hashing.create_hashs()
 
         self.update_threshold()
         self.update_score_function(step=False)
@@ -456,7 +375,7 @@ class DE:
         # self.log(it=0)
 
         if self.do_lsh:
-            self.apply_hash()
+            self.locality_sensitive_hashing.apply_hash()
 
         self.sade_reinit()
         self.start_time = time.time()
@@ -480,10 +399,7 @@ class DE:
             self.update_score_function()
 
             if self.do_lsh and self.it % self.change_interval == 0:
-                self.change_hash()
-
-            if self.do_lsh and self.it % self.update_interval == 0:
-                self.apply_hash()
+                self.locality_sensitive_hashing.change_hash()
 
             for i in range(self.pop_size):
                 self.huehue = i
@@ -501,7 +417,7 @@ class DE:
                     self.spent_evals += ret
 
             if self.do_lsh and False:
-                for h in self.hash_values:
+                for h in self.locality_sensitive_hashing.hash_values:
                     if len(h) >= self.pop_size // 2:
                         print('Niche reset')
                         for i in h:
@@ -558,7 +474,6 @@ class DE:
 
             if self.stage2_all_interval > 0 and self.it % self.stage2_all_interval == 0 and self.it > 0:
                 print('NINJA MOVE')
-                self.rosetta_pack.loop_modeling(self.pop[self.best_index].pose)
                 self.pop[self.best_index].update_angle_from_pose()
                 self.pop[self.best_index].eval()
                 for i in range(self.pop_size):
