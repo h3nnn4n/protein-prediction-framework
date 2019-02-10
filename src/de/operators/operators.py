@@ -11,6 +11,7 @@ from operators.global_exp import currToRand_exp_global, currToBest_exp_global, \
 from operators.rosetta_operators import monte_carlo_3, monte_carlo_3s, \
     monte_carlo_9, monte_carlo_9s, monte_carlo_3_coil_only
 from operators.lsh_operators import rand1exp_lsh
+from operators.rmsd_operators import rand1exp_global_max_rmsd
 
 
 class Operators:
@@ -35,6 +36,7 @@ class Operators:
             'monte_carlo_9s': self.get_monte_carlo_9s,
             'monte_carlo_3_coil_only': self.get_monte_carlo_3_coil_only,
             'rand1exp_lsh': self.get_rand1exp_lsh,
+            'rand1exp_global_max_rmsd': self.get_rand1exp_global_max_rmsd,
         }
 
     def get_random_individual(self):
@@ -49,6 +51,22 @@ class Operators:
 
     def get_current_individual(self, current):
         return self.de.pop[current]
+
+    def get_individual_within_rmsd_range(self, n=3, min_range=1, max_range=50, n_retries=10):
+        for _ in range(n_retries):
+            first = self.get_random_individual()
+            individuals_list = [first]
+
+            for _ in range(1, n):
+                for _, candidate in enumerate(self.de.pop):
+                    rmsd = self.de.rosetta_pack.get_rmsd_from_pose(first.pose, candidate.pose)
+                    if min_range <= rmsd and rmsd <= max_range and candidate not in individuals_list:
+                        individuals_list.append(candidate)
+
+                    if len(individuals_list) == n:
+                        return individuals_list
+
+        return []
 
     def get_operator(self, name):
         return self.available_operators[name]()
@@ -124,3 +142,7 @@ class Operators:
     def get_rand1exp_lsh(self):
         self.rand1exp_lsh = types.MethodType(rand1exp_lsh, self)
         return self.rand1exp_lsh
+
+    def get_rand1exp_global_max_rmsd(self):
+        self.rand1exp_global_max_rmsd = types.MethodType(rand1exp_global_max_rmsd, self)
+        return self.rand1exp_global_max_rmsd
