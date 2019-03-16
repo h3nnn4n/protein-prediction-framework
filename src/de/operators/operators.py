@@ -11,7 +11,8 @@ from operators.global_exp import currToRand_exp_global, currToBest_exp_global, \
 from operators.rosetta_operators import monte_carlo_3, monte_carlo_3s, \
     monte_carlo_9, monte_carlo_9s, monte_carlo_3_coil_only
 from operators.lsh_operators import rand1exp_lsh
-from operators.rmsd_operators import rand1exp_global_max_rmsd
+from operators.rmsd_operators import rand1exp_global_max_rmsd, \
+    best1exp_global_max_rmsd
 
 
 class Operators:
@@ -37,6 +38,7 @@ class Operators:
             'monte_carlo_3_coil_only': self.get_monte_carlo_3_coil_only,
             'rand1exp_lsh': self.get_rand1exp_lsh,
             'rand1exp_global_max_rmsd': self.get_rand1exp_global_max_rmsd,
+            'best1exp_global_max_rmsd': self.get_best1exp_global_max_rmsd,
         }
 
     def get_random_individual(self):
@@ -52,9 +54,11 @@ class Operators:
     def get_current_individual(self, current):
         return self.de.pop[current]
 
-    def get_individual_within_rmsd_range(self, n=3, min_range=1, max_range=50, n_retries=10):
+    def get_individual_within_rmsd_range(self, n=3, min_range=1, max_range=50, n_retries=10, first=None):
         for _ in range(n_retries):
-            first = self.get_random_individual()
+            if first is None:
+                first = self.get_random_individual()
+
             individuals_list = [first]
 
             for _ in range(1, n):
@@ -146,3 +150,7 @@ class Operators:
     def get_rand1exp_global_max_rmsd(self):
         self.rand1exp_global_max_rmsd = types.MethodType(rand1exp_global_max_rmsd, self)
         return self.rand1exp_global_max_rmsd
+
+    def get_best1exp_global_max_rmsd(self):
+        self.best1exp_global_max_rmsd = types.MethodType(best1exp_global_max_rmsd, self)
+        return self.best1exp_global_max_rmsd
