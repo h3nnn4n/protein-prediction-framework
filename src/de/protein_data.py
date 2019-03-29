@@ -240,7 +240,7 @@ class ProteinData:
             pd.get_allatom_switch().apply(self.pose)
             r.apply(self.pose)
             # pd.get_packer().apply(self.pose)
-            # FIXME I guess
+            # FIXME Ensure this is correct
             # TBH I dont remember what this does or why I need it
 
         self.update_angle_from_pose()

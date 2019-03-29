@@ -3,9 +3,8 @@ import random
 from protein_data import ProteinData
 from rosetta_pack import RosettaPack
 
-# TODO:
-# Test side chain being putback after allatom -> centroid -> allatom
-# Test TM-Score
+# TODO Test side chain being putback after allatom -> centroid -> allatom
+# TODO Test TM-Score
 
 pname = '1crn'
 rp = RosettaPack(name=pname)

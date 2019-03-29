@@ -176,7 +176,7 @@ def test_get_tmscore_path():
 
 
 def test_get_sidechain_recover():
-    # TODO improve this
+    # TODO improve this to check that the side chain is actually recovered
     rp = RosettaPack(name=pname)
     sidechain_recover = rp.get_sidechain_recover()
     assert sidechain_recover is not None
