@@ -272,7 +272,7 @@ def test_repack():
     assert pd.repacked is None
     score = pd.repack()
     assert pd.repacked is not None
-    assert type(score) is float
+    assert isinstance(score, float)
 
 # Utils
 
@@ -302,11 +302,11 @@ def get_angles_and_pose(pd):
         angles.append(omega_angle)
 
         if pd.allatom and n_sidechain_angles > 0:
-                aa = pd.rosetta_pack.target[k]
-                side_chain_angles = pd.bounds.generateRandomSidechainAngles(aa)
-                for _, vv in enumerate(side_chain_angles):
-                    angles.append(vv)
-                    pose_angles.append(vv)
+            aa = pd.rosetta_pack.target[k]
+            side_chain_angles = pd.bounds.generateRandomSidechainAngles(aa)
+            for _, vv in enumerate(side_chain_angles):
+                angles.append(vv)
+                pose_angles.append(vv)
 
         index += 3 + n_sidechain_angles
 

@@ -10,6 +10,7 @@ import string
 
 from operators.operators import Operators
 from locality_sensitive_hashing import LocalitySensitiveHashing
+from forced_insertion import ForcedInsertion
 
 
 class DE:
@@ -81,6 +82,11 @@ class DE:
 
         self.spent_evals = 0
         self.max_evals = 500000
+
+        # Forced insertion
+        self.forced_insertion = False
+        self.forced_insertion_chance = 0.0
+        self.forced_insertion_mode = None
 
         # Pop data dump
         # nothing
@@ -162,6 +168,11 @@ class DE:
     def reload_config(self):
         self.update_remc()
         self.update_lsh()
+        self.forced_insertion_op = ForcedInsertion(
+            de=self,
+            mode=self.forced_insertion_mode,
+            chance=self.forced_insertion_chance
+        )
 
     def update_remc(self):
         self.trial.enable_remc = self.enable_remc
@@ -312,6 +323,9 @@ class DE:
             f.write('reset_d_percent: %f\n' % self.reset_d_percent)
             f.write('reset_rmsd_percent: %f\n' % self.reset_rmsd_percent)
             f.write('reset_rmsd_trigger: %f\n' % self.reset_rmsd_trigger)
+            f.write('forced_insertion: %d\n' % self.forced_insertion)
+            f.write('forced_insertion_chance: %f\n' % self.forced_insertion_chance)
+            f.write('forced_insertion_mode: %s\n' % self.forced_insertion_mode)
             f.write('sade_run: %d\n' % self.sade_run)
             f.write('sade_lp: %d\n' % self.sade_lp)
             f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
@@ -397,6 +411,8 @@ class DE:
             self.it += 1
 
             self.update_score_function()
+
+            self.forced_insertion_op.run()
 
             if self.do_lsh and self.it % self.change_interval == 0:
                 self.locality_sensitive_hashing.change_hash()

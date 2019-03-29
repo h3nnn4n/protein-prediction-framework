@@ -48,6 +48,8 @@ def base_coil_search(self, target, mode, operator):
 
     return evals
 
+# TODO Run using ONLY coil only search (and stage1 init)
+
 
 def monte_carlo_3_coil_only(self, target):
     return base_coil_search(self, target, '3', self.monte_carlo_3_coil_only)

@@ -79,6 +79,10 @@ class ConfigLoader:
         self.options['reset_rmsd_trigger'] = 0.0
         self.options['reset_rmsd_percent'] = 0.0
 
+        self.options['forced_insertion'] = False
+        self.options['forced_insertion_chance'] = 0.01
+        self.options['forced_insertion_mode'] = 'frag9'
+
         self.options['cname'] = 'none' if conf_file is None else conf_file.split('.')[0]
         self.options['sade_run'] = False
         self.options['sade_lp'] = 50

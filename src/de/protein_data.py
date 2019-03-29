@@ -46,7 +46,8 @@ class ProteinData:
             self.rosetta_pack.get_allatom_switch().apply(self.pose)
 
         self.number_of_backbone_angles = len(self.rosetta_pack.target) * 3
-        self.total_number_of_angles = sum([(self.bounds.getNumSideChainAngles(ss) + 3) for ss in self.rosetta_pack.target])
+        self.total_number_of_angles = sum([(self.bounds.getNumSideChainAngles(ss) + 3)
+                                           for ss in self.rosetta_pack.target])
         self.angles = np.zeros(self.total_number_of_angles)
         self.score = None
 
@@ -73,7 +74,8 @@ class ProteinData:
         index = 0
         for k, _ in enumerate(self.rosetta_pack.ss_pred):
             n_sidechain_angles = self.bounds.getNumSideChainAngles(self.rosetta_pack.target[k])
-            print("%4d %4d %8.3f %8.3f %8.3f " % (k, index, self.angles[index + 0], self.angles[index + 1], self.angles[index + 2]), end='')
+            print("%4d %4d %8.3f %8.3f %8.3f " %
+                  (k, index, self.angles[index + 0], self.angles[index + 1], self.angles[index + 2]), end='')
             for i in range(n_sidechain_angles):
                 print(" %8.3f" % self.angles[index + 3 + i], end='')
             index += 3 + n_sidechain_angles
