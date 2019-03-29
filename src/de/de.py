@@ -362,6 +362,7 @@ class DE:
         self.set_sade_ops()
         self.open_stats()
         self.dump_config()
+        self.forced_insertion_op.initialize_logger()
 
         if self.do_lsh:
             self.locality_sensitive_hashing.create_hashs()

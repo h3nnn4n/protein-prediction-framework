@@ -11,6 +11,8 @@ class ForcedInsertion:
         self.mode = mode
         self.chance = chance
 
+        self.total_insertions = 0
+
         self.frag_inserter = None
 
         self.initialize_rosetta()
@@ -33,27 +35,35 @@ class ForcedInsertion:
         return self.de is not None and self.mode is not None and self.chance > 0
 
     def apply_insertion(self, individual):
-        # TODO add some metrics and logging here
-
-        # score_before = individual.score
+        self.total_insertions += 1
+        score_before = individual.score
 
         self.frag_inserter.apply(individual.pose)
         individual.update_angle_from_pose()
         individual.eval()
 
-        # score_after = individual.score
+        score_after = individual.score
 
-        # print("forced frag: %8.3f %8.3f %8.3f" % (
-        #     score_before,
-        #     score_after,
-        #     score_after - score_before
-        # ))
+        self.logger_file_handle.write("%8d %8d %8d %8.3f %8.3f %8.3f\n" % (
+            self.de.spent_evals,
+            self.de.it,
+            self.total_insertions,
+            score_before,
+            score_after,
+            score_after - score_before
+        ))
+
+        self.logger_file_handle.flush()
 
     def initialize_rosetta(self):
         if not self.can_run():
             return
 
         self.frag_inserter = self.get_frag_mover()
+
+    def initialize_logger(self):
+        self.file_name = self.de.rosetta_pack.protein_loader.original + '/' + "forced_fragment_" + self.de.name_suffix + ".yaml"
+        self.logger_file_handle = open(self.file_name, 'w')
 
     def get_frag_mover(self):
         rp = self.de.rosetta_pack
