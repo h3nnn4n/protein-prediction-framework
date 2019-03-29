@@ -1,15 +1,15 @@
 from random import uniform
 
-# TODO: Test coverage
-# TODO: Check for all atom
+# TODO: Check/support for all atom
 
 
 class ForcedInsertion:
-    def __init__(self, de=None, mode=None, chance=0.0):
+    def __init__(self, de=None, mode=None, chance=0.0, enable=None):
         # print("forced_frag init mode: %s  chance: %f" % (mode, chance))
         self.de = de
         self.mode = mode
         self.chance = chance
+        self.enable = enable
 
         self.total_insertions = 0
 
@@ -32,7 +32,7 @@ class ForcedInsertion:
             self.apply_insertion(p)
 
     def can_run(self):
-        return self.de is not None and self.mode is not None and self.chance > 0
+        return self.de is not None and self.mode is not None and self.chance > 0 and self.enable
 
     def apply_insertion(self, individual):
         self.total_insertions += 1

@@ -171,7 +171,8 @@ class DE:
         self.forced_insertion_op = ForcedInsertion(
             de=self,
             mode=self.forced_insertion_mode,
-            chance=self.forced_insertion_chance
+            chance=self.forced_insertion_chance,
+            enable=self.forced_insertion
         )
 
     def update_remc(self):
