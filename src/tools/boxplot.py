@@ -75,9 +75,9 @@ def boxplot(target, names):
                 if w < 0.05:
                     a, b = np.mean(p1[:ml]), np.mean(p2[:ml])
                     if a < b:
-                        print("%8s %35s %35s %8.5f %8.3f %8.3f %8d" % (mode, i[1], j[1], w, a, b, ml))
+                        print("%8s %45s %45s %8.5f %8.3f %8.3f %8d" % (mode, i[1], j[1], w, a, b, ml))
                     else:
-                        print("%8s %35s %35s %8.5f %8.3f %8.3f %8d" % (mode, j[1], i[1], w, b, a, ml))
+                        print("%8s %45s %45s %8.5f %8.3f %8.3f %8d" % (mode, j[1], i[1], w, b, a, ml))
 
     try:
         ############
