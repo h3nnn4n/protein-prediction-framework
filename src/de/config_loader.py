@@ -89,7 +89,7 @@ class ConfigLoader:
         self.options['sade_reinit_interval'] = 1000
         self.options['sade_selection'] = 'roulette'
 
-        self.options['enable_remc'] = True
+        self.options['enable_remc'] = False
 
         self.options['do_crowding'] = False
         self.options['do_rmsd_crowding'] = False
