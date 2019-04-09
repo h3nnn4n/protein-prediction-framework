@@ -568,8 +568,6 @@ class DE:
             if len(i) > 0:
                 print(n, i)
 
-# ########### End of operators
-
     def selection(self, candidate=None):
         if self.do_crowding or self.do_rmsd_crowding:
             self.crowding_selection()
