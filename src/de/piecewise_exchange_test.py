@@ -38,7 +38,6 @@ class TestSplit:
 class TestSwapRegion:
     def test_swap_first_region(self):
         mock_de = self.de_mock_builder()
-        mock_de.rosetta_pack.ss_pred = 'CCCHHHCCC'
 
         pe = PiecewiseExchange(de=mock_de)
         splits = pe.split_regions()
@@ -55,7 +54,6 @@ class TestSwapRegion:
 
     def test_swap_second_region(self):
         mock_de = self.de_mock_builder()
-        mock_de.rosetta_pack.ss_pred = 'CCCHHHCCC'
 
         pe = PiecewiseExchange(de=mock_de)
         splits = pe.split_regions()
@@ -74,6 +72,44 @@ class TestSwapRegion:
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
         mock_de.pop = self.build_pop()
+        mock_de.rosetta_pack.ss_pred = 'CCCHHHCCC'
+
+        return mock_de
+
+    def build_pop(self):
+        pop_size = 10
+
+        pop = [ProteinData(rp) for _ in range(pop_size)]
+
+        for i in range(len(rp.target)):
+            for j in range(pop_size):
+                pop[j].angles[i] = j * 10
+
+        return pop
+
+
+class TestScramblePop:
+    def test_scramble_pop(self):
+        mock_de = self.de_mock_builder()
+
+        pe = PiecewiseExchange(de=mock_de)
+        _ = [p.eval() for p in mock_de.pop]
+
+        scores_before = [p.score for p in mock_de.pop]
+
+        pe.scramble_pop()
+
+        scores_after = [p.score for p in mock_de.pop]
+
+        for a, b in zip(scores_before, scores_after):
+            assert a != b
+
+    def de_mock_builder(self):
+        mock_de = mock.MagicMock
+        mock_de.rosetta_pack = rp
+        mock_de.pop = self.build_pop()
+        mock_de.pop_size = len(mock_de.pop)
+        mock_de.rosetta_pack.ss_pred = 'CCCHHHCCC'
 
         return mock_de
 
