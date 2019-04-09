@@ -51,9 +51,10 @@ def test_run_from_main():
     assert prefix_in_filelist('stats__', new_files)
     assert prefix_in_filelist('repack__', new_files)
     assert prefix_in_filelist('parameters__', new_files)
+    assert prefix_in_filelist('forced_fragment__', new_files)
 
     for file in new_files:
-        assert os.path.getsize(file) > 0
+        assert os.path.isfile(file)
 
     for file in new_files:
         os.remove(file)
@@ -74,9 +75,10 @@ def test_run_with_fake_file():
         assert prefix_in_filelist('stats__', new_files)
         assert prefix_in_filelist('repack__', new_files)
         assert prefix_in_filelist('parameters__', new_files)
+        assert prefix_in_filelist('forced_fragment__', new_files)
 
         for file in new_files:
-            assert os.path.getsize(file) > 0
+            assert os.path.isfile(file)
 
         for file in new_files:
             os.remove(file)
@@ -106,9 +108,10 @@ def test_run_lsh_with_fake_file():
         assert prefix_in_filelist('stats__', new_files)
         assert prefix_in_filelist('repack__', new_files)
         assert prefix_in_filelist('parameters__', new_files)
+        assert prefix_in_filelist('forced_fragment__', new_files)
 
         for file in new_files:
-            assert os.path.getsize(file) > 0
+            assert os.path.isfile(file)
 
         for file in new_files:
             os.remove(file)
