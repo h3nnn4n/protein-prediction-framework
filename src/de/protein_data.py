@@ -158,16 +158,6 @@ class ProteinData:
 
     def eval(self, score=None):
         self.score = self.score_function(self.pose)
-        # if score is None and self.pose.is_centroid():
-        #     print('centroid')
-        #     score = self.rosetta_pack.get_score3()
-
-        # if score is None and not self.pose.is_centroid():
-        #     print('allatom')
-        #     score = self.rosetta_pack.get_scorefxn()
-
-        # self.score = score(self.pose)
-        # self.rosetta_pack.pymover.apply(self.pose)
 
     def fix_bounds(self):
         index = 0
@@ -200,6 +190,7 @@ class ProteinData:
             index += 3 + n_sidechain_angles
 
     def update_pose_from_angles(self):
+        # TODO: Check if this works with all atom
         self.new_angles(self.angles)
 
     def update_angle_from_pose(self):

@@ -5,6 +5,7 @@ import random
 # TODO: Random search mode
 # TODO: Random Search with
 # TODO: Run experiments
+# FIXME: I am pretty sure this only works with the centroid model
 
 class PiecewiseExchange:
     def __init__(self, de=None):
@@ -48,6 +49,30 @@ class PiecewiseExchange:
             t = ind1.angles[i]
             ind1.angles[i] = ind2.angles[i]
             ind2.angles[i] = t
+
+    def random_piecewise_search(self):
+        pop_size = self.de.pop_size
+
+        split_regions = self.split_regions()
+        split_regions = [0] + split_regions + [len(self.de.rosetta_pack.ss_pred)]
+
+        for i in range(len(split_regions) - 1):
+            region = split_regions[i], split_regions[i + 1]
+            p1, _ = random.sample(range(pop_size), k=2)
+            self.add_region(region, p1)
+
+        self.de.trial.update_pose_from_angles()
+        self.de.trial.eval()
+
+    def add_region(self, region, p1):
+        start, end = region
+
+        ind1 = self.de.pop[p1]
+        trial = self.de.trial
+
+        print(start, end)
+
+        trial.angles[start:end] = ind1.angles[start:end]
 
     def update_poses(self):
         for p in self.de.pop:

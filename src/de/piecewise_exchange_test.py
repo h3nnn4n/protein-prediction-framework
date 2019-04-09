@@ -7,6 +7,7 @@ from piecewise_exchange import PiecewiseExchange
 
 pname = '1crn'
 rp = RosettaPack(name=pname)
+ss_pred = rp.ss_pred
 
 
 class TestSplit:
@@ -123,3 +124,57 @@ class TestScramblePop:
                 pop[j].angles[i] = j * 10
 
         return pop
+
+
+class TestRandomPiecewiseSearch:
+    def test_score_changed(self):
+        mock_de = self.de_mock_builder()
+        pe = PiecewiseExchange(de=mock_de)
+
+        trial_score_before = mock_de.trial.score
+
+        pe.random_piecewise_search()
+
+        trial_score_after = mock_de.trial.score
+
+        assert trial_score_before != trial_score_after
+
+    def test_changed_all_angles(self):
+        mock_de = self.de_mock_builder()
+        pe = PiecewiseExchange(de=mock_de)
+
+        pe.random_piecewise_search()
+
+        for k, angle in enumerate(mock_de.trial.angles):
+            assert angle != -50, "failed at angle %4d %8.3f" % (k, angle)
+
+    def de_mock_builder(self):
+        mock_de = mock.MagicMock
+        mock_de.rosetta_pack = rp
+        mock_de.rosetta_pack.ss_pred = ss_pred
+        mock_de.pop = self.build_pop()
+        mock_de.pop_size = len(mock_de.pop)
+        mock_de.trial = self.build_trial()
+
+        return mock_de
+
+    def build_pop(self):
+        pop_size = 10
+
+        pop = [ProteinData(rp) for _ in range(pop_size)]
+
+        for i in range(len(rp.target)):
+            for j in range(pop_size):
+                pop[j].angles[i] = j * 10
+
+        return pop
+
+    def build_trial(self):
+        trial = ProteinData(rp)
+
+        for i in range(len(rp.target)):
+            trial.angles[i] = -50
+
+        trial.eval()
+
+        return trial
