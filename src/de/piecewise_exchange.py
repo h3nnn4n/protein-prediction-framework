@@ -44,11 +44,9 @@ class PiecewiseExchange:
         ind1 = self.de.pop[p1]
         ind2 = self.de.pop[p2]
 
-        # TODO: Use slices
-        for i in range(start, end):
-            t = ind1.angles[i]
-            ind1.angles[i] = ind2.angles[i]
-            ind2.angles[i] = t
+        t = ind1.angles[start:end].copy()
+        ind1.angles[start:end] = ind2.angles[start:end]
+        ind2.angles[start:end] = t
 
     def random_piecewise_search(self):
         pop_size = self.de.pop_size
