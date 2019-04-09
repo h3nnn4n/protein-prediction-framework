@@ -65,6 +65,19 @@ class PiecewiseExchange:
 
         return score, rmsd
 
+    def random_piecewise_search_with_stage2_then_repack(self, n=25, temp=1.5, mode='3s'):
+        rp = self.de.rosetta_pack
+        self.random_piecewise_search()
+
+        self.de.trial.stage2_mc(n=n, temp=temp, mode=mode)
+
+        self.de.trial.repack()
+        self.de.trial.eval()
+        score = self.de.trial.score
+        rmsd = rp.get_rmsd_from_native(self.de.trial.pose)
+
+        return score, rmsd
+
     def random_piecewise_search(self):
         pop_size = self.de.pop_size
 

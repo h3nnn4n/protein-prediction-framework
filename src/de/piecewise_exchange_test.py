@@ -176,6 +176,20 @@ class TestRandomPiecewiseSearch:
         # assert rmsd_after < rmsd_before
         assert True
 
+    def test_with_stage2_mc_and_repack(self):
+        mock_de = self.de_mock_builder()
+        pe = PiecewiseExchange(de=mock_de)
+
+        score_before = mock_de.trial.score
+        rmsd_before = rp.get_rmsd_from_native(mock_de.trial.pose)
+
+        score_after, rmsd_after = pe.random_piecewise_search_with_stage2_then_repack()
+
+        # TODO: Write a decent test for this
+        # assert score_after < score_before
+        # assert rmsd_after < rmsd_before
+        assert True
+
     def de_mock_builder(self):
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
