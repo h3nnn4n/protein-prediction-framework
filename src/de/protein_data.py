@@ -199,6 +199,9 @@ class ProteinData:
 
             index += 3 + n_sidechain_angles
 
+    def update_pose_from_angles(self):
+        self.new_angles(self.angles)
+
     def update_angle_from_pose(self):
         index = 0
         for k, _ in enumerate(self.rosetta_pack.ss_pred):
