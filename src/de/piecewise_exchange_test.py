@@ -148,6 +148,30 @@ class TestRandomPiecewiseSearch:
         for k, angle in enumerate(mock_de.trial.angles):
             assert angle != -50, "failed at angle %4d %8.3f" % (k, angle)
 
+    def test_with_repack(self):
+        mock_de = self.de_mock_builder()
+        pe = PiecewiseExchange(de=mock_de)
+
+        score_before = mock_de.trial.score
+        rmsd_before = rp.get_rmsd_from_native(mock_de.trial.pose)
+
+        score_after, rmsd_after = pe.random_piecewise_search_with_repack()
+
+        assert score_after < score_before
+        assert rmsd_after < rmsd_before
+
+    def test_with_stage2_mc(self):
+        mock_de = self.de_mock_builder()
+        pe = PiecewiseExchange(de=mock_de)
+
+        score_before = mock_de.trial.score
+        rmsd_before = rp.get_rmsd_from_native(mock_de.trial.pose)
+
+        score_after, rmsd_after = pe.random_piecewise_search_with_stage2()
+
+        assert score_after < score_before
+        assert rmsd_after < rmsd_before
+
     def de_mock_builder(self):
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
@@ -160,12 +184,13 @@ class TestRandomPiecewiseSearch:
 
     def build_pop(self):
         pop_size = 10
-
         pop = [ProteinData(rp) for _ in range(pop_size)]
 
-        for i in range(len(rp.target)):
-            for j in range(pop_size):
-                pop[j].angles[i] = j * 10
+        for p in pop:
+            p.eval()
+            p.stage1_mc()
+            p.update_angle_from_pose()
+            p.eval()
 
         return pop
 

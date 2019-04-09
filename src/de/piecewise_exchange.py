@@ -2,8 +2,6 @@ import random
 
 
 # TODO: Add config
-# TODO: Random search mode
-# TODO: Random Search with
 # TODO: Run experiments
 # FIXME: I am pretty sure this only works with the centroid model
 
@@ -47,6 +45,25 @@ class PiecewiseExchange:
         t = ind1.angles[start:end].copy()
         ind1.angles[start:end] = ind2.angles[start:end]
         ind2.angles[start:end] = t
+
+    def random_piecewise_search_with_repack(self):
+        rp = self.de.rosetta_pack
+        self.random_piecewise_search()
+        score = self.de.trial.repack()
+        rmsd = rp.get_rmsd_from_native(self.de.trial.pose)
+
+        return score, rmsd
+
+    def random_piecewise_search_with_stage2(self, n=25, temp=1.5, mode='3s'):
+        rp = self.de.rosetta_pack
+        self.random_piecewise_search()
+
+        self.de.trial.stage2_mc(n=n, temp=temp, mode=mode)
+
+        score = self.de.trial.score
+        rmsd = rp.get_rmsd_from_native(self.de.trial.pose)
+
+        return score, rmsd
 
     def random_piecewise_search(self):
         pop_size = self.de.pop_size
