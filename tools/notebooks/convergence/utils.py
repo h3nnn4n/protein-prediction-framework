@@ -8,6 +8,20 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
+def list_all_tests():
+    old_path = os.getcwd()
+
+    user_path = os.path.expanduser('~')
+    base_path = os.path.join(user_path, 'progs/de_supimpa/src/de', 'tests_all')
+
+    os.chdir(base_path)
+    all_dirs = [file for file in os.listdir() if os.path.isdir(file)]
+
+    os.chdir(old_path)
+
+    return all_dirs
+
+
 def set_experiment_path(experiment_path):
     user_path = os.path.expanduser('~')
     base_path = os.path.join(user_path, 'progs/de_supimpa/src/de', 'tests_all', experiment_path)
@@ -39,12 +53,28 @@ def set_protein(pname):
 
     os.chdir(pname)
 
+    print(os.getcwd())
+
 
 def set_experiment(expname):
-    if not os.path.isdir(expname):
+    all_dirs = [file for file in os.listdir() if os.path.isdir(file)]
+
+    matches = [dir for dir in all_dirs if expname in dir]
+    has_match = len(matches) > 0
+
+    exact_match = os.path.isdir(expname)
+
+    exact_match = os.path.isdir(expname)
+    if not os.path.isdir(expname) and not has_match:
+        print('going up')
         os.chdir('..')
 
-    os.chdir(expname)
+    if exact_match:
+        os.chdir(expname)
+    elif has_match:
+        os.chdir(matches[0])
+
+    print(os.getcwd())
 
 
 def list_stats():
@@ -143,6 +173,7 @@ def average_all(metric):
             assert len(data_pair) > 0, "data_pair is [] !"
 
             evals, data = data_pair.values()
+            evals, data = data_pair['evals'], data_pair['data']
 
             assert len(evals) > 0, "evals is [] !"
             assert len(data) > 0, "data is [] !"
@@ -171,9 +202,45 @@ def average_all(metric):
         sum(x) / len(x) for x in target_data
     ]
 
-    # print(len(evals), len(mean))
+    # print(len(target_evals), len(mean))
 
-    return evals, mean
+    l = min(len(target_evals), len(mean))
+
+    target_evals = target_evals[0:l]
+    mean = mean[0:l]
+
+    return target_evals, mean
+
+
+def plot_all_best_and_mean_score_and_avg_rmsd():
+    evals, mean_score = average_all(metrics['mean_score'])
+    _, best_score = average_all(metrics['best_score'])
+    _, avg_rmsd = average_all(metrics['avg_rmsd'])
+    # _, moment_of_inertia = average_all(metrics['moment_of_inertia'])
+    # _, pedro_diver = average_all(metrics['pedro_diver'])
+
+    fig, ax1 = plt.subplots(figsize=(16.5, 10))
+    ax2 = ax1.twinx()
+
+    ax1.plot(evals, mean_score, 'g-', label='mean_score')
+    ax1.plot(evals, best_score, 'g', label='best_score', linestyle='-.')
+
+    ax2.plot(evals, avg_rmsd, 'b-', label='avg_rmsd')
+
+    ax1.set_xlabel('Evals')
+    ax1.set_ylabel('Score3', color='g')
+    ax2.set_ylabel('Diversity', color='b')
+
+    ax1.set_xlim(0, 500000)
+    ax1.set_ylim(bottom=0)
+    ax2.set_ylim(bottom=0)
+
+    # lines, labels = ax1.get_legend_handles_labels()
+    # lines2, labels2 = ax2.get_legend_handles_labels()
+
+    fig.legend(loc='upper right', bbox_to_anchor=(0.8, 0.8))
+
+    plt.show()
 
 
 def lerp(a, b, p):
