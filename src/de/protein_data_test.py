@@ -301,7 +301,7 @@ def test_repack():
     assert pd.repacked is None
     score = pd.repack()
     assert pd.repacked is not None
-    assert type(score) is float
+    assert isinstance(score, float)
 
 
 def test_get_tmscore():

@@ -11,6 +11,7 @@ import string
 from operators.operators import Operators
 from locality_sensitive_hashing import LocalitySensitiveHashing
 from forced_insertion import ForcedInsertion
+from piecewise_exchange import PiecewiseExchange
 
 
 class DE:
@@ -87,6 +88,9 @@ class DE:
         self.forced_insertion = False
         self.forced_insertion_chance = 0.0
         self.forced_insertion_mode = None
+
+        # Piecewise Exchange
+        self.piecewise_exchange = PiecewiseExchange(de=self)
 
         # Pop data dump
         # nothing
@@ -562,6 +566,8 @@ class DE:
             f.write('gdt_ts_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0]))
             f.write('gdt_ha_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
+
+        self.piecewise_exchange.random_search()
 
     def print_hash(self):
         for n, i in enumerate(self.hash_values):

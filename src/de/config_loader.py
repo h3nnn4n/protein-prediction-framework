@@ -52,7 +52,7 @@ class ConfigLoader:
 
         self.options = {}
 
-        self.options['pname'] = '1crn'
+        self.options['pname'] = '1zdd'
         self.options['pop_size'] = 10
         self.options['max_iters'] = 10
         self.options['max_evals'] = 500
