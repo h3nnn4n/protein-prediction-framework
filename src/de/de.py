@@ -695,16 +695,13 @@ class DE:
             secs_per_eval = sum(self.time_buffer) / sum(self.spent_eval_buffer)
             eta_evals = (self.max_evals - self.spent_evals) * secs_per_eval
 
-            if self.mode == 'marathon':
-                eta_iters = self.max_iters * secs_per_iter
-            else:
-                eta_iters = (self.max_iters - it) * secs_per_iter
+            eta_iters = (self.max_iters - it) * secs_per_iter
 
             self.last_time = now
             self.last_spent_evals = self.spent_evals
             self.time_pivot += 1
 
-        cr = ''  # '%3.2f' % self.c_rate
+        cr = ''
         probs = ''
 
         if self.sade_run:
@@ -736,9 +733,6 @@ class DE:
             ('%s', probs)
         ]
 
-        # print(self.sade_success_memory)
-        # print(self.sade_failure_memory)
-
         for k, (a, b) in enumerate(data):
             try:
                 string += a % b
@@ -748,11 +742,6 @@ class DE:
 
         print(string)
         self.stats.write(string + '\n')
-
-        # print("%8.4f %8d %8.4f %8d" % (self.improv_value,
-        #                                self.improv_iter_threshold - self.last_improv,
-        #                                self.mean_improv_value,
-        #                                self.mean_improv_iter_threshold - self.mean_last_improv))
 
         if self.ops_stats is not None and self.sade_success_memory is not None:
             string = ''
