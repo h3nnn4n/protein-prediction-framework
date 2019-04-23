@@ -52,7 +52,7 @@ class ConfigLoader:
 
         self.options = {}
 
-        self.options['pname'] = '1crn'
+        self.options['pname'] = '1zdd'
         self.options['pop_size'] = 10
         self.options['max_iters'] = 10
         self.options['max_evals'] = 500
@@ -62,8 +62,6 @@ class ConfigLoader:
         self.options['mode'] = 'normal'
 
         self.options['stage0_init'] = False
-        self.options['stage2_interval'] = -1
-        self.options['stage2_all_interval'] = -1
         self.options['partial_reset'] = -1
 
         self.options['log_interval'] = 10
@@ -91,18 +89,7 @@ class ConfigLoader:
 
         self.options['enable_remc'] = False
 
-        self.options['do_crowding'] = False
-        self.options['do_rmsd_crowding'] = False
-        self.options['crowding_factor'] = 3
-
         self.options['ops'] = ['rand1bin_global']
-
-        self.options['do_clearing'] = False
-        self.options['clearing_interval'] = 10
-        self.options['clearing_size'] = 1
-
-        self.options['energy_function'] = 'score3'
-        self.options['energy_options'] = ['score0_200', 'score1_400', 'score2_1400', 'score3_2000', 'score5_1000']
 
         self.options['extended_diversity_measurements'] = True
 

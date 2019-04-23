@@ -1,4 +1,5 @@
 import random
+import sys
 
 
 # TODO: Add config
@@ -10,14 +11,35 @@ class PiecewiseExchange:
         self.de = de
 
     def split_regions(self):
+        trial = self.de.trial
         ss_pred = self.de.rosetta_pack.ss_pred
         split_points = []
 
         for i in range(1, len(ss_pred)):
             if ss_pred[i - 1] != ss_pred[i]:
-                split_points.append(i)
+                sidechain_size = trial.bounds.getNumSideChainAngles(ss_pred[i - 1])
+                split_points.append(i * 3 + sidechain_size)
 
         return split_points
+
+    def random_search(self):
+        n_iters = 50
+
+        print('starting')
+        sys.stdout.flush()
+        for iter_count in range(n_iters):
+            print("%6d" % (iter_count), end=' ')
+
+            # score, rmsd = self.random_piecewise_search_with_stage2(n=100)
+
+            # score, rmsd = self.random_piecewise_search_with_stage2_then_repack(n=100)
+            # scorefxn = self.de.trial.repacked.energies().total_energy()
+
+            _, rmsd = self.random_piecewise_search_with_stage2_then_repack(n=100)
+            # score, rmsd = self.random_piecewise_search_with_repack()
+            scorefxn = self.de.trial.repacked.energies().total_energy()
+            print("%8.3f %8.3f" % (scorefxn, rmsd))
+            sys.stdout.flush()
 
     def scramble_pop(self):
         pop_size = self.de.pop_size
@@ -58,7 +80,7 @@ class PiecewiseExchange:
         rp = self.de.rosetta_pack
         self.random_piecewise_search()
 
-        self.de.trial.stage2_mc(n=n, temp=temp, mode=mode)
+        self.stage2()
 
         score = self.de.trial.score
         rmsd = rp.get_rmsd_from_native(self.de.trial.pose)
@@ -69,7 +91,7 @@ class PiecewiseExchange:
         rp = self.de.rosetta_pack
         self.random_piecewise_search()
 
-        self.de.trial.stage2_mc(n=n, temp=temp, mode=mode)
+        self.stage2()
 
         self.de.trial.repack()
         self.de.trial.eval()
@@ -79,6 +101,7 @@ class PiecewiseExchange:
         return score, rmsd
 
     def random_piecewise_search(self):
+        trial = self.de.trial
         pop_size = self.de.pop_size
 
         split_regions = self.split_regions()
@@ -89,16 +112,14 @@ class PiecewiseExchange:
             p1, _ = random.sample(range(pop_size), k=2)
             self.add_region(region, p1)
 
-        self.de.trial.update_pose_from_angles()
-        self.de.trial.eval()
+        trial.update_pose_from_angles()
+        trial.eval()
 
     def add_region(self, region, p1):
         start, end = region
 
         ind1 = self.de.pop[p1]
         trial = self.de.trial
-
-        print(start, end)
 
         trial.angles[start:end] = ind1.angles[start:end]
 
@@ -109,3 +130,30 @@ class PiecewiseExchange:
     def update_scores(self):
         for p in self.de.pop:
             p.eval()
+
+    def stage2(self):
+        trial = self.de.trial
+        pd = self.de.rosetta_pack
+
+        score = pd.get_score_function(trial.score_function_name)
+        temp = 1.5
+        n = 250
+
+        mc = pd.get_new_mc(trial.pose, score, temp)
+        mover = pd.get_3mer_smooth()
+        trial_mover = pd.get_new_trial_mover(mover, mc)
+        rep_mover = pd.get_new_rep_mover(trial_mover, n)
+
+        mc.set_temperature(temp)
+
+        trial.eval()
+        score_before = trial.score
+        rep_mover.apply(trial.pose)
+
+        trial.pose.assign(mc.lowest_score_pose())
+        trial.update_angle_from_pose()
+        trial.eval()
+
+        score_after = trial.score
+
+        print("%8.3f %8.3f" % (score_before, score_after), end=' ')

@@ -18,7 +18,7 @@ class TestSplit:
         pe = PiecewiseExchange(de=mock_de)
         splits = pe.split_regions()
 
-        assert splits == [3, 6, 9, 12]
+        assert splits == [10, 20, 28, 38]
 
     def test_split4(self):
         mock_de = self.de_mock_builder()
@@ -27,11 +27,12 @@ class TestSplit:
         pe = PiecewiseExchange(de=mock_de)
         splits = pe.split_regions()
 
-        assert splits == [4, 8, 12, 16]
+        assert splits == [13, 26, 37, 50]
 
     def de_mock_builder(self):
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
+        mock_de.trial = build_trial()
 
         return mock_de
 
@@ -43,15 +44,15 @@ class TestSwapRegion:
         pe = PiecewiseExchange(de=mock_de)
         splits = pe.split_regions()
 
-        for i in range(splits[0]):
-            assert mock_de.pop[1].angles[i] == 10
-            assert mock_de.pop[5].angles[i] == 50
+        for i in range(10):
+            assert mock_de.pop[1].angles[i] == 10, i
+            assert mock_de.pop[5].angles[i] == 50, i
 
         pe.swap_region([0] + splits[0:1], 1, 5)
 
-        for i in range(splits[0]):
-            assert mock_de.pop[1].angles[i] == 50
-            assert mock_de.pop[5].angles[i] == 10
+        for i in range(10):
+            assert mock_de.pop[1].angles[i] == 50, i
+            assert mock_de.pop[5].angles[i] == 10, i
 
     def test_swap_second_region(self):
         mock_de = self.de_mock_builder()
@@ -72,21 +73,17 @@ class TestSwapRegion:
     def de_mock_builder(self):
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
-        mock_de.pop = self.build_pop()
+        mock_de.rosetta_pack.ss_pred = ss_pred
+        mock_de.pop = build_pop(10)
+        mock_de.pop_size = len(mock_de.pop)
+        mock_de.trial = build_trial()
         mock_de.rosetta_pack.ss_pred = 'CCCHHHCCC'
 
+        for i, p in enumerate(mock_de.pop):
+            for j in range(len(p.angles)):
+                p.angles[j] = i * 10
+
         return mock_de
-
-    def build_pop(self):
-        pop_size = 10
-
-        pop = [ProteinData(rp) for _ in range(pop_size)]
-
-        for i in range(len(rp.target)):
-            for j in range(pop_size):
-                pop[j].angles[i] = j * 10
-
-        return pop
 
 
 class TestScramblePop:
@@ -108,22 +105,13 @@ class TestScramblePop:
     def de_mock_builder(self):
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
-        mock_de.pop = self.build_pop()
+        mock_de.rosetta_pack.ss_pred = ss_pred
+        mock_de.pop = build_pop(10)
         mock_de.pop_size = len(mock_de.pop)
+        mock_de.trial = build_trial()
         mock_de.rosetta_pack.ss_pred = 'CCCHHHCCC'
 
         return mock_de
-
-    def build_pop(self):
-        pop_size = 10
-
-        pop = [ProteinData(rp) for _ in range(pop_size)]
-
-        for i in range(len(rp.target)):
-            for j in range(pop_size):
-                pop[j].angles[i] = j * 10
-
-        return pop
 
 
 class TestRandomPiecewiseSearch:
@@ -194,30 +182,31 @@ class TestRandomPiecewiseSearch:
         mock_de = mock.MagicMock
         mock_de.rosetta_pack = rp
         mock_de.rosetta_pack.ss_pred = ss_pred
-        mock_de.pop = self.build_pop()
+        mock_de.pop = build_pop(10)
         mock_de.pop_size = len(mock_de.pop)
-        mock_de.trial = self.build_trial()
+        mock_de.trial = build_trial()
 
         return mock_de
 
-    def build_pop(self):
-        pop_size = 10
-        pop = [ProteinData(rp) for _ in range(pop_size)]
 
-        for p in pop:
-            p.eval()
-            p.stage1_mc()
-            p.update_angle_from_pose()
-            p.eval()
+def build_pop(pop_size=10):
+    pop = [ProteinData(rp) for _ in range(pop_size)]
 
-        return pop
+    for p in pop:
+        p.eval()
+        p.stage1_mc()
+        p.update_angle_from_pose()
+        p.eval()
 
-    def build_trial(self):
-        trial = ProteinData(rp)
+    return pop
 
-        for i in range(len(rp.target)):
-            trial.angles[i] = -50
 
-        trial.eval()
+def build_trial():
+    trial = ProteinData(rp)
 
-        return trial
+    for i in range(len(rp.target)):
+        trial.angles[i] = -50
+
+    trial.eval()
+
+    return trial

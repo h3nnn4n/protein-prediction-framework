@@ -118,6 +118,20 @@ def test_update_angle_from_pose():
             assert abs(a - b) < eps, "failed at angle #%d" % k
 
 
+def test_update_pose_from_angles():
+    """
+        test that the angles from pose are correctly copied to the angle vector
+    """
+    pd = ProteinData(rp)
+
+    for _ in range(repeats):
+        pd.angles = get_uniform_angles(size=pd.total_number_of_angles)
+        pd.update_pose_from_angles()
+
+        for k, (a, b) in enumerate(get_angles_and_pose(pd)):
+            assert abs(a - b) < eps, "failed at angle #%d" % k
+
+
 def test_score_improves_with_stage1_mc():
     """
         test that the score improves with stage1 mc
@@ -287,7 +301,7 @@ def test_repack():
     assert pd.repacked is None
     score = pd.repack()
     assert pd.repacked is not None
-    assert type(score) is float
+    assert isinstance(score, float)
 
 
 def test_get_tmscore():
