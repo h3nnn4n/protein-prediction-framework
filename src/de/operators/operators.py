@@ -13,7 +13,7 @@ from operators.rosetta_operators import monte_carlo_3, monte_carlo_3s, \
 from operators.lsh_operators import rand1exp_lsh
 from operators.rmsd_operators import rand1exp_global_max_rmsd, \
     best1exp_global_max_rmsd
-
+from operators.hooke_jeeves_operators import hooke_jeeves_ls
 
 class Operators:
     def __init__(self, de=None):
@@ -39,6 +39,7 @@ class Operators:
             'rand1exp_lsh': self.get_rand1exp_lsh,
             'rand1exp_global_max_rmsd': self.get_rand1exp_global_max_rmsd,
             'best1exp_global_max_rmsd': self.get_best1exp_global_max_rmsd,
+            'hooke_jeeves_ls': self.get_hooke_jeeves_ls,
         }
 
     def get_random_individual(self):
@@ -154,3 +155,7 @@ class Operators:
     def get_best1exp_global_max_rmsd(self):
         self.best1exp_global_max_rmsd = types.MethodType(best1exp_global_max_rmsd, self)
         return self.best1exp_global_max_rmsd
+
+    def get_hooke_jeeves_ls(self):
+        self.hooke_jeeves_ls = types.MethodType(hooke_jeeves_ls, self)
+        return self.hooke_jeeves_ls

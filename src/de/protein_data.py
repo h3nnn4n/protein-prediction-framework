@@ -56,7 +56,8 @@ class ProteinData:
 
         self.calls = 0
 
-    def __call__(self, angles):
+    def __call__(self, *args):
+        angles = args[0]
         self.new_angles(angles)
         self.eval()
         self.calls += 1
