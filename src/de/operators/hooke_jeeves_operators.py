@@ -1,5 +1,4 @@
 import random
-
 from local_search.hooke_jeeves import hooke
 
 
@@ -14,9 +13,7 @@ def hooke_jeeves_ls(self, target):
 
     f, _ = self.de.get_f_cr()
 
-    print('test')
     evals, _ = hooke(individual, rho=f)
-    print(evals)
 
     self.de.selection(self.de.pop[target])
 
