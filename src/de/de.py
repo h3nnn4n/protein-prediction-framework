@@ -12,6 +12,7 @@ from operators.operators import Operators
 from locality_sensitive_hashing import LocalitySensitiveHashing
 from forced_insertion import ForcedInsertion
 from piecewise_exchange import PiecewiseExchange
+from local_search.hooke_jeeves import hooke
 
 
 class DE:
@@ -94,6 +95,9 @@ class DE:
         # REMC
         self.enable_remc = True
         self.update_remc()
+
+        # LS
+        self.hooke_jeeves_postprocessing = False
 
         # Moment of Inertia
         self.centroids = None
@@ -263,6 +267,45 @@ class DE:
 
 # ######################### END OF SADE ##########################
 
+# ######################### Hooke Jeeves #########################
+
+    def run_hooke_jeeves_for_best(self):
+        if not self.hooke_jeeves_postprocessing:
+            return
+
+        name = self.rosetta_pack.protein_loader.original + '/' + "hooke-jeeves_" + self.name_suffix + ".dat"
+        hooke_start_time = time.time()
+
+        score_before, score_after = self.pop[self.best_index].score, None
+
+        scores = [
+            score_before
+        ]
+
+        while True:
+            old_score = self.pop[self.best_index].score
+            hooke(self.pop[self.best_index], rho=random.random())
+            new_score = self.pop[self.best_index].score
+
+            scores.append(new_score)
+
+            if old_score - new_score < 0.01:
+                break
+
+        score_after = self.pop[self.best_index].score
+
+        hooke_end_time = time.time()
+
+        with open(name, 'w') as f:
+            f.write('hooke_time:        %12.4f\n' % (hooke_start_time - hooke_end_time))
+            f.write('score_before:      %12.4f\n' % score_before)
+            f.write('score_after:       %12.4f\n' % score_after)
+
+            for score_index, score in enumerate(scores):
+                f.write('score_%02d:        %12.4f\n' % (score_index, score))
+
+# ######################### RUN ##################################
+
     def open_stats(self):
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
@@ -307,6 +350,7 @@ class DE:
             f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
             f.write('sade_selection: %s\n' % self.sade_selection)
             f.write('enable_remc: %s\n' % self.enable_remc)
+            f.write('hooke_jeeves_postprocessing: %s\n' % self.hooke_jeeves_postprocessing)
             f.write('ops: %s\n' % self.ops)
             f.write('energy_function: %s\n' % self.energy_function)
             f.write('energy_options: %s\n' % self.energy_options)
@@ -446,6 +490,8 @@ class DE:
             self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
 
         self.end_time = time.time()
+
+        self.run_hooke_jeeves_for_best()
 
         self.log()
         self.dump_pbd_best(self.it)

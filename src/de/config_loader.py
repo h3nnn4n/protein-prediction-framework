@@ -89,6 +89,8 @@ class ConfigLoader:
 
         self.options['enable_remc'] = False
 
+        self.options['hooke_jeeves_postprocessing'] = True
+
         self.options['ops'] = ['rand1bin_global']
 
         self.options['extended_diversity_measurements'] = True
