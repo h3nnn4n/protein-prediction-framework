@@ -97,7 +97,7 @@ class DE:
         self.update_remc()
 
         # LS
-        self.hooke_jeeves_postprocessing = False
+        self.hooke_jeeves_postprocessing = True
 
         # Moment of Inertia
         self.centroids = None
