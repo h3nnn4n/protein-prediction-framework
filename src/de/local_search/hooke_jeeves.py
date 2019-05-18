@@ -66,7 +66,7 @@ def hooke_(nvars, startpt, rho, eps, itermax, f):
 
     endpt = xbefore.copy()
 
-    return iters, endpt
+    return funevals, endpt
 
 
 def best_nearby(delta, point, prevbest, nvars, f, funevals):

@@ -282,12 +282,20 @@ class DE:
             score_before
         ]
 
+        spent_evals = []
+
         while True:
             old_score = self.pop[self.best_index].score
-            hooke(self.pop[self.best_index], rho=random.random())
+            evals, _ = hooke(
+                self.pop[self.best_index],
+                eps=1e-04,
+                rho=random.random(),
+                itermax=250
+            )
             new_score = self.pop[self.best_index].score
 
             scores.append(new_score)
+            spent_evals.append(evals)
 
             if old_score - new_score < 0.01:
                 break
@@ -297,12 +305,16 @@ class DE:
         hooke_end_time = time.time()
 
         with open(name, 'w') as f:
-            f.write('hooke_time:        %12.4f\n' % (hooke_start_time - hooke_end_time))
+            f.write('hooke_time:        %12.4f\n' % (hooke_end_time - hooke_start_time))
             f.write('score_before:      %12.4f\n' % score_before)
             f.write('score_after:       %12.4f\n' % score_after)
+            f.write('spent_evals:       %6d\n' % sum(spent_evals))
 
             for score_index, score in enumerate(scores):
-                f.write('score_%02d:        %12.4f\n' % (score_index, score))
+                f.write('score_%02d:         %12.4f\n' % (score_index + 1, score))
+
+            for eval_index, evals in enumerate(spent_evals):
+                f.write('spent_evals_%02d: %6d\n' % (eval_index + 1, evals))
 
 # ######################### RUN ##################################
 
