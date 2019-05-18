@@ -277,11 +277,10 @@ class DE:
         hooke_start_time = time.time()
 
         score_before, score_after = self.pop[self.best_index].score, None
+        rmsd_before, rmsd_after = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose), None
 
-        scores = [
-            score_before
-        ]
-
+        scores = [score_before]
+        rmsds = [rmsd_before]
         spent_evals = []
 
         while True:
@@ -293,14 +292,17 @@ class DE:
                 itermax=250
             )
             new_score = self.pop[self.best_index].score
+            rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose)
 
             scores.append(new_score)
             spent_evals.append(evals)
+            rmsds.append(rmsd)
 
             if old_score - new_score < 0.01:
                 break
 
         score_after = self.pop[self.best_index].score
+        rmsd_after = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose)
 
         hooke_end_time = time.time()
 
@@ -308,10 +310,15 @@ class DE:
             f.write('hooke_time:        %12.4f\n' % (hooke_end_time - hooke_start_time))
             f.write('score_before:      %12.4f\n' % score_before)
             f.write('score_after:       %12.4f\n' % score_after)
+            f.write('rmsd_before:       %12.4f\n' % rmsd_before)
+            f.write('rmsd_after:        %12.4f\n' % rmsd_after)
             f.write('spent_evals:       %6d\n' % sum(spent_evals))
 
             for score_index, score in enumerate(scores):
                 f.write('score_%02d:         %12.4f\n' % (score_index + 1, score))
+
+            for rmsd_index, rmsd in enumerate(rmsds):
+                f.write('rmsd_%02d:          %12.4f\n' % (rmsd_index + 1, rmsd))
 
             for eval_index, evals in enumerate(spent_evals):
                 f.write('spent_evals_%02d: %6d\n' % (eval_index + 1, evals))
@@ -462,35 +469,6 @@ class DE:
                                 self.pop[i].update_angle_from_pose()
                                 self.pop[i].eval()
 
-            if self.it % 50 == 0 and self.avg_rmsd() < self.reset_rmsd_trigger:
-                print('rmsd_reset')
-                for i in range(self.pop_size):
-                    if random.random() < self.reset_rmsd_percent and i != self.best_index:
-                        self.pop[i].reset()
-                        self.pop[i].stage1_mc(n=100)
-                        self.pop[i].eval()
-                self.update_diversity()
-
-            if self.it > 1 and self.diversity < self.reset_d_trigger:
-                print('d_reset')
-                for i in range(self.pop_size):
-                    if random.random() < self.reset_d_percent and i != self.best_index:
-                        self.pop[i].reset()
-                        self.pop[i].stage1_mc()
-                        self.pop[i].update_angle_from_pose()
-                        self.pop[i].eval()
-                self.update_diversity()
-
-            if (self.partial_reset > 0 and self.it % self.partial_reset == 0 and self.it > 0):
-                print('Partial reset')
-                for i in range(self.pop_size):
-                    if random.random() < .15 and i != self.best_index:
-                        self.pop[i].reset()
-                        self.pop[i].stage2_mc()
-                        self.pop[i].update_angle_from_pose()
-                        self.pop[i].eval()
-                self.update_diversity()
-
             self.update_mean()
 
             if self.log_interval > 0 and self.it % self.log_interval == 0 or self.it == 1:
@@ -547,10 +525,7 @@ class DE:
             f.write('gdt_ha_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
 
-    def print_hash(self):
-        for n, i in enumerate(self.hash_values):
-            if len(i) > 0:
-                print(n, i)
+# ######################### DE STUFF #############################
 
     def selection(self, candidate=None):
         self.standard_selection(candidate)
