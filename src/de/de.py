@@ -281,7 +281,7 @@ class DE:
 
         scores = [score_before]
         rmsds = [rmsd_before]
-        spent_evals = []
+        spent_evals = [0]
 
         while True:
             old_score = self.pop[self.best_index].score
