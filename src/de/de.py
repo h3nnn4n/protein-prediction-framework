@@ -32,8 +32,6 @@ class DE:
         self.m_nmdf = 0
         self.cname = ''
 
-        self.d = self.pop[0].pose.total_residue()
-
         # Energy function
         self.energy_function = None
         self.current_energy_function = None
@@ -58,7 +56,6 @@ class DE:
         self.extended_diversity_measurements = False
         self.coil_only = False
 
-        self.mode = None
         self.stop_condition = ''
 
         self.failsafe_verbose = False
@@ -66,15 +63,7 @@ class DE:
         self.stage0_init = False
         self.log_interval = 10
 
-        # Partial reset
-        self.partial_reset = False
-
-        self.reset_d_trigger = 0.0
-        self.reset_d_percent = 0.0
-
-        self.reset_rmsd_trigger = 0.0
-        self.reset_rmsd_percent = 0.0
-
+        # Condif
         self.config_name = None
         self.stats_name = None
         self.ops_stats_name = None
@@ -265,7 +254,30 @@ class DE:
 
         return self.sade_ops[i]
 
-# ######################### END OF SADE ##########################
+    def check_sade_reinit(self):
+        if self.sade_run and (self.sade_reinit_interval > 0 and self.it % self.sade_reinit_interval == 0):
+            self.sade_reinit()
+
+    def sade_update(self):
+        if self.sade_run:
+            self.sade_update_parameters()
+            self.sade_update_ops()
+
+# ######################### Stage0 Init ##########################
+
+    def stage0_pop_init(self):
+        if self.stage0_init:
+            print('Stage0 init')
+            for p in self.pop:
+                p.eval()
+                p.stage1_mc()
+                p.update_angle_from_pose()
+                p.eval()
+            self.trial.eval()
+        else:
+            for p in self.pop:
+                p.eval()
+            self.trial.eval()
 
 # ######################### Hooke Jeeves #########################
 
@@ -323,169 +335,9 @@ class DE:
             for eval_index, evals in enumerate(spent_evals):
                 f.write('spent_evals_%02d:    %12d\n' % (eval_index + 1, evals))
 
-# ######################### RUN ##################################
+# ######################### REPACKING ############################
 
-    def open_stats(self):
-        char_set = string.ascii_uppercase + string.digits
-        r_string = ''.join(random.sample(char_set * 6, 6))
-
-        now = self.now
-
-        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % \
-                           (self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
-        self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
-        self.stats = open(self.stats_name, 'w')
-
-        self.ops_stats_name = self.rosetta_pack.protein_loader.original + '/' + "ops_" + self.name_suffix + ".dat"
-        self.ops_stats = open(self.ops_stats_name, 'w')
-
-    def dump_config(self):
-        self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
-        with open(self.config_name, 'w') as f:
-            f.write('pname: %s\n' % (self.pname))
-            f.write('pop_size: %d\n' % (self.pop_size))
-            f.write('c_rate: %f\n' % (self.c_rate))
-            f.write('f_factor: %f\n' % (self.f_factor))
-            f.write('max_iters: %d\n' % (self.max_iters))
-            f.write('max_evals: %d\n' % (self.max_evals))
-            f.write('stop_condition: %s\n' % (self.stop_condition))
-            f.write('stage0_init: %d\n' % self.stage0_init)
-            f.write('partial_reset: %d\n' % self.partial_reset)
-            f.write('log_interval: %d\n' % self.log_interval)
-            f.write('do_lsh: %d\n' % self.do_lsh)
-            f.write('n_hashes: %d\n' % self.n_hashes)
-            f.write('n_buckets: %d\n' % self.n_buckets)
-            f.write('update_interval: %d\n' % self.update_interval)
-            f.write('change_interval: %d\n' % self.change_interval)
-            f.write('reset_d_trigger: %f\n' % self.reset_d_trigger)
-            f.write('reset_d_percent: %f\n' % self.reset_d_percent)
-            f.write('reset_rmsd_percent: %f\n' % self.reset_rmsd_percent)
-            f.write('reset_rmsd_trigger: %f\n' % self.reset_rmsd_trigger)
-            f.write('forced_insertion: %d\n' % self.forced_insertion)
-            f.write('forced_insertion_chance: %f\n' % self.forced_insertion_chance)
-            f.write('forced_insertion_mode: %s\n' % self.forced_insertion_mode)
-            f.write('sade_run: %d\n' % self.sade_run)
-            f.write('sade_lp: %d\n' % self.sade_lp)
-            f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
-            f.write('sade_selection: %s\n' % self.sade_selection)
-            f.write('enable_remc: %s\n' % self.enable_remc)
-            f.write('hooke_jeeves_postprocessing: %s\n' % self.hooke_jeeves_postprocessing)
-            f.write('ops: %s\n' % self.ops)
-            f.write('energy_function: %s\n' % self.energy_function)
-            f.write('energy_options: %s\n' % self.energy_options)
-            f.write('extended_diversity_measurements: %s\n' % self.extended_diversity_measurements)
-            f.flush()
-
-    def set_allatom(self):
-        switch = self.rosetta_pack.allatom_switch
-        pack = self.rosetta_pack.get_packer()
-        mini = self.rosetta_pack.get_min_mover()
-
-        for p in self.pop:
-            switch.apply(p.pose)
-            pack.apply(p.pose)
-            mini.apply(p.pose)
-            p.update_angle_from_pose()
-            p.eval()
-
-    def get_best(self):
-        return self.pop[self.best_index].angles
-
-    def run(self):
-        self.set_sade_ops()
-        self.open_stats()
-        self.dump_config()
-        self.forced_insertion_op.initialize_logger()
-
-        if self.do_lsh:
-            self.locality_sensitive_hashing.create_hashs()
-
-        if self.stage0_init:
-            print('Stage0 init')
-            for p in self.pop:
-                p.eval()
-                p.stage1_mc()
-                p.update_angle_from_pose()
-                p.eval()
-            self.trial.eval()
-        else:
-            for p in self.pop:
-                p.eval()
-            self.trial.eval()
-
-        self.update_mean()
-
-        if self.do_lsh:
-            self.locality_sensitive_hashing.apply_hash()
-
-        self.sade_reinit()
-        self.start_time = time.time()
-        self.last_time = self.start_time
-
-        self.stop_at_eval = 'evals' in self.stop_condition
-        self.stop_at_iter = 'iters' in self.stop_condition
-
-        self.it = 0
-        while (self.spent_evals < self.max_evals and self.stop_at_eval) or (self.it < self.max_iters and self.stop_at_iter):
-            if self.sade_run and (self.sade_reinit_interval > 0 and self.it % self.sade_reinit_interval == 0):
-                self.sade_reinit()
-
-            if self.sade_run:
-                self.sade_update_parameters()
-                self.sade_update_ops()
-
-            self.it += 1
-
-            self.forced_insertion_op.run()
-
-            if self.do_lsh and self.it % self.change_interval == 0:
-                self.locality_sensitive_hashing.change_hash()
-
-            for i in range(self.pop_size):
-                self.target = i
-                if self.do_lsh and not self.sade_run:
-                    ret = self.rand1bin_lsh(i)  # pylint: disable=E1128
-                else:
-                    if self.sade_run:
-                        ret = self.sade_get_op()(i)
-                    else:
-                        ret = self.operators.rand1bin_global(i)  # pylint: disable=E1111
-
-                if ret is None:
-                    self.spent_evals += 1
-                else:
-                    self.spent_evals += ret
-
-            if self.do_lsh and False:
-                for h in self.locality_sensitive_hashing.hash_values:
-                    if len(h) >= self.pop_size // 2:
-                        print('Niche reset')
-                        for i in h:
-                            if random.random() < .5 and i != self.best_index:
-                                self.pop[i].stage1_mc()
-                                self.pop[i].update_angle_from_pose()
-                                self.pop[i].eval()
-                                self.pop[i].stage2_mc()
-                                self.pop[i].update_angle_from_pose()
-                                self.pop[i].eval()
-
-            self.update_mean()
-
-            if self.log_interval > 0 and self.it % self.log_interval == 0 or self.it == 1:
-                self.log()
-                self.stats.flush()
-
-                sys.stdout.flush()
-
-            self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
-
-        self.end_time = time.time()
-
-        self.run_hooke_jeeves_for_best()
-
-        self.log()
-        self.dump_pbd_best(self.it)
-
+    def run_repack_for_best(self):
         rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose)
         oldscore = self.best_score
         score = self.pop[self.best_index].repack()
@@ -525,7 +377,149 @@ class DE:
             f.write('gdt_ha_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
 
+# ######################### LOGGING ##############################
+
+    def generation_logger(self):
+        if self.log_interval > 0 and self.it % self.log_interval == 0 or self.it == 1:
+            self.log()
+            self.stats.flush()
+            sys.stdout.flush()
+
+# ######################### RUN ##################################
+
+    def open_stats(self):
+        char_set = string.ascii_uppercase + string.digits
+        r_string = ''.join(random.sample(char_set * 6, 6))
+
+        now = self.now
+
+        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % \
+                           (self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
+        self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
+        self.stats = open(self.stats_name, 'w')
+
+        self.ops_stats_name = self.rosetta_pack.protein_loader.original + '/' + "ops_" + self.name_suffix + ".dat"
+        self.ops_stats = open(self.ops_stats_name, 'w')
+
+    def dump_config(self):
+        self.config_name = self.rosetta_pack.protein_loader.original + '/' + "parameters_" + self.name_suffix + ".yaml"
+        with open(self.config_name, 'w') as f:
+            f.write('pname: %s\n' % (self.pname))
+            f.write('pop_size: %d\n' % (self.pop_size))
+            f.write('c_rate: %f\n' % (self.c_rate))
+            f.write('f_factor: %f\n' % (self.f_factor))
+            f.write('max_iters: %d\n' % (self.max_iters))
+            f.write('max_evals: %d\n' % (self.max_evals))
+            f.write('stop_condition: %s\n' % (self.stop_condition))
+            f.write('stage0_init: %d\n' % self.stage0_init)
+            f.write('log_interval: %d\n' % self.log_interval)
+            f.write('do_lsh: %d\n' % self.do_lsh)
+            f.write('n_hashes: %d\n' % self.n_hashes)
+            f.write('n_buckets: %d\n' % self.n_buckets)
+            f.write('update_interval: %d\n' % self.update_interval)
+            f.write('change_interval: %d\n' % self.change_interval)
+            f.write('forced_insertion: %d\n' % self.forced_insertion)
+            f.write('forced_insertion_chance: %f\n' % self.forced_insertion_chance)
+            f.write('forced_insertion_mode: %s\n' % self.forced_insertion_mode)
+            f.write('sade_run: %d\n' % self.sade_run)
+            f.write('sade_lp: %d\n' % self.sade_lp)
+            f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
+            f.write('sade_selection: %s\n' % self.sade_selection)
+            f.write('enable_remc: %s\n' % self.enable_remc)
+            f.write('hooke_jeeves_postprocessing: %s\n' % self.hooke_jeeves_postprocessing)
+            f.write('ops: %s\n' % self.ops)
+            f.write('energy_function: %s\n' % self.energy_function)
+            f.write('energy_options: %s\n' % self.energy_options)
+            f.write('extended_diversity_measurements: %s\n' % self.extended_diversity_measurements)
+            f.flush()
+
+    def set_allatom(self):
+        switch = self.rosetta_pack.allatom_switch
+        pack = self.rosetta_pack.get_packer()
+        mini = self.rosetta_pack.get_min_mover()
+
+        for p in self.pop:
+            switch.apply(p.pose)
+            pack.apply(p.pose)
+            mini.apply(p.pose)
+            p.update_angle_from_pose()
+            p.eval()
+
+    def get_best(self):
+        return self.pop[self.best_index].angles
+
+    def run(self):
+        self.set_sade_ops()
+        self.open_stats()
+        self.dump_config()
+        self.forced_insertion_op.initialize_logger()
+
+        if self.do_lsh:
+            self.locality_sensitive_hashing.create_hashs()
+
+        self.stage0_pop_init()
+
+        self.update_mean()
+
+        if self.do_lsh:
+            self.locality_sensitive_hashing.apply_hash()
+
+        self.sade_reinit()
+        self.start_time = time.time()
+        self.last_time = self.start_time
+
+        self.stop_at_eval = 'evals' in self.stop_condition
+        self.stop_at_iter = 'iters' in self.stop_condition
+
+        self.it = 0
+
+        while self.can_run_evals() or self.can_run_generations():
+            self.it += 1
+
+            self.check_sade_reinit()
+            self.sade_update()
+            self.forced_insertion_op.run()
+
+            if self.do_lsh:
+                self.locality_sensitive_hashing.lsh_step()
+
+            self.population_update()
+            self.update_mean()
+            self.generation_logger()
+            self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
+
+        self.end_time = time.time()
+
+        self.run_hooke_jeeves_for_best()
+
+        self.log()
+        self.dump_pbd_best(self.it)
+
+        self.run_repack_for_best()
+
 # ######################### DE STUFF #############################
+
+    def can_run_generations(self):
+        return self.it < self.max_iters and self.stop_at_iter
+
+    def can_run_evals(self):
+        return self.spent_evals < self.max_evals and self.stop_at_eval
+
+    def population_update(self):
+        for i in range(self.pop_size):
+            self.target = i
+            if self.do_lsh and not self.sade_run:
+                ret = self.rand1bin_lsh(i)  # pylint: disable=E1128
+            else:
+                if self.sade_run:
+                    ret = self.sade_get_op()(i)
+                else:
+                    ret = self.operators.rand1bin_global(i)  # pylint: disable=E1111
+
+            if ret is None:
+                self.spent_evals += 1
+            else:
+                self.spent_evals += ret
 
     def selection(self, candidate=None):
         self.standard_selection(candidate)

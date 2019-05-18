@@ -28,6 +28,10 @@ class LocalitySensitiveHashing:
         self.update_interval = self.de.update_interval
         self.change_interval = self.de.change_interval
 
+    def lsh_step(self):
+        if self.do_lsh and self.de.it % self.change_interval == 0:
+            self.change_hash()
+
     def create_hashs(self):
         self.hashes = [np.random.randint(100, size=self.de.pop[0].total_number_of_angles) for _ in range(self.n_hashes)]
 

@@ -59,10 +59,8 @@ class ConfigLoader:
         self.options['stop_condition'] = 'evals'
         self.options['c_rate'] = 1.0
         self.options['f_factor'] = 0.5
-        self.options['mode'] = 'normal'
 
         self.options['stage0_init'] = False
-        self.options['partial_reset'] = -1
 
         self.options['log_interval'] = 10
 
@@ -71,11 +69,6 @@ class ConfigLoader:
         self.options['n_buckets'] = 50
         self.options['update_interval'] = 20
         self.options['change_interval'] = 100
-
-        self.options['reset_d_trigger'] = 0.0
-        self.options['reset_d_percent'] = 0.0
-        self.options['reset_rmsd_trigger'] = 0.0
-        self.options['reset_rmsd_percent'] = 0.0
 
         self.options['forced_insertion'] = False
         self.options['forced_insertion_chance'] = 0.01
