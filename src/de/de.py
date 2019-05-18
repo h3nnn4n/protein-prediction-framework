@@ -312,16 +312,16 @@ class DE:
             f.write('score_after:       %12.4f\n' % score_after)
             f.write('rmsd_before:       %12.4f\n' % rmsd_before)
             f.write('rmsd_after:        %12.4f\n' % rmsd_after)
-            f.write('spent_evals:       %6d\n' % sum(spent_evals))
+            f.write('spent_evals:       %12d\n' % sum(spent_evals))
 
             for score_index, score in enumerate(scores):
-                f.write('score_%02d:         %12.4f\n' % (score_index + 1, score))
+                f.write('score_%02d:          %12.4f\n' % (score_index + 1, score))
 
             for rmsd_index, rmsd in enumerate(rmsds):
-                f.write('rmsd_%02d:          %12.4f\n' % (rmsd_index + 1, rmsd))
+                f.write('rmsd_%02d:           %12.4f\n' % (rmsd_index + 1, rmsd))
 
             for eval_index, evals in enumerate(spent_evals):
-                f.write('spent_evals_%02d: %6d\n' % (eval_index + 1, evals))
+                f.write('spent_evals_%02d:    %12d\n' % (eval_index + 1, evals))
 
 # ######################### RUN ##################################
 
