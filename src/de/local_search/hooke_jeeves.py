@@ -1,15 +1,15 @@
 import numpy as np
 
 
-def hooke(protein, rho=0.5, eps=1e-04, itermax=100):
+def hooke(protein, rho=0.5, eps=1e-04, itermax=100, max_evals=5000):
     nvars = protein.total_number_of_angles
     startpt = protein.angles
     f = protein
 
-    return hooke_(nvars, startpt, rho, eps, itermax, f)
+    return hooke_(nvars, startpt, rho, eps, itermax, f, max_evals)
 
 
-def hooke_(nvars, startpt, rho, eps, itermax, f):
+def hooke_(nvars, startpt, rho, eps, itermax, f, maxevals):
     newx = startpt.copy()
     xbefore = startpt.copy()
 
@@ -28,7 +28,7 @@ def hooke_(nvars, startpt, rho, eps, itermax, f):
     funevals = funevals + 1
     newf = fbefore
 
-    while (iters < itermax and eps < steplength):
+    while (iters < itermax and eps < steplength and funevals < maxevals):
         iters = iters + 1
 
         for i in range(0, nvars):
@@ -50,8 +50,10 @@ def hooke_(nvars, startpt, rho, eps, itermax, f):
 
             fbefore = newf
             newf, newx, funevals = best_nearby(delta, newx, fbefore, nvars, f, funevals)
+
             if (fbefore <= newf):
                 break
+
             keep = False
 
             for i in range(0, nvars):

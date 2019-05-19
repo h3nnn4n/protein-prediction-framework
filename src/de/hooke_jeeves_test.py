@@ -22,8 +22,9 @@ class TestRosenbrock:
         itermax = 5000
         rho = 0.5
         eps = 1.0E-04
+        max_evals = 5000
 
-        _, solution = hooke_(nvars, start_point, rho, eps, itermax, rosenbrock)
+        _, solution = hooke_(nvars, start_point, rho, eps, itermax, rosenbrock, max_evals)
 
         final_value = rosenbrock(solution, nvars)
 
@@ -36,8 +37,9 @@ class TestRosenbrock:
         itermax = 5000
         rho = 0.5
         eps = 1.0E-04
+        max_evals = 5000
 
-        _, solution = hooke_(nvars, start_point, rho, eps, itermax, rosenbrock)
+        _, solution = hooke_(nvars, start_point, rho, eps, itermax, rosenbrock, max_evals)
 
         final_value = rosenbrock(solution, nvars)
 

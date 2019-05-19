@@ -82,7 +82,8 @@ class ConfigLoader:
 
         self.options['enable_remc'] = False
 
-        self.options['hooke_jeeves_postprocessing'] = True
+        self.options['run_hooke_jeeves_postprocessing'] = True
+        self.options['hooke_jeeves_postprocessing_mode'] = 'best'
 
         self.options['ops'] = ['rand1bin_global']
 
