@@ -561,7 +561,9 @@ class DE:
                 f.write('%12.5f %12.5f\n' % (a, b))
 
     def dump_pbd_pop(self):
-        pass
+        for index in range(self.pop_size):
+            name = self.rosetta_pack.protein_loader.original + '/' + ("best_%05d_%05d_" % (index, self.it)) + self.name_suffix + ".pdb"
+            self.pop[index].pose.dump_pdb(name)
 
     def dump_pbd_best(self, it):
         name = self.rosetta_pack.protein_loader.original + '/' + ("best_%05d_" % self.it) + self.name_suffix + ".pdb"

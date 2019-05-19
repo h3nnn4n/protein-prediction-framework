@@ -24,10 +24,13 @@ class Repacker:
         best_index = self.de.best_index
         pop_size = self.de.pop_size
 
+        self.de.dump_pbd_pop()
+
         for index in range(pop_size):
             print('running repacking for %4d' % index)
             sys.stdout.flush()
 
+            start_time = time.time()
             is_best = index == best_index
 
             individual = self.pop[index]
@@ -35,7 +38,7 @@ class Repacker:
             oldscore = individual.score
             score = individual.repack()
 
-            name_preffix = '%4d' % index
+            name_preffix = '%04d' % index
             name = self.rosetta_pack.protein_loader.original + '/' + \
                 ("%s_repacked_%05d_" % (name_preffix, self.de.it)) + \
                 self.de.name_suffix + ".pdb"
@@ -45,7 +48,9 @@ class Repacker:
             self.rosetta_pack.run_tmscore(name=name)
             tm_after = self.rosetta_pack.get_tmscore()
 
-            data = self.build_data(tm_before, tm_after, rmsd, oldscore, score)
+            end_time = time.time()
+
+            data = self.build_data(tm_before, tm_after, rmsd, oldscore, score, start_time, end_time)
             self.log(
                 individual,
                 data,
@@ -68,6 +73,7 @@ class Repacker:
         )
 
     def run_repack_for_best(self):
+        start_time = time.time()
         rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose)
         oldscore = self.de.best_score
         score = self.pop[self.de.best_index].repack()
@@ -79,21 +85,24 @@ class Repacker:
         tm_before = self.pop[self.de.best_index].run_tmscore()
         self.rosetta_pack.run_tmscore(name=name)
         tm_after = self.rosetta_pack.get_tmscore()
-        self.repack_time = time.time()
 
-        data = self.build_data(tm_before, tm_after, rmsd, oldscore, score)
+        end_time = time.time()
+
+        data = self.build_data(tm_before, tm_after, rmsd, oldscore, score, start_time, end_time)
         self.log(
             self.pop[self.de.best_index],
             data
         )
 
-    def build_data(self, tm_before, tm_after, rmsd, oldscore, score):
+    def build_data(self, tm_before, tm_after, rmsd, oldscore, score, start_time, end_time):
         data = {}
         data['tm_before'] = tm_before
         data['tm_after'] = tm_after
         data['rmsd'] = rmsd
         data['oldscore'] = oldscore
         data['score'] = score
+        data['start_time'] = start_time
+        data['end_time'] = end_time
 
         return data
 
@@ -102,6 +111,7 @@ class Repacker:
         rmsd = data['rmsd']
         oldscore = data['oldscore']
         score = data['score']
+        start_time, end_time = data['start_time'], data['end_time']
 
         base_name = "repack_" if preffix == '' else "%s_repack_" % preffix
 
@@ -109,7 +119,7 @@ class Repacker:
             base_name + self.de.name_suffix + ".dat"
 
         with open(name, 'w') as f:
-            f.write('repack_time:        %12.4f\n' % (self.repack_time - self.de.end_time))
+            f.write('repack_time:        %12.4f\n' % (end_time - start_time))
             f.write('score:              %12.4f\n' % oldscore)
             f.write('scorefxn:           %12.4f\n' % score)
             f.write('rmsd_after:         %12.4f\n' %
