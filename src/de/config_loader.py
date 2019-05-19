@@ -85,6 +85,8 @@ class ConfigLoader:
         self.options['run_hooke_jeeves_postprocessing'] = True
         self.options['hooke_jeeves_postprocessing_mode'] = 'best'
 
+        self.options['repack_mode'] = 'best'
+
         self.options['ops'] = ['rand1bin_global']
 
         self.options['extended_diversity_measurements'] = True

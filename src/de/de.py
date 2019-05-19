@@ -13,6 +13,7 @@ from locality_sensitive_hashing import LocalitySensitiveHashing
 from forced_insertion import ForcedInsertion
 from piecewise_exchange import PiecewiseExchange
 from hooke_jeeves_postprocessing import HookeJeevesPostprocessing
+from repacker import Repacker
 
 
 class DE:
@@ -63,7 +64,7 @@ class DE:
         self.stage0_init = False
         self.log_interval = 10
 
-        # Condif
+        # Config
         self.config_name = None
         self.stats_name = None
         self.ops_stats_name = None
@@ -125,6 +126,10 @@ class DE:
         self.sade_cr_memory = None
 
         self.sade_reinit_interval = None
+
+        # Repacking
+        self.repack_mode = 'best'
+        self.repacker = Repacker(de=self)
 
         # Inner info
         self.mean = 0
@@ -286,48 +291,6 @@ class DE:
                 p.eval()
             self.trial.eval()
 
-# ######################### REPACKING ############################
-
-    def run_repack_for_best(self):
-        rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].pose)
-        oldscore = self.best_score
-        score = self.pop[self.best_index].repack()
-
-        name = self.rosetta_pack.protein_loader.original + '/' + ("best_repacked_%05d_" % self.it) + self.name_suffix + ".pdb"
-        self.pop[self.best_index].repacked.dump_pdb(name)
-
-        repack_name = name
-
-        tm_before = self.pop[self.best_index].run_tmscore()
-        self.rosetta_pack.run_tmscore(name=repack_name)
-        tm_after = self.rosetta_pack.get_tmscore()
-
-        self.repack_time = time.time()
-        name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.name_suffix + ".dat"
-        with open(name, 'w') as f:
-            f.write('repack_time:        %12.4f\n' % (self.repack_time - self.end_time))
-            f.write('score:              %12.4f\n' % oldscore)
-            f.write('scorefxn:           %12.4f\n' % score)
-            f.write('rmsd_after:         %12.4f\n' % (self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].repacked)))
-            f.write('rmsd_before:        %12.4f\n' % rmsd)
-            f.write('rmsd_change:        %12.4f\n' % (rmsd - self.rosetta_pack.get_rmsd_from_native(self.pop[self.best_index].repacked)))
-            f.write('tm_score_before:    %12.4f\n' % tm_before['tm_score'])
-            f.write('maxsub_before:      %12.4f\n' % tm_before['maxsub'])
-            f.write('gdt_ts_before:      %12.4f\n' % tm_before['gdt_ts'][0])
-            f.write('gdt_ha_before:      %12.4f\n' % tm_before['gdt_ha'][0])
-            f.write('tm_score_after:     %12.4f\n' % tm_after['tm_score'])
-            f.write('maxsub_after:       %12.4f\n' % tm_after['maxsub'])
-            f.write('gdt_ts_after:       %12.4f\n' % tm_after['gdt_ts'][0])
-            f.write('gdt_ha_after:       %12.4f\n' % tm_after['gdt_ha'][0])
-            f.write('tm_score_change:    %12.4f\n' % (tm_before['tm_score'] - tm_after['tm_score']))
-            f.write('maxsub_change:      %12.4f\n' % (tm_before['maxsub'] - tm_after['maxsub']))
-            f.write('gdt_ts_change:      %12.4f\n' % (tm_before['gdt_ts'][0] - tm_after['gdt_ts'][0]))
-            f.write('gdt_ha_change:      %12.4f\n' % (tm_before['gdt_ha'][0] - tm_after['gdt_ha'][0]))
-            f.write('gdt_ts_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0], tm_before['gdt_ts'][1][0]))
-            f.write('gdt_ts_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0], tm_after['gdt_ts'][1][0]))
-            f.write('gdt_ha_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0]))
-            f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
-
 # ######################### LOGGING ##############################
 
     def generation_logger(self):
@@ -344,8 +307,8 @@ class DE:
 
         now = self.now
 
-        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % \
-                           (self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
+        self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (
+            self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
         self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
         self.stats = open(self.stats_name, 'w')
 
@@ -447,7 +410,7 @@ class DE:
         self.log()
         self.dump_pbd_best(self.it)
 
-        self.run_repack_for_best()
+        self.repacker.run_repack()
 
 # ######################### DE STUFF #############################
 
@@ -591,7 +554,8 @@ class DE:
             s = p.score
             data.append((r, s))
 
-        name = self.rosetta_pack.protein_loader.original + '/' + ("popdata_%08d_" % self.it) + self.name_suffix + ".dat"
+        name = self.rosetta_pack.protein_loader.original + '/' + \
+            ("popdata_%08d_" % self.it) + self.name_suffix + ".dat"
         with open(name, 'w') as f:
             for a, b in data:
                 f.write('%12.5f %12.5f\n' % (a, b))
