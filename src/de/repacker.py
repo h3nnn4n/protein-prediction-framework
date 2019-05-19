@@ -1,4 +1,5 @@
 import time
+import sys
 
 
 class Repacker:
@@ -20,7 +21,51 @@ class Repacker:
             self.run_repack_for_best()
 
     def run_repack_for_all(self):
-        pass
+        best_index = self.de.best_index
+        pop_size = self.de.pop_size
+
+        for index in range(pop_size):
+            print('running repacking for %4d' % index)
+            sys.stdout.flush()
+
+            is_best = index == best_index
+
+            individual = self.pop[index]
+            rmsd = self.rosetta_pack.get_rmsd_from_native(individual.pose)
+            oldscore = individual.score
+            score = individual.repack()
+
+            name_preffix = '%4d' % index
+            name = self.rosetta_pack.protein_loader.original + '/' + \
+                ("%s_repacked_%05d_" % (name_preffix, self.de.it)) + \
+                self.de.name_suffix + ".pdb"
+            individual.repacked.dump_pdb(name)
+
+            tm_before = individual.run_tmscore()
+            self.rosetta_pack.run_tmscore(name=name)
+            tm_after = self.rosetta_pack.get_tmscore()
+
+            data = self.build_data(tm_before, tm_after, rmsd, oldscore, score)
+            self.log(
+                individual,
+                data,
+                preffix='%04d' % index
+            )
+
+            if is_best:
+                self.fake_repack_for_best(individual, data)
+
+    def fake_repack_for_best(self, individual, data):
+        name_preffix = 'best'
+        name = self.rosetta_pack.protein_loader.original + '/' + \
+            ("%s_repacked_%05d_" % (name_preffix, self.de.it)) + \
+            self.de.name_suffix + ".pdb"
+        individual.repacked.dump_pdb(name)
+
+        self.log(
+            individual,
+            data
+        )
 
     def run_repack_for_best(self):
         rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose)
@@ -31,23 +76,47 @@ class Repacker:
             ("best_repacked_%05d_" % self.de.it) + self.de.name_suffix + ".pdb"
         self.pop[self.de.best_index].repacked.dump_pdb(name)
 
-        repack_name = name
-
         tm_before = self.pop[self.de.best_index].run_tmscore()
-        self.rosetta_pack.run_tmscore(name=repack_name)
+        self.rosetta_pack.run_tmscore(name=name)
         tm_after = self.rosetta_pack.get_tmscore()
-
         self.repack_time = time.time()
-        name = self.rosetta_pack.protein_loader.original + '/' + "repack_" + self.de.name_suffix + ".dat"
+
+        data = self.build_data(tm_before, tm_after, rmsd, oldscore, score)
+        self.log(
+            self.pop[self.de.best_index],
+            data
+        )
+
+    def build_data(self, tm_before, tm_after, rmsd, oldscore, score):
+        data = {}
+        data['tm_before'] = tm_before
+        data['tm_after'] = tm_after
+        data['rmsd'] = rmsd
+        data['oldscore'] = oldscore
+        data['score'] = score
+
+        return data
+
+    def log(self, individual, data, preffix=''):
+        tm_before, tm_after = data['tm_before'], data['tm_after']
+        rmsd = data['rmsd']
+        oldscore = data['oldscore']
+        score = data['score']
+
+        base_name = "repack_" if preffix == '' else "%s_repack_" % preffix
+
+        name = self.rosetta_pack.protein_loader.original + '/' + \
+            base_name + self.de.name_suffix + ".dat"
+
         with open(name, 'w') as f:
             f.write('repack_time:        %12.4f\n' % (self.repack_time - self.de.end_time))
             f.write('score:              %12.4f\n' % oldscore)
             f.write('scorefxn:           %12.4f\n' % score)
             f.write('rmsd_after:         %12.4f\n' %
-                    (self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].repacked)))
+                    (self.rosetta_pack.get_rmsd_from_native(individual.repacked)))
             f.write('rmsd_before:        %12.4f\n' % rmsd)
             f.write('rmsd_change:        %12.4f\n' %
-                    (rmsd - self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].repacked)))
+                    (rmsd - self.rosetta_pack.get_rmsd_from_native(individual.repacked)))
             f.write('tm_score_before:    %12.4f\n' % tm_before['tm_score'])
             f.write('maxsub_before:      %12.4f\n' % tm_before['maxsub'])
             f.write('gdt_ts_before:      %12.4f\n' % tm_before['gdt_ts'][0])
