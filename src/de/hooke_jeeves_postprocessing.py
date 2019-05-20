@@ -1,5 +1,8 @@
+import sys
 import time
 import random
+
+from shutil import copyfile
 
 from local_search.hooke_jeeves import hooke
 
@@ -26,29 +29,41 @@ class HookeJeevesPostprocessing:
             self.run_hooke_jeeves_for_best()
 
     def run_hooke_jeeves_for_all(self):
-        pass
+        for index, individual in enumerate(self.de.pop):
+            print('running hooke_jeeves for %4d' % index)
+            sys.stdout.flush()
+
+            self.run_hooke_jeeves_for_individual(
+                individual,
+                preffix=('%04d' % index),
+                is_best=(index == self.de.best_index)
+            )
 
     def run_hooke_jeeves_for_best(self):
-        name = self.rosetta_pack.protein_loader.original + '/' + "hooke-jeeves_" + self.de.name_suffix + ".dat"
+        self.run_hooke_jeeves_for_individual(self.pop[self.de.best_index], preffix='best')
+
+    def run_hooke_jeeves_for_individual(self, individual, preffix='', is_best=False):
+        name = self.rosetta_pack.protein_loader.original + '/' + \
+            ("hooke-jeeves_%s_" % preffix) + self.de.name_suffix + ".dat"
         hooke_start_time = time.time()
 
-        score_before, score_after = self.pop[self.de.best_index].score, None
-        rmsd_before, rmsd_after = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose), None
+        score_before, score_after = individual.score, None
+        rmsd_before, rmsd_after = self.rosetta_pack.get_rmsd_from_native(individual.pose), None
 
         scores = [score_before]
         rmsds = [rmsd_before]
         spent_evals = [0]
 
         while True:
-            old_score = self.pop[self.de.best_index].score
+            old_score = individual.score
             evals, _ = hooke(
-                self.pop[self.de.best_index],
+                individual,
                 eps=1e-04,
                 rho=random.random(),
                 itermax=250
             )
-            new_score = self.pop[self.de.best_index].score
-            rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose)
+            new_score = individual.score
+            rmsd = self.rosetta_pack.get_rmsd_from_native(individual.pose)
 
             scores.append(new_score)
             spent_evals.append(evals)
@@ -57,8 +72,8 @@ class HookeJeevesPostprocessing:
             if old_score - new_score < 0.01:
                 break
 
-        score_after = self.pop[self.de.best_index].score
-        rmsd_after = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose)
+        score_after = individual.score
+        rmsd_after = self.rosetta_pack.get_rmsd_from_native(individual.pose)
 
         hooke_end_time = time.time()
 
@@ -78,3 +93,9 @@ class HookeJeevesPostprocessing:
 
             for eval_index, evals in enumerate(spent_evals):
                 f.write('spent_evals_%02d:    %12d\n' % (eval_index + 1, evals))
+
+        if is_best:
+            src = name
+            dest = self.rosetta_pack.protein_loader.original + '/' + \
+                "hooke-jeeves_best_" + self.de.name_suffix + ".dat"
+            copyfile(src, dest)
