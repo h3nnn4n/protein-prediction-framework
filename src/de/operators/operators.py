@@ -15,6 +15,7 @@ from operators.rmsd_operators import rand1exp_global_max_rmsd, \
     best1exp_global_max_rmsd
 from operators.hooke_jeeves_operators import hooke_jeeves_ls
 
+
 class Operators:
     def __init__(self, de=None):
         self.de = de

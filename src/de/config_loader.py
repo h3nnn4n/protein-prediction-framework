@@ -87,6 +87,10 @@ class ConfigLoader:
 
         self.options['repack_mode'] = 'best'
 
+        self.options['run_crowding'] = 1
+        self.options['crowding_factor'] = 5
+        self.options['crowding_mode'] = 'rmsd'
+
         self.options['ops'] = ['rand1bin_global']
 
         self.options['extended_diversity_measurements'] = True

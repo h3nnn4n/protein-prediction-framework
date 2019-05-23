@@ -162,7 +162,7 @@ class RosettaPack():
             return pyrosetta.rosetta.core.scoring.CA_rmsd(pose, pose2)
 
     def get_rmsd_from_native(self, pose):
-        return pyrosetta.rosetta.core.scoring.CA_rmsd(self.native, pose)
+        return self.get_rmsd_from_pose(self.native, pose)
 
     def get_native(self):
         return self.native

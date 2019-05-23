@@ -2,6 +2,7 @@ import random
 from local_search.hooke_jeeves import hooke
 
 
+# TODO: I think this should be operating on the trial individual, not the target
 def hooke_jeeves_ls(self, target):
     if not self.de.sade_run:
         sade_k = 0

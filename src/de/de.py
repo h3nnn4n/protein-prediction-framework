@@ -14,6 +14,7 @@ from forced_insertion import ForcedInsertion
 from piecewise_exchange import PiecewiseExchange
 from hooke_jeeves_postprocessing import HookeJeevesPostprocessing
 from repacker import Repacker
+from crowding import Crowding
 
 
 class DE:
@@ -90,6 +91,12 @@ class DE:
         self.run_hooke_jeeves_postprocessing = True
         self.hooke_jeeves_postprocessing_mode = 'best'
         self.hooke_jeeves_postprocessing = HookeJeevesPostprocessing(de=self)
+
+        # Crowding
+        self.run_crowding = True
+        self.crowding_factor = 5
+        self.crowding_mode = 'rmsd'
+        self.crowding = Crowding(de=self)
 
         # Moment of Inertia
         self.centroids = None
@@ -342,6 +349,9 @@ class DE:
             f.write('enable_remc: %s\n' % self.enable_remc)
             f.write('run_hooke_jeeves_postprocessing: %s\n' % self.run_hooke_jeeves_postprocessing)
             f.write('hooke_jeeves_postprocessing_mode: %s\n' % self.hooke_jeeves_postprocessing_mode)
+            f.write('run_crowding: %d\n' % self.run_crowding)
+            f.write('crowding_factor: %d\n' % self.crowding_factor)
+            f.write('crowding_mode: %s\n' % self.crowding_mode)
             f.write('ops: %s\n' % self.ops)
             f.write('energy_function: %s\n' % self.energy_function)
             f.write('energy_options: %s\n' % self.energy_options)
@@ -437,17 +447,20 @@ class DE:
                 self.spent_evals += ret
 
     def selection(self, candidate=None):
-        self.standard_selection(candidate)
+        if self.run_crowding:
+            self.crowding.selection(candidate)
+        else:
+            self.standard_selection(candidate)
 
-    def standard_selection(self, candidate):
+    def standard_selection(self, candidate=None):
         sade_k = self.sade_k
 
         _, cr = self.get_f_cr()
+        ind = self.it % self.sade_lp
 
         if self.trial.score < candidate.score:
             if self.sade_run:
                 self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
                 self.sade_success_memory[ind][sade_k] += 1
 
             for k in range(self.pop_size):
@@ -458,7 +471,6 @@ class DE:
                     self.trial = t
         else:
             if self.sade_run:
-                ind = self.it % self.sade_lp
                 self.sade_failure_memory[ind][sade_k] += 1
 
     def get_f_cr(self):
