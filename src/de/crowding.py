@@ -20,17 +20,25 @@ class Crowding:
 
         if self.de.trial.score < candidate.score:
             self.update_sade_success()
-            self.swap_candidate_and_trial(candidate, self.de.trial)
+            self.swap_candidate_and_trial(candidate)
         else:
             self.update_sade_fail()
 
-    def swap_candidate_and_trial(self, candidate, trial):
+    def swap_candidate_and_trial(self, candidate):
+        swapped = False
+
         for k in range(self.pop_size):
-            p = self.pop[k]
-            if candidate is p:
+            if candidate is self.pop[k]:
                 t = self.pop[k]
                 self.pop[k] = self.de.trial
                 self.de.trial = t
+
+                if not swapped:
+                    swapped = True
+                else:
+                    raise Exception('Found repeated elements while doing selection!')
+
+        assert swapped
 
     def find_nearest_candidate_to_trial(self, candidates):
         return self.sort_candidates_by_trial_rmsd(candidates)[0]
@@ -51,6 +59,9 @@ class Crowding:
         return random.sample(self.de.pop, n)
 
     def update_sade_fail(self):
+        if not self.de.sade_run:
+            return
+
         sade_k = self.de.sade_k
 
         _, _ = self.de.get_f_cr()
@@ -60,6 +71,9 @@ class Crowding:
             self.de.sade_failure_memory[ind][sade_k] += 1
 
     def update_sade_success(self):
+        if not self.de.sade_run:
+            return
+
         sade_k = self.de.sade_k
 
         _, cr = self.de.get_f_cr()
