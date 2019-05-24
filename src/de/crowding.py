@@ -8,6 +8,11 @@ class Crowding:
         self.crowding_factor = self.de.crowding_factor
         self.crowding_mode = self.de.crowding_mode
 
+        self.safety_checks = False
+
+        self.mean = None
+        self.best_score = float('inf')
+
         self.inject_deps()
 
     def inject_deps(self):
@@ -15,6 +20,9 @@ class Crowding:
         self.pop_size = self.de.pop_size
 
     def selection(self, _):
+        if self.safety_checks:
+            self.update_mean()
+
         candidates = self.get_random_individuals()
         candidate = self.find_nearest_candidate_to_trial(candidates)
 
@@ -23,6 +31,9 @@ class Crowding:
             self.swap_candidate_and_trial(candidate)
         else:
             self.update_sade_fail()
+
+        if self.safety_checks:
+            self.check_mean()
 
     def swap_candidate_and_trial(self, candidate):
         swapped = False
@@ -82,3 +93,27 @@ class Crowding:
         if self.de.sade_run:
             self.de.sade_cr_memory[sade_k].append(cr)
             self.de.sade_success_memory[ind][sade_k] += 1
+
+    def check_mean(self):
+        old_mean = self.mean
+        old_best = self.best_score
+
+        self.update_mean()
+
+        if old_mean is None:
+            return
+
+        assert self.mean <= old_mean
+        assert self.best_score <= old_best
+
+    def update_mean(self):
+        self.mean = 0
+        self.best_score = float('inf')
+
+        for i in range(self.pop_size):
+            self.mean += self.pop[i].score / self.pop_size
+            if self.best_score is None or self.pop[i].score < self.best_score:
+                self.best_score = self.pop[i].score
+                self.best_index = i
+
+        return self.mean
