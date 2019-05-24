@@ -63,7 +63,6 @@ class TestSwap:
     def test_pop_consistency(self):
         de = de_mock_builder(pop_size=6)
         de.operators = Operators(de=de)
-        trial = de.trial
 
         op = de.operators.get_operator('monte_carlo_3s')
 
@@ -79,12 +78,12 @@ class TestSwap:
                 p2 = de.pop[j]
 
                 assert p1 is not p2
-                assert p1 is not trial
-                assert p2 is not trial
+                assert p1 is not de.trial
+                assert p2 is not de.trial
 
                 assert p1.pose is not p2.pose
-                assert p1.pose is not trial.pose
-                assert p2.pose is not trial.pose
+                assert p1.pose is not de.trial.pose
+                assert p2.pose is not de.trial.pose
 
 
 def pop_builder(pop_size=1):
