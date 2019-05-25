@@ -27,23 +27,31 @@ def check_target_folders():
 
 def create_exp_folders(name):
     if os.path.isdir(os.path.join('tests_all', name)):
-        print('WARNING! A folder with the name `%s` already exists!' % name)
+        raise('WARNING! A folder with the name `%s` already exists!' % name)
     else:
         os.mkdir(os.path.join('tests_all', name))
 
     if os.path.isdir(os.path.join('bkp_all', name)):
-        print('WARNING! A folder with the name `%s` already exists!' % name)
+        raise('WARNING! A folder with the name `%s` already exists!' % name)
     else:
         os.mkdir(os.path.join('bkp_all', name))
 
 
 def file_list():
+    file_counter = 0
+    total = len(os.listdir())
+
     for filename in os.listdir():
         if '.yaml' in filename or '.dat' in filename or '.pdb' in filename:
             if 'base_' in filename:
                 continue
 
             if any(map(lambda text: text in filename, WHITELIST)):
+                file_counter += 1
+
+                if file_counter % 1000 == 0:
+                    print('Moves %7d of %7d' % (file_counter, total))
+
                 yield filename
 
         continue
