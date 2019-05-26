@@ -93,7 +93,7 @@ class DE:
         self.hooke_jeeves_postprocessing = HookeJeevesPostprocessing(de=self)
 
         # Crowding
-        self.run_crowding = True
+        self.run_crowding = False
         self.crowding_factor = 5
         self.crowding_mode = 'rmsd'
         self.crowding = Crowding(de=self)
