@@ -105,9 +105,11 @@ class Spicker:
                 f.write("%4d %3s\n" % (n + 1, pose.residue(n + 1).name3()))
 
     def init_ca_file(self):
-        # TODO, leave only `ATOM` clauses, otherwise the file is ignored
-        native = self.de.rosetta_pack.native
-        native.dump_pdb('CA')
+        # TODO, leave only `ATOM` clauses, othewise Spicker crashes
+        # native = self.de.rosetta_pack.native
+        # out = os.path.join(self.working_folder, 'CA')
+        # native.dump_pdb(out)
+        pass
 
     def call_spicker(self):
         os.chdir(self.working_folder)
