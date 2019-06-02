@@ -25,12 +25,17 @@ class HookeJeevesPostprocessing:
         if mode == 'all':
             self.run_hooke_jeeves_for_all()
 
+        if mode == 'cluster':
+            self.run_hooke_jeeves_for_clusters()
+
         if mode == 'best':
             self.run_hooke_jeeves_for_best()
 
     def run_hooke_jeeves_for_all(self):
+        print('[HOOKE JEEVES] running for all')
+
         for index, individual in enumerate(self.de.pop):
-            print('running hooke_jeeves for %4d' % index)
+            print('[HOOKE JEEVES] running for %4d' % index)
             sys.stdout.flush()
 
             self.run_hooke_jeeves_for_individual(
@@ -39,8 +44,24 @@ class HookeJeevesPostprocessing:
                 is_best=(index == self.de.best_index)
             )
 
+    def run_hooke_jeeves_for_clusters(self):
+        print('[HOOKE JEEVES] running for cluster centroids')
+
+        indexes = self.de.spicker.centroid_index_in_pop
+        for index in indexes:
+            print('[HOOKE JEEVES] running for %4d' % index)
+            sys.stdout.flush()
+            individual = self.pop[index]
+
+            self.run_hooke_jeeves_for_individual(
+                individual,
+                preffix=('%04d' % index),
+                is_best=(index == self.de.best_index)
+            )
+
     def run_hooke_jeeves_for_best(self):
-        print('running hooke_jeeves for best')
+        print('[HOOKE JEEVES] running for best')
+
         self.run_hooke_jeeves_for_individual(self.pop[self.de.best_index], preffix='best')
 
     def run_hooke_jeeves_for_individual(self, individual, preffix='', is_best=False):

@@ -17,17 +17,28 @@ class Repacker:
         if mode == 'all':
             self.run_repack_for_all()
 
+        if mode == 'cluster':
+            self.run_repack_for_clusters()
+
         if mode == 'best':
             self.run_repack_for_best()
 
     def run_repack_for_all(self):
+        print('[REPACK] running for all')
+        self.run_repack_for_list(range(self.de.pop_size))
+
+    def run_repack_for_clusters(self):
+        print('[REPACK] running for cluster centroids')
+        indexes = self.de.spicker.centroid_index_in_pop
+        self.run_repack_for_list(indexes)
+
+    def run_repack_for_list(self, indexes):
         best_index = self.de.best_index
-        pop_size = self.de.pop_size
 
-        self.de.dump_pbd_pop()
+        self.dump_pbd_from_index_list(indexes)
 
-        for index in range(pop_size):
-            print('running repacking for %4d' % index)
+        for index in indexes:
+            print('[REPACK] running for %4d' % index)
             sys.stdout.flush()
 
             start_time = time.time()
@@ -60,6 +71,12 @@ class Repacker:
             if is_best:
                 self.fake_repack_for_best(individual, data)
 
+    def dump_pbd_from_index_list(self, indexes):
+        for index in indexes:
+            name = self.rosetta_pack.protein_loader.original + '/' + \
+                ("best_%05d_%05d_" % (index, self.de.it)) + self.de.name_suffix + ".pdb"
+            self.pop[index].pose.dump_pdb(name)
+
     def fake_repack_for_best(self, individual, data):
         name_preffix = 'best'
         name = self.rosetta_pack.protein_loader.original + '/' + \
@@ -73,7 +90,7 @@ class Repacker:
         )
 
     def run_repack_for_best(self):
-        print('running repacking for best')
+        print('[REPACK] running for best')
 
         start_time = time.time()
         rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose)
