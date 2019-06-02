@@ -91,6 +91,8 @@ class ConfigLoader:
         self.options['crowding_factor'] = 5
         self.options['crowding_mode'] = 'rmsd'
 
+        self.options['run_spicker'] = True
+
         self.options['ops'] = ['rand1bin_global']
 
         self.options['extended_diversity_measurements'] = True

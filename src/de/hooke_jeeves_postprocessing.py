@@ -40,6 +40,7 @@ class HookeJeevesPostprocessing:
             )
 
     def run_hooke_jeeves_for_best(self):
+        print('running hooke_jeeves for best')
         self.run_hooke_jeeves_for_individual(self.pop[self.de.best_index], preffix='best')
 
     def run_hooke_jeeves_for_individual(self, individual, preffix='', is_best=False):

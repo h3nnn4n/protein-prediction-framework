@@ -15,6 +15,7 @@ from piecewise_exchange import PiecewiseExchange
 from hooke_jeeves_postprocessing import HookeJeevesPostprocessing
 from repacker import Repacker
 from crowding import Crowding
+from spicker import Spicker
 
 
 class DE:
@@ -97,6 +98,10 @@ class DE:
         self.crowding_factor = 5
         self.crowding_mode = 'rmsd'
         self.crowding = Crowding(de=self)
+
+        # Spicker Clustering
+        self.run_spicker = True
+        self.spicker = Spicker(de=self)
 
         # Moment of Inertia
         self.centroids = None
@@ -352,6 +357,7 @@ class DE:
             f.write('run_crowding: %d\n' % self.run_crowding)
             f.write('crowding_factor: %d\n' % self.crowding_factor)
             f.write('crowding_mode: %s\n' % self.crowding_mode)
+            f.write('run_spicker: %d\n' % self.run_spicker)
             f.write('ops: %s\n' % self.ops)
             f.write('energy_function: %s\n' % self.energy_function)
             f.write('energy_options: %s\n' % self.energy_options)
@@ -414,6 +420,8 @@ class DE:
             self.rosetta_pack.pymover.apply(self.pop[self.best_index].pose)
 
         self.end_time = time.time()
+
+        self.spicker.run()
 
         self.hooke_jeeves_postprocessing.run_hooke_jeeves()
 

@@ -73,6 +73,8 @@ class Repacker:
         )
 
     def run_repack_for_best(self):
+        print('running repacking for best')
+
         start_time = time.time()
         rmsd = self.rosetta_pack.get_rmsd_from_native(self.pop[self.de.best_index].pose)
         oldscore = self.de.best_score
