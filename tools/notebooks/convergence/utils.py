@@ -8,7 +8,21 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def list_all_tests():
+base_path = os.getcwd()
+target_test = None
+target_protein = None
+target_experiment = None
+
+
+def reset_path():
+    os.chdir(base_path)
+    
+    
+def print_state():
+    print("%s %s %s" % (target_test, target_protein, target_experiment))
+
+
+def list_tests():
     old_path = os.getcwd()
 
     user_path = os.path.expanduser('~')
@@ -22,65 +36,92 @@ def list_all_tests():
     return all_dirs
 
 
-def set_experiment_path(experiment_path):
+def cd_test():
     user_path = os.path.expanduser('~')
-    base_path = os.path.join(user_path, 'progs/de_supimpa/src/de', 'tests_all', experiment_path)
+    base_path = os.path.join(user_path, 'progs/de_supimpa/src/de', 'tests_all', target_test)
 
     os.chdir(base_path)
-    print(os.getcwd())
+
+
+def set_test(target_test_name):
+    global target_test
+    target_test = target_test_name
+    print_state()
 
 
 def list_proteins():
-    all_files = os.listdir()
-    all_dirs = [file for file in all_files if os.path.isdir(file) and len(file) == 4]
+    cd_test()
+    
+    all_dirs = [file for file in os.listdir() if os.path.isdir(file) and len(file) == 4]
 
     return all_dirs
+
+
+def cd_protein():
+    cd_test()
+
+    os.chdir(target_protein)
+
+    
+def set_protein(pname):
+    global target_protein
+    target_protein = pname
+    print_state()
 
 
 def list_experiments():
-    all_files = os.listdir()
-    all_dirs = [file for file in all_files if os.path.isdir(file)]
+    cd_test()
+    cd_protein()
+
+    all_dirs = [file for file in os.listdir() if os.path.isdir(file)]
 
     return all_dirs
 
 
-def set_protein(pname):
-    if not os.path.isdir(pname):
-        os.chdir('..')
+def cd_experiment():
+    cd_test()
+    cd_protein()
+    
+    expname = target_experiment
 
-    if not os.path.isdir(pname):
-        os.chdir('..')
-
-    os.chdir(pname)
-
-    print(os.getcwd())
-
-
-def set_experiment(expname):
     all_dirs = [file for file in os.listdir() if os.path.isdir(file)]
 
-    matches = [dir for dir in all_dirs if expname in dir]
+    matches = [dir for dir in all_dirs if expname == dir[5:]]
     has_match = len(matches) > 0
 
     exact_match = os.path.isdir(expname)
 
     exact_match = os.path.isdir(expname)
-    if not os.path.isdir(expname) and not has_match:
-        print('going up')
-        os.chdir('..')
-
+    
     if exact_match:
         os.chdir(expname)
     elif has_match:
         os.chdir(matches[0])
+    
 
-    print(os.getcwd())
+def set_experiment(expname):
+    global target_experiment
+    target_experiment = expname
+    print_state()
 
 
 def list_stats():
+    cd_test()
+    cd_protein()
+    cd_experiment()
+
     all_files = [file for file in os.listdir() if os.path.isfile(file) and 'stats__' in file]
 
     return all_files
+
+
+def set_env(quiet=False):
+    cd_test()
+    cd_protein()
+    cd_experiment()
+    
+    if not quiet:
+        print_state()
 
 
 def parse_num(num):
@@ -126,6 +167,13 @@ def get_xy_from_data_file(filename, x, y):
     return x_data, y_data
 
 
+def get_plot_title():
+    return '%s - %s' % (
+        target_protein.upper(),
+        target_experiment[5:].upper().replace('_', '-')
+    )
+
+
 def get_all_metric(index):
     all_data = []
     files = list_stats()
@@ -145,6 +193,7 @@ def plot_all(metric):
     all_data = data = get_all_metric(metric)
 
     plt.figure(figsize=(16.5, 10))
+    plt.title('Individual experiment data: %s' % get_plot_title(), fontsize=25)
 
     for exp_data in all_data:
         evals = exp_data['evals']
@@ -196,13 +245,9 @@ def average_all(metric):
             if index == len(target_evals) - 1:
                 target_data[index].append(data[i])
 
-    # print(list(map(len, target_data)))
-
     mean = [
         sum(x) / len(x) for x in target_data
     ]
-
-    # print(len(target_evals), len(mean))
 
     l = min(len(target_evals), len(mean))
 
@@ -216,6 +261,7 @@ def plot_all_best_and_mean_score_and_avg_rmsd():
     evals, mean_score = average_all(metrics['mean_score'])
     _, best_score = average_all(metrics['best_score'])
     _, avg_rmsd = average_all(metrics['avg_rmsd'])
+    _, best_rmsd = average_all(metrics['best_rmsd'])
     # _, moment_of_inertia = average_all(metrics['moment_of_inertia'])
     # _, pedro_diver = average_all(metrics['pedro_diver'])
 
@@ -225,7 +271,8 @@ def plot_all_best_and_mean_score_and_avg_rmsd():
     ax1.plot(evals, mean_score, 'g-', label='mean_score')
     ax1.plot(evals, best_score, 'g', label='best_score', linestyle='-.')
 
-    ax2.plot(evals, avg_rmsd, 'b-', label='avg_rmsd')
+    ax2.plot(evals, avg_rmsd, 'b-', label='avg_rmsd', linestyle='-.')
+    ax2.plot(evals, best_rmsd, 'b-', label='best_rmsd')
 
     ax1.set_xlabel('Evals')
     ax1.set_ylabel('Score3', color='g')
@@ -239,8 +286,54 @@ def plot_all_best_and_mean_score_and_avg_rmsd():
     # lines2, labels2 = ax2.get_legend_handles_labels()
 
     fig.legend(loc='upper right', bbox_to_anchor=(0.8, 0.8))
+    plt.title('Mean of all experiments: %s' % get_plot_title(), fontsize=25)
 
-    plt.show()
+#     plt.show()
+    save_fig('all_mean_best_score_avg_rmsd')
+    
+    
+
+
+def plot_all_best_and_mean_score_and_best_rmsd():
+    evals, mean_score = average_all(metrics['mean_score'])
+    _, best_score = average_all(metrics['best_score'])
+    _, best_rmsd = average_all(metrics['best_rmsd'])
+    # _, moment_of_inertia = average_all(metrics['moment_of_inertia'])
+    # _, pedro_diver = average_all(metrics['pedro_diver'])
+
+    fig, ax1 = plt.subplots(figsize=(16.5, 10))
+    ax2 = ax1.twinx()
+
+    ax1.plot(evals, mean_score, 'g-', label='mean_score')
+    ax1.plot(evals, best_score, 'g', label='best_score', linestyle='-.')
+
+    ax2.plot(evals, best_rmsd, 'b-', label='best_rmsd')
+
+    ax1.set_xlabel('Evals')
+    ax1.set_ylabel('Score3', color='g')
+    ax2.set_ylabel('Diversity', color='b')
+
+    ax1.set_xlim(0, 500000)
+    ax1.set_ylim(bottom=0)
+    ax2.set_ylim(bottom=0)
+
+    # lines, labels = ax1.get_legend_handles_labels()
+    # lines2, labels2 = ax2.get_legend_handles_labels()
+
+    fig.legend(loc='upper right', bbox_to_anchor=(0.8, 0.8))
+    plt.title('Mean of all experiments: %s' % get_plot_title(), fontsize=25)
+
+#     plt.show()
+#     save_fig('all_mean_best_score_avg_rmsd')
+    
+    
+def save_fig(name_):
+    name = '%s_%s_%s.png' % (target_protein, target_experiment, name_)
+    
+    cd_test()
+    plt.savefig(name)
+    
+    set_env(quiet=True)
 
 
 def lerp(a, b, p):
