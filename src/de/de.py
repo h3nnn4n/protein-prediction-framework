@@ -13,6 +13,7 @@ from locality_sensitive_hashing import LocalitySensitiveHashing
 from forced_insertion import ForcedInsertion
 from piecewise_exchange import PiecewiseExchange
 from hooke_jeeves_postprocessing import HookeJeevesPostprocessing
+from nelder_mead_postprocessing import NelderMeadPostprocessing
 from repacker import Repacker
 from crowding import Crowding
 from spicker import Spicker
@@ -90,8 +91,12 @@ class DE:
 
         # LS
         self.run_hooke_jeeves_postprocessing = True
-        self.hooke_jeeves_postprocessing_mode = 'best'
+        self.hooke_jeeves_postprocessing_mode = 'cluster'
         self.hooke_jeeves_postprocessing = HookeJeevesPostprocessing(de=self)
+
+        self.run_nelder_mead_postprocessing = False
+        self.nelder_mead_postprocessing_mode = 'none'
+        self.nelder_mead_postprocessing = NelderMeadPostprocessing(de=self)
 
         # Crowding
         self.run_crowding = False
@@ -163,6 +168,8 @@ class DE:
             chance=self.forced_insertion_chance,
             enable=self.forced_insertion
         )
+        self.init_file_names()
+        self.spicker.reset()
 
     def update_remc(self):
         self.trial.enable_remc = self.enable_remc
@@ -313,7 +320,7 @@ class DE:
 
 # ######################### RUN ##################################
 
-    def open_stats(self):
+    def init_file_names(self):
         char_set = string.ascii_uppercase + string.digits
         r_string = ''.join(random.sample(char_set * 6, 6))
 
@@ -321,6 +328,8 @@ class DE:
 
         self.name_suffix = "_%s__%s__%04d_%02d_%02d__%02d_%02d_%02d__%s" % (
             self.pname, self.cname, now.year, now.month, now.day, now.hour, now.minute, now.second, r_string)
+
+    def open_stats(self):
         self.stats_name = self.rosetta_pack.protein_loader.original + '/' + "stats_" + self.name_suffix + ".dat"
         self.stats = open(self.stats_name, 'w')
 
@@ -354,6 +363,8 @@ class DE:
             f.write('enable_remc: %s\n' % self.enable_remc)
             f.write('run_hooke_jeeves_postprocessing: %s\n' % self.run_hooke_jeeves_postprocessing)
             f.write('hooke_jeeves_postprocessing_mode: %s\n' % self.hooke_jeeves_postprocessing_mode)
+            f.write('run_nelder_mead_postprocessing: %s\n' % self.run_nelder_mead_postprocessing)
+            f.write('nelder_mead_postprocessing_mode: %s\n' % self.nelder_mead_postprocessing_mode)
             f.write('run_crowding: %d\n' % self.run_crowding)
             f.write('crowding_factor: %d\n' % self.crowding_factor)
             f.write('crowding_mode: %s\n' % self.crowding_mode)
@@ -424,6 +435,7 @@ class DE:
         self.spicker.run()
 
         self.hooke_jeeves_postprocessing.run_hooke_jeeves()
+        self.nelder_mead_postprocessing.run_nelder_mead()
 
         self.log()
         self.dump_pbd_best(self.it)

@@ -1,7 +1,6 @@
 import subprocess
 import string
 import random
-import uuid
 import os
 import re
 
@@ -15,10 +14,8 @@ class Spicker:
         self.pop = self.de.pop
         self.run_spicker = self.de.run_spicker
 
-        self.reset()
-
     def reset(self):
-        self.working_folder = '%s__%s' % ('spicker', uuid.uuid4())
+        self.working_folder = '%s__%s__%s' % ('spicker', self.de.name_suffix, random_string())
 
         self.tra1_filenames = []
         self.psize = None
