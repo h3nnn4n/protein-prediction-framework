@@ -1,5 +1,6 @@
 import datetime
 import tarfile
+import pickle
 import string
 import random
 import time
@@ -86,11 +87,15 @@ def move_to_results(target):
     
     folder_name = target + name_suffix
     
+    # Create protein folders
+    
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
         print('INFO: created results folder %s' % folder_name)
     
     protein_list = get_protein_list()
+    
+    # Sort by protein
     
     for protein in protein_list:
         protein_path = os.path.join(folder_name, protein)
@@ -105,9 +110,15 @@ def move_to_results(target):
             os.mkdir(protein_path)
             print('INFO: created protein folder for %s' % protein_path)
 
+    # Sort by filetype
+    
+    experiments = get_experiment_names()
+    print('INFO: Found %d experiments' % len(experiments))
     file_counter = 0
     total = len(os.listdir())
     file_counter = 0
+    
+    create_experiment_folders(folder_name, protein_list, experiments)
 
     print('INFO: found %d files' % total)
 
@@ -121,14 +132,48 @@ def move_to_results(target):
 
                 if file_counter % 1000 == 0:
                     print('INFO: Moved %7d of %7d' % (file_counter, total))
+                    
+                experiment_name = get_experiment_name(experiments, filename)
 
                 protein = detect_protein(filename, protein_list)
                 
-                move(filename, os.path.join(folder_name, protein, filename))
+                move(filename, os.path.join(folder_name, protein, experiment_name, filename))
 
     print('INFO: Moved %7d of %7d files' % (file_counter, total))
 
     return folder_name
+
+
+def get_experiment_name(experiment_names, file):
+    for name in experiment_names:
+        if name in file:
+            return name
+        
+    return None
+
+
+def create_experiment_folders(folder_name, proteins, experiments):
+    for protein in proteins:
+        for experiment in experiments:
+            path = os.path.join(folder_name, protein, experiment)
+
+            if os.path.exists(path):
+                print('INFO: Experiment %s for %s already exists. Skipping' % (experiment, protein))
+            else:
+                os.mkdir(path)
+
+
+def get_experiment_names():
+    experiments = set()
+    
+    for file in os.listdir():
+        if 'stats__' not in file:
+            continue
+            
+        experiment_name = file.split('__')[2][5:]
+        experiments.add(experiment_name)
+        
+    return sorted(list(experiments))
 
 
 def organize_protein_folder(protein):
@@ -136,30 +181,109 @@ def organize_protein_folder(protein):
     
     print('INFO: Organizing %s' % protein)
     
-    for target in WHITELIST:
-        folder_name = target.replace('_', '')
+    experiments = [file for file in os.listdir() if os.path.isdir(file) and 'spicker___' not in file]
+    
+    for experiment in experiments:
+        os.chdir(experiment)
         
-        if not os.path.exists(folder_name):
-            os.mkdir(folder_name)
-        
-        for file in os.listdir():
-            if target in file:
-                move(file, os.path.join(folder_name, file))
+        for target in WHITELIST:
+            folder_name = target.replace('_', '')
+
+            if not os.path.exists(folder_name):
+                os.mkdir(folder_name)
+
+            for file in os.listdir():
+                if target in file:
+                    move(file, os.path.join(folder_name, file))
+                    
+        os.chdir('..')
     
     os.chdir('..')
 
+
+def extract_all_repack_data():
+    data = {}
+    wanted_data = ['repack_time', 'score', 'scorefxn', 'rmsd_before', 'rmsd_after']
+    repacked = [file for file in os.listdir() if '_repack_' in file]
+    
+    print('INFO: Parsing %7d repack.dat files' % len(repacked))
+
+    for name in repacked:
+        run_code = name.split('__')[-1][0:6]
+
+        if run_code not in data.keys():
+            data[run_code] = []
+
+        with open(name, 'r') as f:
+            new_data = {}
+
+            for line in f.readlines():
+                tokens = re.sub(' {2,}', ' ', line.strip()).split(' ')
+
+                has_data = any([wanted == tokens[0][:-1] for wanted in wanted_data])
+                if has_data:
+                    new_data[tokens[0][:-1]] = float(tokens[1])
+        
+        data[run_code].append(new_data)
+                    
+    return data
+      
+    
+def get_by_best_metric(data, metric):
+    data_by_best = []
+    
+    for _, results in data.items():
+        best = results[0]
+        
+        for result in results:
+            if result[metric] < best[metric]:
+                best = result
+                
+        data_by_best.append(best)
+        
+    return data_by_best
+
+    
+def get_by_best_rmsd():
+    data = extract_all_repack_data()
+    return get_by_best_metric(data, 'rmsd_after')
+
+
+def get_by_best_energy():
+    data = extract_all_repack_data()
+    return get_by_best_metric(data, 'scorefxn')
+    
+    
+def data_dump():
+    data = {}
+
+    protein_list = [file for file in os.listdir() if len(file) == 4 and os.path.isdir(file)]
+
+    for protein in protein_list:
+        data[protein] = {}
+
+        experiments = os.listdir(protein)
+
+        for experiment in experiments:
+            os.chdir(os.path.join(protein, experiment, 'repack'))
+            
+            data[protein][experiment] = {}
+            data[protein][experiment]['best_by_rmsd'] = get_by_best_rmsd()
+            data[protein][experiment]['best_by_energy'] = get_by_best_energy()
+            data[protein][experiment]['all_repacks'] = extract_all_repack_data()
+            
+            os.chdir('../../../')
+            
+    with open('%s.pickle' % 'data_dump', 'wb') as f:
+        pickle.dump(data, f)
+            
+    return data
     
     
     
     
     
-    
-    
-    
-    
-    
-    
-    
+
     
     
     
