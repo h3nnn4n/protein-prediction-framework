@@ -75,17 +75,18 @@ def detect_protein(name, protein_list):
     return None
     
     
-def move_to_results(target):
-    char_set = string.ascii_uppercase + string.digits
-    r_string = ''.join(random.sample(char_set * 6, 6))
+def move_to_results(target, folder_name=None):
+    if folder_name is None:
+        char_set = string.ascii_uppercase + string.digits
+        r_string = ''.join(random.sample(char_set * 6, 6))
 
-    now = datetime.datetime.now()
+        now = datetime.datetime.now()
 
-    name_suffix = "__%04d_%02d_%02d" % (
-        now.year, now.month, now.day
-    )
-    
-    folder_name = target + name_suffix
+        name_suffix = "__%04d_%02d_%02d" % (
+            now.year, now.month, now.day
+        )
+
+        folder_name = target + name_suffix
     
     # Create protein folders
     
@@ -204,7 +205,7 @@ def organize_protein_folder(protein):
 def extract_all_repack_data():
     data = {}
     wanted_data = ['repack_time', 'score', 'scorefxn', 'rmsd_before', 'rmsd_after']
-    repacked = [file for file in os.listdir() if '_repack_' in file]
+    repacked = [file for file in os.listdir() if '_repack_' in file or 'repack_' in file[0:7]]
     
     print('INFO: Parsing %7d repack.dat files' % len(repacked))
 
@@ -278,23 +279,3 @@ def data_dump():
         pickle.dump(data, f)
             
     return data
-    
-    
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
