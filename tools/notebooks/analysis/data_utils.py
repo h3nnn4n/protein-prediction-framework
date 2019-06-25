@@ -18,7 +18,7 @@ def column_output(results):
     return output
 
 
-def experiment_summary(data, mode='best_by_energy', metric='scorefxn'):
+def experiment_summary(data, mode='best_by_energy', metric='scorefxn', with_raw=False):
     output = {}
     proteins = list(data.keys())
     
@@ -41,6 +41,9 @@ def experiment_summary(data, mode='best_by_energy', metric='scorefxn'):
             output[protein][experiment]['data']['mean'] = np.mean(raw_data)
             output[protein][experiment]['data']['std'] = np.std(raw_data)
             output[protein][experiment]['data']['median'] = np.median(raw_data)
+            
+            if with_raw:
+                output[protein][experiment]['data']['raw'] = raw_data
 
     return output
 
