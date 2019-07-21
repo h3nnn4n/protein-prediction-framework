@@ -94,7 +94,7 @@ class ConfigLoader:
         self.options['crowding_factor'] = 5
         self.options['crowding_mode'] = 'rmsd'
 
-        self.options['run_spicker'] = True
+        self.options['run_spicker'] = False
 
         self.options['ops'] = ['rand1bin_global']
 

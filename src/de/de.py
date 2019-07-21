@@ -105,7 +105,7 @@ class DE:
         self.crowding = Crowding(de=self)
 
         # Spicker Clustering
-        self.run_spicker = True
+        self.run_spicker = False
         self.spicker = Spicker(de=self)
 
         # Moment of Inertia
