@@ -31,6 +31,8 @@ class HookeJeevesPostprocessing:
         if mode == 'best':
             self.run_hooke_jeeves_for_best()
 
+        print('[HOOKE JEEVES] finished running')
+
     def run_hooke_jeeves_for_all(self):
         print('[HOOKE JEEVES] running for all')
 

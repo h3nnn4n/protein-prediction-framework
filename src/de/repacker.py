@@ -23,6 +23,8 @@ class Repacker:
         if mode == 'best':
             self.run_repack_for_best()
 
+        print('[REPACK] finished running')
+
     def run_repack_for_all(self):
         print('[REPACK] running for all')
         self.run_repack_for_list(range(self.de.pop_size))

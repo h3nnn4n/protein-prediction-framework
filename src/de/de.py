@@ -442,6 +442,8 @@ class DE:
 
         self.repacker.run_repack()
 
+        print('DE finished running')
+
 # ######################### DE STUFF #############################
 
     def can_run_generations(self):
