@@ -146,11 +146,19 @@ def move_to_results(target, folder_name=None):
 
 
 def get_experiment_name(experiment_names, file):
+    matches = []
+    
     for name in experiment_names:
         if name in file:
-            return name
-        
-    return None
+            matches.append(name)
+            
+    if len(matches) == 0:
+        return None
+    
+    if len(matches) == 1:
+        return matches[0]
+    
+    return sorted(matches, key=len)[-1]
 
 
 def create_experiment_folders(folder_name, proteins, experiments):

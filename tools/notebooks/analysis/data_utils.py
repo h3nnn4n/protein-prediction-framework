@@ -36,6 +36,10 @@ def experiment_summary(data, mode='best_by_energy', metric='scorefxn', with_raw=
 
             raw_data = column_output(results)[metric]
             
+            if len(raw_data) == 0:
+                print('[WARN] experiment %s for protein %s is empty! skipping' % (experiment, protein))
+                continue
+            
             output[protein][experiment]['data']['min'] = min(raw_data)
             output[protein][experiment]['data']['max'] = max(raw_data)
             output[protein][experiment]['data']['mean'] = np.mean(raw_data)
@@ -52,7 +56,7 @@ def load_all_data(runs):
     
     for run in runs:
         os.chdir(run)
-        
+            
         experiment_folders = [file for file in os.listdir() if run in file]
         
         if len(experiment_folders) > 1:
@@ -78,7 +82,7 @@ def merge_container(a, b):
     return a
     
     
-def merge_data(dataset):
+def merge_data(dataset, protein_blacklist=[], keep_only_common_methods=True):
     merged = {}
     
     modes = ['best_by_rmsd', 'all_repacks', 'best_by_energy']
@@ -100,8 +104,46 @@ def merge_data(dataset):
                             merged[protein_k][experiment_k][mode] = []
                         
                     merge_container(merged[protein_k][experiment_k][mode], experiment_v[mode])
-                    
+    
+    if len(protein_blacklist) > 0:
+        remove_blacklisted_proteins(merged, protein_blacklist)
+        
+    if keep_only_common_methods:
+        remove_not_common_methods(merged)
+    
     return merged
+
+
+def remove_blacklisted_proteins(alldata, protein_blacklist):
+    proteins_before = list(alldata.keys())
+
+    for protein in protein_blacklist:
+        alldata.pop(protein.lower(), False)
+
+    proteins_after = list(alldata.keys())
+
+    print('removed %d proteins. Blacklist had %d' % (
+        len(proteins_before) - len(proteins_after),
+        len(protein_blacklist)
+    ))
+
+
+def remove_not_common_methods(alldata):
+    first_key = list(alldata.keys())[0]
+    methods = set(alldata[first_key].keys())
+
+    for _, protein_methods in alldata.items():
+        methods_ = set(protein_methods.keys())
+        methods = methods & methods_
+
+    proteins = list(alldata.keys())
+    for protein in proteins:
+        protein_methods = list(alldata[protein].keys())
+
+        for protein_method in protein_methods:
+            if protein_method not in methods:
+                print('[WARN] removing %s from %s' % (protein_method, protein))
+                alldata[protein].pop(protein_method, True)
 
 
 def flatten_all_repacks_data(data):
