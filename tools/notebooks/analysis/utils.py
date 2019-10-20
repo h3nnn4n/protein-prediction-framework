@@ -210,9 +210,10 @@ def organize_protein_folder(protein):
     os.chdir('..')
 
 
+    # More like some repack data
 def extract_all_repack_data():
     data = {}
-    wanted_data = ['repack_time', 'score', 'scorefxn', 'rmsd_before', 'rmsd_after']
+    wanted_data = ['repack_time', 'score', 'scorefxn', 'rmsd_before', 'rmsd_after', 'gdt_ts_after', 'tm_score_after']
     repacked = [file for file in os.listdir() if '_repack_' in file or 'repack_' in file[0:7]]
     
     print('INFO: Parsing %7d repack.dat files' % len(repacked))
