@@ -82,8 +82,8 @@ class ConfigLoader:
 
         self.options['enable_remc'] = False
 
-        self.options['run_hooke_jeeves_postprocessing'] = True
-        self.options['hooke_jeeves_postprocessing_mode'] = 'cluster'
+        self.options['run_hooke_jeeves_postprocessing'] = False
+        self.options['hooke_jeeves_postprocessing_mode'] = 'none'
 
         self.options['run_nelder_mead_postprocessing'] = False
         self.options['nelder_mead_postprocessing_mode'] = 'none'
@@ -94,7 +94,7 @@ class ConfigLoader:
         self.options['crowding_factor'] = 5
         self.options['crowding_mode'] = 'rmsd'
 
-        self.options['run_spicker'] = True
+        self.options['run_spicker'] = False
 
         self.options['ops'] = ['rand1bin_global']
 

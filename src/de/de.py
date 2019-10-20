@@ -90,8 +90,8 @@ class DE:
         self.update_remc()
 
         # LS
-        self.run_hooke_jeeves_postprocessing = True
-        self.hooke_jeeves_postprocessing_mode = 'cluster'
+        self.run_hooke_jeeves_postprocessing = False
+        self.hooke_jeeves_postprocessing_mode = 'none'
         self.hooke_jeeves_postprocessing = HookeJeevesPostprocessing(de=self)
 
         self.run_nelder_mead_postprocessing = False
@@ -105,7 +105,7 @@ class DE:
         self.crowding = Crowding(de=self)
 
         # Spicker Clustering
-        self.run_spicker = True
+        self.run_spicker = False
         self.spicker = Spicker(de=self)
 
         # Moment of Inertia
