@@ -63,11 +63,10 @@ class DE:
         self.failsafe_verbose = False
 
         self.stage0_init = False
-        self.stage0_init = False
-        self.stage2_interval = -1
-        self.stage2_all_interval = -1
-        self.partial_reset = -1
         self.log_interval = 10
+
+        # Partial reset
+        self.partial_reset = False
 
         self.reset_d_trigger = 0.0
         self.reset_d_percent = 0.0
@@ -92,22 +91,9 @@ class DE:
         # Piecewise Exchange
         self.piecewise_exchange = PiecewiseExchange(de=self)
 
-        # Pop data dump
-        # nothing
-
-        # Clearing
-        self.do_clearing = False
-        self.clearing_interval = 10
-        self.clearing_size = 1
-
         # REMC
         self.enable_remc = True
         self.update_remc()
-
-        # Crowding
-        self.do_crowding = False
-        self.do_rmsd_crowding = False
-        self.crowding_factor = None
 
         # Moment of Inertia
         self.centroids = None
@@ -128,7 +114,6 @@ class DE:
         self.sade_run = True
         self.sade_lp = 50
         self.sade_lp_left = self.sade_lp
-        # self.sade_f = []
         self.sade_selection = ''
         self.sade_k = None
 
@@ -150,18 +135,6 @@ class DE:
         self.mean = 0
         self.best_index = 0
         self.best_score = float('inf')
-
-        self.mean_last_improv = None
-        self.mean_improv_value = 0
-        self.mean_last_improv_value = 0
-        self.mean_improv_threshold = 0.1
-        self.mean_improv_iter_threshold = 1000
-
-        self.last_improv = None
-        self.improv_value = 0
-        self.last_improv_value = 0
-        self.improv_threshold = 0.1
-        self.improv_iter_threshold = 5000
 
         self.operators = Operators(de=self)
 
@@ -315,8 +288,6 @@ class DE:
             f.write('max_evals: %d\n' % (self.max_evals))
             f.write('stop_condition: %s\n' % (self.stop_condition))
             f.write('stage0_init: %d\n' % self.stage0_init)
-            f.write('stage2_interval: %d\n' % self.stage2_interval)
-            f.write('stage2_all_interval: %d\n' % self.stage2_all_interval)
             f.write('partial_reset: %d\n' % self.partial_reset)
             f.write('log_interval: %d\n' % self.log_interval)
             f.write('do_lsh: %d\n' % self.do_lsh)
@@ -336,13 +307,7 @@ class DE:
             f.write('sade_reinit_interval: %d\n' % self. sade_reinit_interval)
             f.write('sade_selection: %s\n' % self.sade_selection)
             f.write('enable_remc: %s\n' % self.enable_remc)
-            f.write('do_crowding: %d\n' % self.do_crowding)
-            f.write('do_rmsd_crowding: %d\n' % self.do_rmsd_crowding)
-            f.write('crowding_factor: %d\n' % self.crowding_factor)
             f.write('ops: %s\n' % self.ops)
-            f.write('do_clearing: %d\n' % self.do_clearing)
-            f.write('clearing_interval: %d\n' % self.clearing_interval)
-            f.write('clearing_size: %d\n' % self.clearing_size)
             f.write('energy_function: %s\n' % self.energy_function)
             f.write('energy_options: %s\n' % self.energy_options)
             f.write('extended_diversity_measurements: %s\n' % self.extended_diversity_measurements)
@@ -372,13 +337,8 @@ class DE:
         if self.do_lsh:
             self.locality_sensitive_hashing.create_hashs()
 
-        self.update_threshold()
-        self.update_score_function(step=False)
-        # self.update_mean()
-
         if self.stage0_init:
             print('Stage0 init')
-            # self.log(it=-1)
             for p in self.pop:
                 p.eval()
                 p.stage1_mc()
@@ -392,8 +352,6 @@ class DE:
 
         self.update_mean()
 
-        # self.log(it=0)
-
         if self.do_lsh:
             self.locality_sensitive_hashing.apply_hash()
 
@@ -405,9 +363,8 @@ class DE:
         self.stop_at_iter = 'iters' in self.stop_condition
 
         self.it = 0
-        while (self.spent_evals < self.max_evals and self.stop_at_eval) or (self.it < self.max_iters and self.stop_at_iter) or self.mode == 'marathon':
-            if self.sade_run and (self.sade_reinit_interval > 0 and self.it % self.sade_reinit_interval == 0) and \
-               self.energy_function not in ['cascade']:
+        while (self.spent_evals < self.max_evals and self.stop_at_eval) or (self.it < self.max_iters and self.stop_at_iter):
+            if self.sade_run and (self.sade_reinit_interval > 0 and self.it % self.sade_reinit_interval == 0):
                 self.sade_reinit()
 
             if self.sade_run:
@@ -415,8 +372,6 @@ class DE:
                 self.sade_update_ops()
 
             self.it += 1
-
-            self.update_score_function()
 
             self.forced_insertion_op.run()
 
@@ -453,20 +408,12 @@ class DE:
 
             if self.it % 50 == 0 and self.avg_rmsd() < self.reset_rmsd_trigger:
                 print('rmsd_reset')
-                # self.log()
-                # self.trial.stage1_mc(n=100)
-                # self.trial.reset()
                 for i in range(self.pop_size):
                     if random.random() < self.reset_rmsd_percent and i != self.best_index:
-                        # before = self.pop[i].score
-                        # import ipdb; ipdb.set_trace()
                         self.pop[i].reset()
                         self.pop[i].stage1_mc(n=100)
-                        # self.pop[i].update_angle_from_pose()
                         self.pop[i].eval()
-                        # print(i, before, self.pop[i].score)
                 self.update_diversity()
-                # self.log()
 
             if self.it > 1 and self.diversity < self.reset_d_trigger:
                 print('d_reset')
@@ -488,32 +435,7 @@ class DE:
                         self.pop[i].eval()
                 self.update_diversity()
 
-            if self.stage2_interval > 0 and self.it % self.stage2_interval == 0 and self.it > 0:
-                print('LS')
-                self.pop[self.best_index].stage2_mc()
-                self.pop[self.best_index].update_angle_from_pose()
-                self.pop[self.best_index].eval()
-
-            if self.stage2_all_interval > 0 and self.it % self.stage2_all_interval == 0 and self.it > 0:
-                print('NINJA MOVE')
-                self.pop[self.best_index].update_angle_from_pose()
-                self.pop[self.best_index].eval()
-                for i in range(self.pop_size):
-                    if i == self.best_index:
-                        continue
-
-                    if random.random() < .25:
-                        self.pop[i].stage2_mc(n=10, temp=2.5)
-                    else:
-                        self.pop[i].stage2_mc(n=10, temp=.5)
-                    self.pop[i].update_angle_from_pose()
-                    self.pop[i].eval()
-
             self.update_mean()
-            self.update_threshold()
-
-            if False and self.it % 1000 == 0:
-                self.dump_pbd_best(self.it)
 
             if self.log_interval > 0 and self.it % self.log_interval == 0 or self.it == 1:
                 self.log()
@@ -567,63 +489,13 @@ class DE:
             f.write('gdt_ha_info_before: %12.4f %12.4f %12.4f %12.4f\n' % (tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0], tm_before['gdt_ha'][1][0]))
             f.write('gdt_ha_info_after:  %12.4f %12.4f %12.4f %12.4f\n' % (tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0], tm_after['gdt_ha'][1][0]))
 
-        self.piecewise_exchange.random_search()
-
     def print_hash(self):
         for n, i in enumerate(self.hash_values):
             if len(i) > 0:
                 print(n, i)
 
     def selection(self, candidate=None):
-        if self.do_crowding or self.do_rmsd_crowding:
-            self.crowding_selection()
-        else:
-            if candidate is not None:
-                self.standard_selection(candidate)
-            else:
-                pass
-
-    def crowding_selection(self):
-        sade_k = self.sade_k
-
-        _, cr = self.get_f_cr()
-
-        ps = random.sample(range(self.pop_size), k=self.crowding_factor)
-
-        best_index = None
-        best_dist = None
-
-        for p in ps:
-            if self.do_rmsd_crowding:
-                d = self.rosetta_pack.get_rmsd_from_pose(self.trial.pose, self.pop[p].pose)
-            elif self.do_crowding:
-                d = np.sqrt(np.sum((self.trial.angles - self.pop[p].angles)**2))
-            else:
-                print('WARNING! Crowding was called without being enabled!')
-
-            if best_dist is None or d < best_dist:
-                best_dist = d
-                best_index = p
-
-        candidate = self.pop[best_index]
-
-        if self.trial.score < candidate.score:
-            if self.sade_run:
-                self.sade_cr_memory[sade_k].append(cr)
-                ind = self.it % self.sade_lp
-                self.sade_success_memory[ind][sade_k] += 1
-
-            t = candidate
-            candidate = self.trial
-            self.trial = t
-            if self.trial is candidate:
-                import sys
-                print('PANIC! Found duplicated reference in population')
-                sys.exit()
-        else:
-            if self.sade_run:
-                ind = self.it % self.sade_lp
-                self.sade_failure_memory[ind][sade_k] += 1
+        self.standard_selection(candidate)
 
     def standard_selection(self, candidate):
         sade_k = self.sade_k
@@ -662,113 +534,6 @@ class DE:
 
         return self.sade_cr[self.target][self.sade_k]
 
-    def update_score_function(self, step=True):
-        def update_pop_score(update_score=False):
-            for p in self.pop:
-                p.set_score_function(self.current_energy_function)
-                if update_score:
-                    p.eval()
-
-            self.trial.set_score_function(self.current_energy_function)
-            if update_score:
-                self.trial.eval()
-                self.update_mean()
-
-        if self.energy_function in ['score0', 'score1', 'score2', 'score3', 'score5']:
-            if not hasattr(self, 'single_score_update'):
-                self.single_score_update = True
-                self.current_energy_function = self.energy_function
-                update_pop_score()
-
-        elif self.energy_function == 'cascade':
-            if self.spent_gens == 0 and not hasattr(self, 'parsed_energy'):
-                first = self.parse_energy_options()
-                self.parsed_energy = True
-                self.current_energy_function = first
-                update_pop_score()
-            if self.mode == 'marathon':
-                low, high, n = self.parsed_energy_options[self.current_energy_function]
-                # print(self.spent_gens, high, low, self.current_energy_function, n)
-                # if (self.best_score is not None and abs(self.mean - self.best_score) < 0.1):
-                if self.last_improv > self.improv_iter_threshold or self.mean_last_improv > self.mean_improv_iter_threshold:
-                    if self.last_improv > self.improv_iter_threshold:
-                        print('Iter reset!')
-                        # print('Next: last improv', self.last_improv, self.improv_iter_threshold)
-                    elif self.mean_last_improv > self.mean_improv_iter_threshold:
-                        print('Mean reset!')
-                        # print('Next: last mean improv', self.mean_last_improv, self.mean_improv_iter_threshold)
-                    if self.current_energy_function == n:
-                        # import sys
-                        # sys.exit()
-                        self.mode = 'quit'
-                    self.current_energy_function = n
-                    update_pop_score(update_score=True)
-                    self.sade_reinit()
-                    self.spent_on_score = 0
-                    self.total_evals_on_current_score = self.spent_on_score
-
-                # print(self.spent_gens, self.spent_on_score, self.total_evals_on_current_score)
-                if self.sade_reinit_interval > 0 and self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and \
-                   self.spent_on_score > 0 and self.spent_on_score != self.total_evals_on_current_score:
-                    self.sade_reinit()
-
-                if step:
-                    self.spent_gens += 1
-                    self.spent_on_score += 1
-            else:
-                low, high, n = self.parsed_energy_options[self.current_energy_function]
-                # print(self.spent_gens, high, low, self.current_energy_function, n)
-                if high < self.spent_gens:
-                    self.current_energy_function = n
-                    update_pop_score(update_score=True)
-                    self.sade_reinit()
-                    self.spent_on_score = high - low
-                    self.total_evals_on_current_score = self.spent_on_score
-
-                if self.spent_on_score % self.sade_reinit_interval == 0 and self.sade_run and self.spent_on_score > 0 and \
-                   self.spent_on_score < self.total_evals_on_current_score:
-                    self.sade_reinit()
-
-                if step:
-                    self.spent_gens += 1
-                    self.spent_on_score -= 1
-
-    def parse_energy_options(self):
-        first = None
-        acc = 0
-        for w in self.energy_options:
-            a, b = w.split('_')
-            # if acc == 0:
-            #     self.current_energy_function = a
-            b = int(b)
-            acc += b
-            # print(a, b, acc - b, acc)
-            self.parsed_energy_options[a] = (acc - b, acc)
-
-            if first is None:
-                first = a
-
-        last = None
-        for k, w in enumerate(self.energy_options):
-            a, _ = w.split('_')
-
-            if k == 0:
-                last = a
-                continue
-
-            x, y = self.parsed_energy_options[last]
-            # print(last, x, y)
-            self.parsed_energy_options[last] = (x, y, a)
-            # print(last, self.parsed_energy_options[last])
-            last = a
-
-        x, y = self.parsed_energy_options[last]
-        self.parsed_energy_options[last] = (x, y, a)
-        # print(last, self.parsed_energy_options[last])
-        # print(last)
-
-        return first
-
     def update_mean(self):
         self.mean = 0
         self.best_score = float('inf')
@@ -779,31 +544,6 @@ class DE:
                 self.best_index = i
 
         return self.mean
-
-    def update_threshold(self, force_update=False):
-        if self.mean_last_improv is None:
-            self.mean_last_improv = 0
-            self.mean_last_improv_value = float("inf")
-        # elif abs(self.mean_last_improv_value - self.mean) > self.mean_improv_threshold or self.mean_last_improv > self.mean_improv_iter_threshold:
-        elif abs(self.mean_last_improv_value - self.mean) > self.mean_improv_threshold:
-            # print('Mean reset')
-            self.mean_improv_value = self.mean - self.mean_last_improv_value
-            self.mean_last_improv_value = self.mean
-            self.mean_last_improv = 0
-        else:
-            self.mean_last_improv += 1
-
-        if self.last_improv is None:
-            self.last_improv = 0
-            self.last_improv_value = float("inf")
-        # elif abs(self.last_improv_value - self.best_score) > self.improv_threshold or self.last_improv > self.improv_iter_threshold:
-        elif abs(self.last_improv_value - self.best_score) > self.improv_threshold:
-            # print('Iter reset')
-            self.improv_value = self.best_score - self.last_improv_value
-            self.last_improv_value = self.best_score
-            self.last_improv = 0
-        else:
-            self.last_improv += 1
 
     def update_moment_of_inertia(self):
         pop_size = self.pop_size
